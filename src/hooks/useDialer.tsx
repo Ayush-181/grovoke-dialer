@@ -264,7 +264,7 @@ export function DialerProvider({ children }: { children: ReactNode }) {
           ringbackRef.current.stop();
           startedAtRef.current = Date.now();
           setStatus(next.mode === "conference" ? "conferencing" : "live");
-          const callSid = (call.parameters as Record<string, string>)?.CallSid ?? null;
+          const callSid = (call.parameters as Record<string, string>)?.["CallSid"] ?? null;
           const { data } = await supabase
             .from("dial_call_logs")
             .insert({
