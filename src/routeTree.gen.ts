@@ -10,33 +10,120 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTimezonesRouteImport } from './routes/_authenticated/timezones'
+import { Route as ApiPublicTwimlRecordingRouteImport } from './routes/api/public/twiml/recording'
+import { Route as ApiPublicTwimlVoiceRouteImport } from './routes/api/public/twiml/voice'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTimezonesRoute = AuthenticatedTimezonesRouteImport.update({
+  id: '/timezones',
+  path: '/timezones',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicTwimlRecordingRoute = ApiPublicTwimlRecordingRouteImport.update({
+  id: '/api/public/twiml/recording',
+  path: '/api/public/twiml/recording',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTwimlVoiceRoute = ApiPublicTwimlVoiceRouteImport.update({
+  id: '/api/public/twiml/voice',
+  path: '/api/public/twiml/voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/timezones': typeof AuthenticatedTimezonesRoute
+  '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
+  '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/timezones': typeof AuthenticatedTimezonesRoute
+  '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
+  '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/timezones': typeof AuthenticatedTimezonesRoute
+  '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
+  '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/settings'
+    | '/timezones'
+    | '/api/public/twiml/recording'
+    | '/api/public/twiml/voice'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/settings'
+    | '/timezones'
+    | '/api/public/twiml/recording'
+    | '/api/public/twiml/voice'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/settings'
+    | '/_authenticated/timezones'
+    | '/api/public/twiml/recording'
+    | '/api/public/twiml/voice'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ApiPublicTwimlRecordingRoute: typeof ApiPublicTwimlRecordingRoute
+  ApiPublicTwimlVoiceRoute: typeof ApiPublicTwimlVoiceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +135,79 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/timezones': {
+      id: '/_authenticated/timezones'
+      path: '/timezones'
+      fullPath: '/timezones'
+      preLoaderRoute: typeof AuthenticatedTimezonesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/twiml/recording': {
+      id: '/api/public/twiml/recording'
+      path: '/api/public/twiml/recording'
+      fullPath: '/api/public/twiml/recording'
+      preLoaderRoute: typeof ApiPublicTwimlRecordingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twiml/voice': {
+      id: '/api/public/twiml/voice'
+      path: '/api/public/twiml/voice'
+      fullPath: '/api/public/twiml/voice'
+      preLoaderRoute: typeof ApiPublicTwimlVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTimezonesRoute: typeof AuthenticatedTimezonesRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTimezonesRoute: AuthenticatedTimezonesRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ApiPublicTwimlRecordingRoute: ApiPublicTwimlRecordingRoute,
+  ApiPublicTwimlVoiceRoute: ApiPublicTwimlVoiceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
