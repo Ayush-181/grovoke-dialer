@@ -1,24 +1,41 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/useAuth";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Call Board — Power Dialer CRM for Local Service Leads" },
+      {
+        name: "description",
+        content:
+          "Import lead lists, build calling sessions, and power through them with a browser dialer that logs every call, recording and outcome.",
+      },
+      { property: "og:title", content: "Call Board — Power Dialer CRM" },
+      {
+        property: "og:description",
+        content: "Dark-industrial B2B power dialer for cold-calling local service businesses.",
+      },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const { initialized, user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!initialized) return;
+    void navigate({ to: user ? "/dashboard" : "/auth", replace: true });
+  }, [initialized, user, navigate]);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="grid-noise flex min-h-screen items-center justify-center bg-background">
+      <div className="text-center">
+        <h1 className="mono text-2xl font-semibold tracking-tight">CALL BOARD</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Loading your workspace…</p>
+      </div>
     </div>
   );
 }
