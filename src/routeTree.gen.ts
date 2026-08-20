@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicTwimlRecordingRouteImport } from './routes/api/public/twiml/recording'
 import { Route as ApiPublicTwimlVoiceRouteImport } from './routes/api/public/twiml/voice'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTwimlRecordingRoute = ApiPublicTwimlRecordingRouteImport.update({
+  id: '/api/public/twiml/recording',
+  path: '/api/public/twiml/recording',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTwimlVoiceRoute = ApiPublicTwimlVoiceRouteImport.update({
@@ -25,27 +31,32 @@ const ApiPublicTwimlVoiceRoute = ApiPublicTwimlVoiceRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/twiml/voice'
+  fullPaths: '/' | '/api/public/twiml/recording' | '/api/public/twiml/voice'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/twiml/voice'
-  id: '__root__' | '/' | '/api/public/twiml/voice'
+  to: '/' | '/api/public/twiml/recording' | '/api/public/twiml/voice'
+  id:
+    '__root__' | '/' | '/api/public/twiml/recording' | '/api/public/twiml/voice'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicTwimlRecordingRoute: typeof ApiPublicTwimlRecordingRoute
   ApiPublicTwimlVoiceRoute: typeof ApiPublicTwimlVoiceRoute
 }
 
@@ -56,6 +67,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/twiml/recording': {
+      id: '/api/public/twiml/recording'
+      path: '/api/public/twiml/recording'
+      fullPath: '/api/public/twiml/recording'
+      preLoaderRoute: typeof ApiPublicTwimlRecordingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/twiml/voice': {
@@ -70,6 +88,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicTwimlRecordingRoute: ApiPublicTwimlRecordingRoute,
   ApiPublicTwimlVoiceRoute: ApiPublicTwimlVoiceRoute,
 }
 export const routeTree = rootRouteImport
