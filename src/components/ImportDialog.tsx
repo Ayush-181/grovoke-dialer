@@ -161,7 +161,7 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
                 <div key={f.key} className="space-y-1">
                   <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     {f.label}
-                    {f.required && <span className="text-primary"> *</span>}
+                    {"required" in f && f.required && <span className="text-primary"> *</span>}
                   </label>
                   <select
                     value={mapping[f.key] ?? ""}
