@@ -81,7 +81,10 @@ function CallsPage() {
 
   const saveRow = async (id: string, patch: { outcome?: Outcome; notes?: string }, leadId: string | null) => {
     const { error } = await supabase.from("dial_call_logs").update(patch).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     if (patch.outcome && leadId) {
       await supabase
         .from("leads")
