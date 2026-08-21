@@ -87,19 +87,31 @@ function SettingsPage() {
     if (!workspace || !user) return;
     setSaving(true);
     try {
-      const payload: Record<string, string | null> = { workspace_id: workspace.id };
-      for (const f of TWILIO_FIELDS) payload[f.key] = twilio[f.key]?.trim() || null;
+      const t = (key: string) => twilio[key]?.trim() || null;
 
       const [a, b, c, d] = await Promise.all([
         supabase.from("workspaces").update({ name: wsName.trim() || "Workspace" }).eq("id", workspace.id),
-        supabase.from("workspace_settings").upsert(payload, { onConflict: "workspace_id" }),
+        supabase.from("workspace_settings").upsert(
+          {
+            workspace_id: workspace.id,
+            twilio_account_sid: t("twilio_account_sid"),
+            twilio_auth_token: t("twilio_auth_token"),
+            twilio_api_key_sid: t("twilio_api_key_sid"),
+            twilio_api_key_secret: t("twilio_api_key_secret"),
+            twilio_twiml_app_sid: t("twilio_twiml_app_sid"),
+            twilio_phone_number: t("twilio_phone_number"),
+          },
+          { onConflict: "workspace_id" },
+        ),
         supabase
           .from("user_preferences")
           .upsert(
             { user_id: user.id, default_anchor_zone: anchorZone, mic_device_id: dialer.selectedInput },
             { onConflict: "user_id" },
           ),
-        supabase.from("profiles").upsert({ id: user.id, email: user.email, full_name: fullName }),
+        supabase
+          .from("profiles")
+          .upsert({ id: user.id, email: user.email ?? null, full_name: fullName }),
       ]);
       const err = a.error || b.error || c.error || d.error;
       if (err) throw err;
