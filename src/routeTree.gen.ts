@@ -17,6 +17,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTimezonesRouteImport } from './routes/_authenticated/timezones'
+import { Route as AuthenticatedSessionsIndexRouteImport } from './routes/_authenticated/sessions.index'
 import { Route as ApiPublicTwimlRecordingRouteImport } from './routes/api/public/twiml/recording'
 import { Route as ApiPublicTwimlVoiceRouteImport } from './routes/api/public/twiml/voice'
 
@@ -59,6 +60,12 @@ const AuthenticatedTimezonesRoute = AuthenticatedTimezonesRouteImport.update({
   path: '/timezones',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSessionsIndexRoute =
+  AuthenticatedSessionsIndexRouteImport.update({
+    id: '/sessions/',
+    path: '/sessions/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicTwimlRecordingRoute = ApiPublicTwimlRecordingRouteImport.update({
   id: '/api/public/twiml/recording',
   path: '/api/public/twiml/recording',
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AuthenticatedLeadsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/timezones': typeof AuthenticatedTimezonesRoute
+  '/sessions/': typeof AuthenticatedSessionsIndexRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
@@ -89,6 +97,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AuthenticatedLeadsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/timezones': typeof AuthenticatedTimezonesRoute
+  '/sessions': typeof AuthenticatedSessionsIndexRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
@@ -102,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/timezones': typeof AuthenticatedTimezonesRoute
+  '/_authenticated/sessions/': typeof AuthenticatedSessionsIndexRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/settings'
     | '/timezones'
+    | '/sessions/'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
   fileRoutesByTo: FileRoutesByTo
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/settings'
     | '/timezones'
+    | '/sessions'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
   id:
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leads'
     | '/_authenticated/settings'
     | '/_authenticated/timezones'
+    | '/_authenticated/sessions/'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
   fileRoutesById: FileRoutesById
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTimezonesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sessions/': {
+      id: '/_authenticated/sessions/'
+      path: '/sessions'
+      fullPath: '/sessions/'
+      preLoaderRoute: typeof AuthenticatedSessionsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/twiml/recording': {
       id: '/api/public/twiml/recording'
       path: '/api/public/twiml/recording'
@@ -231,6 +251,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTimezonesRoute: typeof AuthenticatedTimezonesRoute
+  AuthenticatedSessionsIndexRoute: typeof AuthenticatedSessionsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -239,6 +260,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTimezonesRoute: AuthenticatedTimezonesRoute,
+  AuthenticatedSessionsIndexRoute: AuthenticatedSessionsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
