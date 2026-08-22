@@ -54,11 +54,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-surface">
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
-        <div className="flex h-12 items-center gap-6 px-4">
+        <div className="flex h-14 items-center gap-6 px-4">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <PhoneCall className="h-3.5 w-3.5" />
             </span>
             <span className="mono text-sm font-semibold tracking-tight">CALL BOARD</span>
@@ -72,9 +72,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors",
+                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
                     active
-                      ? "bg-surface-raised text-primary"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-surface hover:text-foreground",
                   )}
                 >
@@ -86,12 +86,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
+            <HeaderClocks />
             <span className="hidden text-xs text-muted-foreground md:inline">
               {workspace?.name}
             </span>
             <span className="mono hidden text-xs text-muted-foreground lg:inline">
               {user?.email}
             </span>
+
             <button
               onClick={() => void signOut()}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
