@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { PhoneWidget } from "@/components/PhoneWidget";
+import { HOME_ZONE, formatTimeInZone, zoneDef } from "@/lib/timezones";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -23,17 +24,41 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
+const HEADER_CLOCKS = [HOME_ZONE, "America/New_York", "America/Los_Angeles"];
+
+function HeaderClocks() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="hidden items-center gap-3 rounded-full border border-border bg-surface px-3 py-1 xl:flex">
+      {HEADER_CLOCKS.map((z) => (
+        <div key={z} className="flex items-baseline gap-1.5">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {zoneDef(z).short}
+          </span>
+          <span className="mono text-xs font-semibold">{formatTimeInZone(now, z)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { workspace } = useWorkspace();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-surface">
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
-        <div className="flex h-12 items-center gap-6 px-4">
+        <div className="flex h-14 items-center gap-6 px-4">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <PhoneCall className="h-3.5 w-3.5" />
             </span>
             <span className="mono text-sm font-semibold tracking-tight">CALL BOARD</span>
@@ -47,9 +72,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors",
+                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
                     active
-                      ? "bg-surface-raised text-primary"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-surface hover:text-foreground",
                   )}
                 >
@@ -61,12 +86,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
+            <HeaderClocks />
             <span className="hidden text-xs text-muted-foreground md:inline">
               {workspace?.name}
             </span>
             <span className="mono hidden text-xs text-muted-foreground lg:inline">
               {user?.email}
             </span>
+
             <button
               onClick={() => void signOut()}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
