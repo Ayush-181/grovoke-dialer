@@ -13,8 +13,9 @@ export const ZONES: ZoneDef[] = [
   { id: "America/Phoenix", label: "Arizona (no DST)", short: "MST" },
   { id: "America/Los_Angeles", label: "Pacific", short: "PT" },
   { id: "America/Anchorage", label: "Alaska", short: "AKT" },
-  { id: "Pacific/Honolulu", label: "Hawaii", short: "HST" },
-  { id: "Europe/London", label: "London", short: "GMT/BST" },
+  { id: "Pacific/Honolulu", label: "Hawaii", short: "HT" },
+  { id: "Europe/London", label: "London", short: "UK" },
+
   { id: "Europe/Berlin", label: "Berlin", short: "CET" },
   { id: "Asia/Dubai", label: "Dubai", short: "GST" },
   { id: "Asia/Singapore", label: "Singapore", short: "SGT" },
