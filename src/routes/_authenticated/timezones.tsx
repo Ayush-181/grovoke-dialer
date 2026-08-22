@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { RefreshCw } from "lucide-react";
 import {
   HOME_ZONE,
   ZONES,
   formatDateInZone,
   formatTimeInZone,
-  instantToWallClock,
   parseDateTimeLocalValue,
   toDateTimeLocalValue,
   wallClockToInstant,
-  zoneAbbreviation,
+  zoneDef,
 } from "@/lib/timezones";
 import { PageHeader } from "@/components/AppShell";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/timezones")({
@@ -21,7 +20,8 @@ export const Route = createFileRoute("/_authenticated/timezones")({
       { title: "Time Zones — Call Board" },
       {
         name: "description",
-        content: "Convert your anchor time to every US calling zone and see who is inside hours.",
+        content:
+          "Pick an anchor zone and read the matching local time in every calling zone on one card grid.",
       },
       { property: "og:title", content: "Time Zones — Call Board" },
       { property: "og:description", content: "IST to US calling-hours converter for dialers." },
@@ -29,8 +29,6 @@ export const Route = createFileRoute("/_authenticated/timezones")({
   }),
   component: TimeZonesPage,
 });
-
-const US_ZONES = ZONES.filter((z) => z.id !== HOME_ZONE);
 
 function TimeZonesPage() {
   const [anchorZone, setAnchorZone] = useState(HOME_ZONE);
@@ -44,116 +42,136 @@ function TimeZonesPage() {
     return () => clearInterval(t);
   }, [live]);
 
-  useEffect(() => {
-    if (live) setValue(toDateTimeLocalValue(now, anchorZone));
-  }, [live, now, anchorZone]);
-
   const instant = useMemo(() => {
     if (live) return now;
     const wc = parseDateTimeLocalValue(value);
     return wc ? wallClockToInstant(wc, anchorZone) : now;
   }, [live, now, value, anchorZone]);
 
+  useEffect(() => {
+    if (live) setValue(toDateTimeLocalValue(instant, anchorZone));
+  }, [live, instant, anchorZone]);
+
+  function chooseAnchor(zoneId: string) {
+    if (zoneId === anchorZone) return;
+    setAnchorZone(zoneId);
+    setValue(toDateTimeLocalValue(instant, zoneId));
+  }
+
+  function useNow() {
+    const n = new Date();
+    setNow(n);
+    setValue(toDateTimeLocalValue(n, anchorZone));
+    setLive(true);
+  }
+
   return (
-    <div>
+    <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Time Zones"
-        subtitle="Anchor your clock, then read every US zone at a glance."
+        title="Time Zone Converter"
+        subtitle="One anchor, every calling zone at a glance."
         actions={
-          <Button variant={live ? "default" : "outline"} size="sm" onClick={() => setLive(!live)}>
-            {live ? "Live" : "Frozen"}
-          </Button>
+          <span className="text-[11px] uppercase tracking-widest text-muted-foreground">
+            Click any card to make it the anchor
+          </span>
         }
       />
 
-      <div className="panel mb-4 flex flex-wrap items-end gap-3 p-4">
-        <div className="space-y-1">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+      <div className="panel mb-5 grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+        <div className="min-w-0 space-y-1.5">
+          <label
+            htmlFor="anchor-zone"
+            className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground"
+          >
             Anchor zone
           </label>
           <select
+            id="anchor-zone"
             value={anchorZone}
-            onChange={(e) => setAnchorZone(e.target.value)}
-            className="rounded border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary"
+            onChange={(e) => chooseAnchor(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring"
           >
             {ZONES.map((z) => (
               <option key={z.id} value={z.id}>
-                {z.label}
+                {z.label} · {z.short}
               </option>
             ))}
           </select>
         </div>
-        <div className="space-y-1">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Anchor time
+
+        <div className="min-w-0 space-y-1.5">
+          <label
+            htmlFor="anchor-time"
+            className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground"
+          >
+            Time in anchor zone
           </label>
           <input
+            id="anchor-time"
             type="datetime-local"
             value={value}
             onChange={(e) => {
               setLive(false);
               setValue(e.target.value);
             }}
-            className="mono rounded border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary"
+            className="mono w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring"
           />
         </div>
-        <div className="ml-auto text-right">
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            {zoneAbbreviation(instant, anchorZone)}
-          </div>
-          <div className="mono text-2xl font-semibold text-primary">
-            {formatTimeInZone(instant, anchorZone)}
-          </div>
-          <div className="text-[10px] text-muted-foreground">
-            {formatDateInZone(instant, anchorZone)}
-          </div>
-        </div>
+
+        <button
+          type="button"
+          onClick={useNow}
+          className="inline-flex h-[38px] shrink-0 items-center gap-2 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          <RefreshCw className={cn("h-3.5 w-3.5", live && "live-dot")} />
+          Use Now
+        </button>
       </div>
 
-      <div className="panel overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-[10px] uppercase tracking-widest text-muted-foreground">
-              <th className="px-3 py-2 text-left font-medium">Zone</th>
-              <th className="px-3 py-2 text-left font-medium">Local time</th>
-              <th className="px-3 py-2 text-left font-medium">Date</th>
-              <th className="px-3 py-2 text-left font-medium">Calling window</th>
-            </tr>
-          </thead>
-          <tbody>
-            {US_ZONES.map((z) => {
-              const wc = instantToWallClock(instant, z.id);
-              const inHours = wc.hour >= 9 && wc.hour < 17;
-              const edge = (wc.hour >= 8 && wc.hour < 9) || (wc.hour >= 17 && wc.hour < 19);
-              return (
-                <tr key={z.id} className="border-b border-border/60 last:border-0">
-                  <td className="px-3 py-2">
-                    <div className="font-medium">{z.label}</div>
-                    <div className="mono text-[10px] text-muted-foreground">
-                      {zoneAbbreviation(instant, z.id)}
-                    </div>
-                  </td>
-                  <td className="mono px-3 py-2 text-base">{formatTimeInZone(instant, z.id)}</td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">
-                    {formatDateInZone(instant, z.id)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span
-                      className={cn(
-                        "rounded px-2 py-0.5 text-[10px] uppercase tracking-wide",
-                        inHours && "bg-primary/15 text-primary",
-                        !inHours && edge && "bg-warning/15 text-warning",
-                        !inHours && !edge && "bg-destructive/15 text-destructive",
-                      )}
-                    >
-                      {inHours ? "prime 9–5" : edge ? "edge hours" : "off hours"}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {ZONES.map((z) => {
+          const isAnchor = z.id === anchorZone;
+          const isHome = z.id === HOME_ZONE;
+          return (
+            <button
+              key={z.id}
+              type="button"
+              onClick={() => chooseAnchor(z.id)}
+              className={cn(
+                "panel relative overflow-hidden p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
+                isAnchor && "border-primary bg-primary/5 ring-1 ring-primary/30",
+                !isAnchor && isHome && "border-l-4 border-l-success",
+              )}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {z.label} · {zoneDef(z.id).short}
+                </div>
+                {isAnchor ? (
+                  <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary-foreground">
+                    Anchor
+                  </span>
+                ) : isHome ? (
+                  <span className="rounded-full bg-success/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-success-foreground">
+                    Home
+                  </span>
+                ) : null}
+              </div>
+
+              <div
+                className={cn(
+                  "mono mt-3 text-2xl font-bold tracking-tight",
+                  isAnchor ? "text-primary" : "text-foreground",
+                )}
+              >
+                {formatTimeInZone(instant, z.id)}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {formatDateInZone(instant, z.id)}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
