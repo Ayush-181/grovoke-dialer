@@ -141,7 +141,7 @@
   }
 
   ::selection {
-    background: oklch(0.752 0.187 148.1 / 30%);
+    background: oklch(0.546 0.215 262.9 / 18%);
   }
 
   ::-webkit-scrollbar {
@@ -152,7 +152,7 @@
     background: var(--color-background);
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(1 0 0 / 12%);
+    background: oklch(0 0 0 / 14%);
     border-radius: 8px;
     border: 2px solid var(--color-background);
   }
@@ -165,17 +165,19 @@
 }
 
 @utility panel {
-  background-color: var(--color-surface);
+  background-color: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
 }
 
 @utility grid-noise {
   background-image:
-    linear-gradient(to right, oklch(1 0 0 / 3%) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(1 0 0 / 3%) 1px, transparent 1px);
+    linear-gradient(to right, oklch(0 0 0 / 3%) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0 0 0 / 3%) 1px, transparent 1px);
   background-size: 32px 32px;
 }
+
 
 @keyframes pulse-ring {
   0%,
