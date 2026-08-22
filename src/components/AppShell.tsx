@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { PhoneWidget } from "@/components/PhoneWidget";
+import { HOME_ZONE, formatTimeInZone, zoneDef } from "@/lib/timezones";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -23,10 +24,34 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
+const HEADER_CLOCKS = [HOME_ZONE, "America/New_York", "America/Los_Angeles"];
+
+function HeaderClocks() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="hidden items-center gap-3 rounded-full border border-border bg-surface px-3 py-1 xl:flex">
+      {HEADER_CLOCKS.map((z) => (
+        <div key={z} className="flex items-baseline gap-1.5">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+            {zoneDef(z).short}
+          </span>
+          <span className="mono text-xs font-semibold">{formatTimeInZone(now, z)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { workspace } = useWorkspace();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
 
   return (
     <div className="min-h-screen bg-background">
