@@ -20,20 +20,31 @@ type Props = {
   onImported: () => void;
 };
 
-type Row = Record<string, string>;
+type Row = Record<string, string | null>;
+type RowError = { row: number; reason: string };
+type Summary = {
+  inserted: number;
+  existing: number;
+  failed: number;
+  errors: RowError[];
+};
+
+const CHUNK = 200;
 
 export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Props) {
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<string[][]>([]);
-  const [mapping, setMapping] = useState<Record<LeadField, string>>(
-    {} as Record<LeadField, string>,
+  const [mapping, setMapping] = useState<Record<LeadField, number>>(
+    {} as Record<LeadField, number>,
   );
   const [busy, setBusy] = useState(false);
+  const [summary, setSummary] = useState<Summary | null>(null);
 
   const reset = () => {
     setHeaders([]);
     setRows([]);
-    setMapping({} as Record<LeadField, string>);
+    setMapping({} as Record<LeadField, number>);
+    setSummary(null);
   };
 
   const onFile = async (file: File) => {
@@ -45,76 +56,121 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
     const first = grid[0]!;
     const hasHeader = looksLikeHeader(first);
     const hdrs = hasHeader ? first : first.map((_, i) => `Column ${i + 1}`);
+    setSummary(null);
     setHeaders(hdrs);
     setRows(hasHeader ? grid.slice(1) : grid);
     setMapping(autoMap(hdrs));
   };
 
+  /** Build insertable rows; every skipped row is reported with a line number. */
   const buildRows = () => {
-    const idx = (field: LeadField) => headers.indexOf(mapping[field] ?? "");
-    const out: Row[] = [];
-    const seen = new Set<string>();
-    let skippedNoPhone = 0;
-    let dupInFile = 0;
+    const out: { row: Row; line: number }[] = [];
+    const errors: RowError[] = [];
+    const seen = new Map<string, number>();
+    const headerOffset = 2; // 1-based + header line
 
-    for (const r of rows) {
-      const rawPhone = idx("phone") >= 0 ? (r[idx("phone")] ?? "") : "";
+    rows.forEach((r, i) => {
+      const line = i + headerOffset;
+      const at = (f: LeadField) => {
+        const idx = mapping[f];
+        return idx != null && idx >= 0 ? (r[idx] ?? "").trim() : "";
+      };
+      const rawPhone = at("phone");
       const normalized = normalizePhone(rawPhone);
+      if (!rawPhone) {
+        errors.push({ row: line, reason: "missing phone" });
+        return;
+      }
       if (normalized.length < 10) {
-        skippedNoPhone++;
-        continue;
+        errors.push({ row: line, reason: `invalid phone "${rawPhone}"` });
+        return;
       }
-      if (seen.has(normalized)) {
-        dupInFile++;
-        continue;
+      const dupOf = seen.get(normalized);
+      if (dupOf) {
+        errors.push({ row: line, reason: `duplicate phone in file (also row ${dupOf})` });
+        return;
       }
-      seen.add(normalized);
-      const get = (f: LeadField) => (idx(f) >= 0 ? (r[idx(f)] ?? "").trim() || null : null);
+      seen.set(normalized, line);
+      const val = (f: LeadField) => at(f) || null;
       out.push({
-        workspace_id: workspaceId,
-        business_name: get("business_name") ?? "Unknown business",
-        phone: toE164(rawPhone),
-        phone_normalized: normalized,
-        address: get("address"),
-        city: get("city"),
-        state: get("state"),
-        zip: get("zip"),
-        website: get("website"),
-        email: get("email"),
-        notes: get("notes"),
-      } as unknown as Row);
-    }
-    return { out, skippedNoPhone, dupInFile };
+        line,
+        row: {
+          workspace_id: workspaceId,
+          business_name: val("business_name") ?? "Unknown business",
+          phone: toE164(rawPhone),
+          phone_normalized: normalized,
+          address: val("address"),
+          city: val("city"),
+          state: val("state"),
+          zip: val("zip"),
+          website: val("website"),
+          email: val("email"),
+          notes: val("notes"),
+        },
+      });
+    });
+    return { out, errors };
   };
 
   const runImport = async () => {
     setBusy(true);
+    setSummary(null);
     try {
-      const { out, skippedNoPhone, dupInFile } = buildRows();
+      const { out, errors } = buildRows();
       if (out.length === 0) {
+        setSummary({ inserted: 0, existing: 0, failed: errors.length, errors });
         toast.error("No rows with a usable phone number");
         return;
       }
+
       let inserted = 0;
-      for (let i = 0; i < out.length; i += 500) {
-        const chunk = out.slice(i, i + 500);
+      let attempted = 0;
+
+      for (let i = 0; i < out.length; i += CHUNK) {
+        const slice = out.slice(i, i + CHUNK);
+        const payload = slice.map((s) => s.row);
         const { data, error } = await supabase
           .from("leads")
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .upsert(chunk as any, {
+          .upsert(payload as any, {
             onConflict: "workspace_id,phone_normalized",
             ignoreDuplicates: true,
           })
           .select("id");
-        if (error) throw error;
-        inserted += data?.length ?? 0;
+
+        if (!error) {
+          inserted += data?.length ?? 0;
+          attempted += slice.length;
+          continue;
+        }
+
+        // Chunk failed — retry row by row so one bad row can't kill the batch.
+        for (const item of slice) {
+          const { data: one, error: rowErr } = await supabase
+            .from("leads")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .upsert([item.row] as any, {
+              onConflict: "workspace_id,phone_normalized",
+              ignoreDuplicates: true,
+            })
+            .select("id");
+          if (rowErr) {
+            errors.push({ row: item.line, reason: rowErr.message });
+          } else {
+            attempted += 1;
+            inserted += one?.length ?? 0;
+          }
+        }
       }
-      toast.success(
-        `Imported ${inserted} new leads · ${out.length - inserted} already existed · ${dupInFile} duplicates in file · ${skippedNoPhone} without a phone`,
-      );
+
+      const existing = Math.max(0, attempted - inserted);
+      setSummary({ inserted, existing, failed: errors.length, errors });
+      if (inserted > 0) {
+        toast.success(`Imported ${inserted} new leads · ${errors.length} rows skipped`);
+      } else {
+        toast.warning(`No new leads imported · ${errors.length} rows skipped`);
+      }
       onImported();
-      reset();
-      onOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Import failed");
     } finally {
@@ -142,7 +198,7 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
         </DialogHeader>
 
         {headers.length === 0 ? (
-          <label className="flex h-40 cursor-pointer items-center justify-center rounded border border-dashed border-border text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground">
+          <label className="flex h-40 cursor-pointer items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground">
             <input
               type="file"
               accept=".csv,text/csv"
@@ -164,14 +220,16 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
                     {"required" in f && f.required && <span className="text-primary"> *</span>}
                   </label>
                   <select
-                    value={mapping[f.key] ?? ""}
-                    onChange={(e) => setMapping({ ...mapping, [f.key]: e.target.value })}
-                    className="w-full rounded border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary"
+                    value={mapping[f.key] ?? -1}
+                    onChange={(e) =>
+                      setMapping({ ...mapping, [f.key]: Number(e.target.value) })
+                    }
+                    className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary"
                   >
-                    <option value="">— ignore —</option>
-                    {headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
+                    <option value={-1}>— ignore —</option>
+                    {headers.map((h, i) => (
+                      <option key={`${h}-${i}`} value={i}>
+                        {h} (col {i + 1})
                       </option>
                     ))}
                   </select>
@@ -179,13 +237,13 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
               ))}
             </div>
 
-            <div className="max-h-56 overflow-auto rounded border border-border">
+            <div className="max-h-56 overflow-auto rounded-lg border border-border">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-surface-raised">
                   <tr>
-                    {headers.map((h) => (
+                    {headers.map((h, i) => (
                       <th
-                        key={h}
+                        key={`${h}-${i}`}
                         className="whitespace-nowrap px-2 py-1.5 text-left font-medium text-muted-foreground"
                       >
                         {h}
@@ -207,6 +265,34 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
               </table>
             </div>
 
+            {summary && (
+              <div className="space-y-2 rounded-lg border border-border bg-surface p-3">
+                <div className="mono flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                  <span className="text-success">{summary.inserted} imported</span>
+                  <span className="text-muted-foreground">
+                    {summary.existing} already existed
+                  </span>
+                  <span className={summary.failed ? "text-destructive" : "text-muted-foreground"}>
+                    {summary.failed} skipped
+                  </span>
+                </div>
+                {summary.errors.length > 0 && (
+                  <div className="max-h-32 overflow-auto rounded-md border border-border bg-background p-2">
+                    <ul className="mono space-y-0.5 text-[11px] text-muted-foreground">
+                      {summary.errors.slice(0, 100).map((e, i) => (
+                        <li key={i}>
+                          Row {e.row}: {e.reason}
+                        </li>
+                      ))}
+                      {summary.errors.length > 100 && (
+                        <li>…and {summary.errors.length - 100} more</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <span className="mono text-xs text-muted-foreground">
                 {rows.length} rows detected
@@ -215,9 +301,15 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
                 <Button variant="outline" size="sm" onClick={reset}>
                   Choose another file
                 </Button>
-                <Button size="sm" disabled={busy} onClick={() => void runImport()}>
-                  {busy ? "Importing…" : `Import ${rows.length} rows`}
-                </Button>
+                {summary ? (
+                  <Button size="sm" onClick={() => onOpenChange(false)}>
+                    Done
+                  </Button>
+                ) : (
+                  <Button size="sm" disabled={busy} onClick={() => void runImport()}>
+                    {busy ? "Importing…" : `Import ${rows.length} rows`}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
