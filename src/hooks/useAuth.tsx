@@ -28,13 +28,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(next);
       setInitialized(true);
     });
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      setInitialized(true);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setSession(data.session);
+        setInitialized(true);
+      })
+      .catch(() => {
+        if (mounted) setInitialized(true);
+      });
+    // Safety net: never leave the app stuck on a loading screen.
+    const timeout = setTimeout(() => {
+      if (mounted) setInitialized(true);
+    }, 5000);
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       sub.subscription.unsubscribe();
     };
   }, []);
