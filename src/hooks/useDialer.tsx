@@ -153,7 +153,11 @@ export function DialerProvider({ children }: { children: ReactNode }) {
         setStatus("offline");
         return;
       }
-      const device = new Device(result.token, { logLevel: "error", codecPreferences: ["opus", "pcmu"] as never });
+      const { Device: TwilioDevice } = await import("@twilio/voice-sdk");
+      const device = new TwilioDevice(result.token, {
+        logLevel: "error",
+        codecPreferences: ["opus", "pcmu"] as never,
+      });
       device.on("registered", () => {
         setReady(true);
         setStatus("idle");
