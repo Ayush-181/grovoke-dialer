@@ -103,18 +103,21 @@ const HINTS: Record<LeadField, string[]> = {
   notes: ["notes", "note", "comment", "description"],
 };
 
-/** Guess a header -> lead field mapping. */
-export function autoMap(headers: string[]): Record<LeadField, string> {
-  const map = {} as Record<LeadField, string>;
-  const used = new Set<string>();
+/**
+ * Guess a lead field -> column *index* mapping. Index-based so duplicate
+ * header names can't collide. -1 means "not mapped".
+ */
+export function autoMap(headers: string[]): Record<LeadField, number> {
+  const map = {} as Record<LeadField, number>;
+  const used = new Set<number>();
   for (const field of LEAD_FIELDS) {
     const hints = HINTS[field.key];
-    const match = headers.find((h) => {
+    const idx = headers.findIndex((h, i) => {
       const lower = h.toLowerCase();
-      return !used.has(h) && hints.some((hint) => lower.includes(hint));
+      return !used.has(i) && hints.some((hint) => lower.includes(hint));
     });
-    map[field.key] = match ?? "";
-    if (match) used.add(match);
+    map[field.key] = idx;
+    if (idx >= 0) used.add(idx);
   }
   return map;
 }
