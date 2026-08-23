@@ -1,4 +1,4 @@
-/** Minimal RFC4180-ish CSV row splitter. */
+/** Minimal RFC4180-ish CSV row splitter (quotes may appear anywhere in the row). */
 export function splitCsvLine(line: string): string[] {
   const out: string[] = [];
   let cur = "";
@@ -22,26 +22,58 @@ export function splitCsvLine(line: string): string[] {
   return out.map((v) => v.trim());
 }
 
+/**
+ * Full RFC4180 parser: handles quoted fields anywhere in a row, escaped
+ * quotes ("") and newlines inside quoted values.
+ */
 export function parseCsvText(text: string): string[][] {
   const rows: string[][] = [];
+  let row: string[] = [];
   let cur = "";
   let quoted = false;
+  let sawAny = false;
+
+  const endField = () => {
+    row.push(cur.trim());
+    cur = "";
+  };
+  const endRow = () => {
+    endField();
+    if (row.some((c) => c.length > 0)) rows.push(row);
+    row = [];
+    sawAny = false;
+  };
+
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
-    if (ch === '"') {
-      quoted = !quoted && (cur.length === 0 || quoted);
-      cur += ch;
+    if (quoted) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else quoted = false;
+      } else cur += ch;
       continue;
     }
-    if (!quoted && (ch === "\n" || ch === "\r")) {
+    if (ch === '"') {
+      quoted = true;
+      sawAny = true;
+      continue;
+    }
+    if (ch === ",") {
+      endField();
+      sawAny = true;
+      continue;
+    }
+    if (ch === "\n" || ch === "\r") {
       if (ch === "\r" && text[i + 1] === "\n") i++;
-      if (cur.trim().length) rows.push(splitCsvLine(cur));
-      cur = "";
+      endRow();
       continue;
     }
     cur += ch;
+    sawAny = true;
   }
-  if (cur.trim().length) rows.push(splitCsvLine(cur));
+  if (sawAny || cur.length > 0 || row.length > 0) endRow();
   return rows;
 }
 
