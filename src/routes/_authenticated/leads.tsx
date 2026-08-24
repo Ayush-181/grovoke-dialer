@@ -99,7 +99,17 @@ function LeadsPage() {
         subtitle={`${total} leads match the current filter.`}
         actions={
           <>
-            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (!workspace) {
+                  toast.error("Workspace still loading — try again in a moment");
+                  return;
+                }
+                setImportOpen(true);
+              }}
+            >
               <Upload className="mr-1.5 h-3.5 w-3.5" /> Import CSV
             </Button>
             <Button size="sm" onClick={() => void startSession()} disabled={creating || total === 0}>
