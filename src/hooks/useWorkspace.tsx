@@ -44,12 +44,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { user, initialized } = useAuth();
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["workspace", user?.id],
     enabled: initialized && !!user,
     queryFn: () => loadOrCreateWorkspace(user!.id, user!.email ?? null),
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
+
+  useEffect(() => {
+    if (error) {
+      toast.error(
+        `Workspace failed to load: ${error instanceof Error ? error.message : "unknown error"}`,
+      );
+    }
+  }, [error]);
 
   return (
     <Ctx.Provider
