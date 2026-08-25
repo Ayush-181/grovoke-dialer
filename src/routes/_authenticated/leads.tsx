@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Phone, Upload, ListPlus } from "lucide-react";
+import { Phone, Upload, ListPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,16 @@ import { PageHeader } from "@/components/AppShell";
 import { ImportDialog } from "@/components/ImportDialog";
 import { OutcomeBadge } from "@/routes/_authenticated/calls";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { OUTCOMES, STATUSES, statusLabel } from "@/lib/outcomes";
 import { formatPhone } from "@/lib/phone";
@@ -46,6 +56,9 @@ function LeadsPage() {
   const [page, setPage] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState<string[] | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const now = new Date();
 
   const set = (patch: Partial<LeadFilters>) => {
@@ -92,6 +105,24 @@ function LeadsPage() {
     }
   };
 
+  const runDelete = async (ids: string[]) => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("leads").delete().in("id", ids);
+      if (error) throw error;
+      toast.success(`Deleted ${ids.length} lead${ids.length === 1 ? "" : "s"}`);
+      setSelected((s) => s.filter((id) => !ids.includes(id)));
+      setConfirmDelete(null);
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not delete leads");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const allSelected = rows.length > 0 && rows.every((r) => selected.includes(r.id));
+
   return (
     <div>
       <PageHeader
@@ -112,6 +143,15 @@ function LeadsPage() {
             >
               <Upload className="mr-1.5 h-3.5 w-3.5" /> Import CSV
             </Button>
+            {selected.length > 0 && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setConfirmDelete(selected)}
+              >
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete selected ({selected.length})
+              </Button>
+            )}
             <Button size="sm" onClick={() => void startSession()} disabled={creating || total === 0}>
               <ListPlus className="mr-1.5 h-3.5 w-3.5" />
               {creating ? "Building…" : "Start session from filter"}
@@ -187,7 +227,19 @@ function LeadsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-[10px] uppercase tracking-widest text-muted-foreground">
+              <th className="px-3 py-2 text-left font-medium">
+                <input
+                  type="checkbox"
+                  aria-label="Select all leads"
+                  checked={allSelected}
+                  onChange={(e) =>
+                    setSelected(e.target.checked ? rows.map((r) => r.id) : [])
+                  }
+                  className="accent-[var(--color-primary)]"
+                />
+              </th>
               <th className="px-3 py-2 text-left font-medium">Business</th>
+              <th className="px-3 py-2 text-left font-medium">Owner</th>
               <th className="px-3 py-2 text-left font-medium">Phone</th>
               <th className="px-3 py-2 text-left font-medium">Location</th>
               <th className="px-3 py-2 text-left font-medium">Local time</th>
@@ -200,7 +252,7 @@ function LeadsPage() {
           <tbody>
             {rows.length === 0 && !isFetching && (
               <tr>
-                <td colSpan={8} className="px-3 py-12 text-center text-xs text-muted-foreground">
+                <td colSpan={10} className="px-3 py-12 text-center text-xs text-muted-foreground">
                   No leads yet — import a CSV to get started.
                 </td>
               </tr>
@@ -212,8 +264,24 @@ function LeadsPage() {
                   key={l.id}
                   className="border-b border-border/60 transition-colors hover:bg-surface-raised"
                 >
+                  <td className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${l.business_name}`}
+                      checked={selected.includes(l.id)}
+                      onChange={(e) =>
+                        setSelected((s) =>
+                          e.target.checked ? [...s, l.id] : s.filter((id) => id !== l.id),
+                        )
+                      }
+                      className="accent-[var(--color-primary)]"
+                    />
+                  </td>
                   <td className="max-w-[240px] truncate px-3 py-2 font-medium">
                     {l.business_name}
+                  </td>
+                  <td className="max-w-[160px] truncate px-3 py-2 text-xs">
+                    {l.owner_name || "—"}
                   </td>
                   <td className="mono px-3 py-2 text-xs">{formatPhone(l.phone)}</td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
@@ -229,20 +297,32 @@ function LeadsPage() {
                   </td>
                   <td className="mono px-3 py-2 text-right text-xs">{l.call_count}</td>
                   <td className="px-3 py-2 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        void dialer.dial({
-                          phone: l.phone,
-                          leadId: l.id,
-                          businessName: l.business_name,
-                          state: l.state,
-                        })
-                      }
-                    >
-                      <Phone className="h-3.5 w-3.5" />
-                    </Button>
+                    <div className="flex justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void dialer.dial({
+                            phone: l.phone,
+                            leadId: l.id,
+                            businessName: l.business_name,
+                            ownerName: l.owner_name,
+                            state: l.state,
+                          })
+                        }
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        aria-label={`Delete ${l.business_name}`}
+                        onClick={() => setConfirmDelete([l.id])}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -269,6 +349,33 @@ function LeadsPage() {
           </Button>
         </div>
       </div>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {confirmDelete?.length ?? 0} lead
+              {(confirmDelete?.length ?? 0) === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the lead{(confirmDelete?.length ?? 0) === 1 ? "" : "s"} from
+              this workspace. Call history is kept.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmDelete) void runDelete(confirmDelete);
+              }}
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {workspace && (
         <ImportDialog
