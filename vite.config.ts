@@ -17,8 +17,7 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: [
-        { find: /^events$/, replacement: path.resolve(__dirname, "src/polyfills/events-shim.ts") },
-      ],
+        { find: /^(node:)?events$/, replacement: path.resolve(__dirname, "src/polyfills/events-shim.ts") },
     },
   },
 });
