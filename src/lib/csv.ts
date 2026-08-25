@@ -80,6 +80,7 @@ export function parseCsvText(text: string): string[][] {
 export const LEAD_FIELDS = [
   { key: "business_name", label: "Business name", required: true },
   { key: "phone", label: "Phone", required: true },
+  { key: "owner_name", label: "Owner name" },
   { key: "address", label: "Address" },
   { key: "city", label: "City" },
   { key: "state", label: "State" },
@@ -92,8 +93,9 @@ export const LEAD_FIELDS = [
 export type LeadField = (typeof LEAD_FIELDS)[number]["key"];
 
 const HINTS: Record<LeadField, string[]> = {
-  business_name: ["business", "name", "company", "title"],
+  business_name: ["business", "company", "title", "name"],
   phone: ["phone", "tel", "mobile", "number"],
+  owner_name: ["owner name", "owner", "contact", "first name", "principal"],
   address: ["address", "street", "addr"],
   city: ["city", "town"],
   state: ["state", "province", "region"],
