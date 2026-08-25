@@ -1,1 +1,11 @@
- // The `events` npm polyfill only default-exports EventEmitter // (module.exports = EventEmitter), but @twilio/voice-sdk's browser // build does `import { EventEmitter } from 'events'` — a NAMED import. // Vite can't invent that named export from a plain CJS default export, // so EventEmitter resolves to undefined and `class Device extends // EventEmitter` crashes with "Class extends value undefined is not // a constructor or null". This shim re-exports it both ways. import EventEmitterImpl from "events/events.js"; export const EventEmitter = EventEmitterImpl; export default EventEmitterImpl;
+// The `events` npm polyfill only default-exports EventEmitter
+// (module.exports = EventEmitter), but @twilio/voice-sdk's browser
+// build does `import { EventEmitter } from 'events'` — a NAMED import.
+// Vite can't invent that named export from a plain CJS default export,
+// so EventEmitter resolves to undefined and `class Device extends
+// EventEmitter` crashes with "Class extends value undefined is not
+// a constructor or null". This shim re-exports it both ways.
+import EventEmitterImpl from "events/events.js";
+
+export const EventEmitter = EventEmitterImpl;
+export default EventEmitterImpl;
