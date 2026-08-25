@@ -212,95 +212,105 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
             Drop in a CSV — click to choose a file
           </label>
         ) : (
-          <div className="space-y-4">
-            <div className="grid gap-2 sm:grid-cols-3">
-              {LEAD_FIELDS.map((f) => (
-                <div key={f.key} className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    {f.label}
-                    {"required" in f && f.required && <span className="text-primary"> *</span>}
-                  </label>
-                  <select
-                    value={mapping[f.key] ?? -1}
-                    onChange={(e) =>
-                      setMapping({ ...mapping, [f.key]: Number(e.target.value) })
-                    }
-                    className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary"
-                  >
-                    <option value={-1}>— ignore —</option>
-                    {headers.map((h, i) => (
-                      <option key={`${h}-${i}`} value={i}>
-                        {h} (col {i + 1})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-            </div>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+              <div className="grid gap-2 sm:grid-cols-3">
+                {LEAD_FIELDS.map((f) => (
+                  <div key={f.key} className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {f.label}
+                      {"required" in f && f.required && <span className="text-primary"> *</span>}
+                    </label>
+                    <select
+                      value={mapping[f.key] ?? -1}
+                      onChange={(e) =>
+                        setMapping({ ...mapping, [f.key]: Number(e.target.value) })
+                      }
+                      className="w-full rounded-md border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary"
+                    >
+                      <option value={-1}>— ignore —</option>
+                      {headers.map((h, i) => (
+                        <option key={`${h}-${i}`} value={i}>
+                          {h} (col {i + 1})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
 
-            <div className="max-h-56 overflow-auto rounded-lg border border-border">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-surface-raised">
-                  <tr>
-                    {headers.map((h, i) => (
-                      <th
-                        key={`${h}-${i}`}
-                        className="whitespace-nowrap px-2 py-1.5 text-left font-medium text-muted-foreground"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.map((r, i) => (
-                    <tr key={i} className="border-t border-border/60">
-                      {headers.map((_, c) => (
-                        <td key={c} className="mono max-w-[160px] truncate px-2 py-1">
-                          {r[c] ?? ""}
-                        </td>
+              <div className="w-full max-w-full overflow-x-auto overflow-y-auto rounded-lg border border-border [max-height:14rem]">
+                <table className="w-max min-w-full text-xs">
+                  <thead className="sticky top-0 bg-surface-raised">
+                    <tr>
+                      {headers.map((h, i) => (
+                        <th
+                          key={`${h}-${i}`}
+                          className="whitespace-nowrap px-2 py-1.5 text-left font-medium text-muted-foreground"
+                        >
+                          {h}
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {preview.map((r, i) => (
+                      <tr key={i} className="border-t border-border/60">
+                        {headers.map((_, c) => (
+                          <td
+                            key={c}
+                            className="mono max-w-[160px] truncate whitespace-nowrap px-2 py-1"
+                          >
+                            {r[c] ?? ""}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {summary && (
+                <div className="space-y-2 rounded-lg border border-border bg-surface p-3">
+                  <div className="mono flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                    <span className="text-success">{summary.inserted} imported</span>
+                    <span className="text-muted-foreground">
+                      {summary.existing} already existed
+                    </span>
+                    <span
+                      className={summary.failed ? "text-destructive" : "text-muted-foreground"}
+                    >
+                      {summary.failed} skipped
+                    </span>
+                  </div>
+                  {summary.errors.length > 0 && (
+                    <div className="max-h-32 overflow-auto rounded-md border border-border bg-background p-2">
+                      <ul className="mono space-y-0.5 text-[11px] text-muted-foreground">
+                        {summary.errors.slice(0, 100).map((e, i) => (
+                          <li key={i}>
+                            Row {e.row}: {e.reason}
+                          </li>
+                        ))}
+                        {summary.errors.length > 100 && (
+                          <li>…and {summary.errors.length - 100} more</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {summary && (
-              <div className="space-y-2 rounded-lg border border-border bg-surface p-3">
-                <div className="mono flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                  <span className="text-success">{summary.inserted} imported</span>
-                  <span className="text-muted-foreground">
-                    {summary.existing} already existed
-                  </span>
-                  <span className={summary.failed ? "text-destructive" : "text-muted-foreground"}>
-                    {summary.failed} skipped
-                  </span>
-                </div>
-                {summary.errors.length > 0 && (
-                  <div className="max-h-32 overflow-auto rounded-md border border-border bg-background p-2">
-                    <ul className="mono space-y-0.5 text-[11px] text-muted-foreground">
-                      {summary.errors.slice(0, 100).map((e, i) => (
-                        <li key={i}>
-                          Row {e.row}: {e.reason}
-                        </li>
-                      ))}
-                      {summary.errors.length > 100 && (
-                        <li>…and {summary.errors.length - 100} more</li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between">
+            <div className="mt-3 flex shrink-0 items-center justify-between border-t border-border pt-3">
               <span className="mono text-xs text-muted-foreground">
                 {rows.length} rows detected
               </span>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={reset}>
                   Choose another file
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+                  Cancel
                 </Button>
                 {summary ? (
                   <Button size="sm" onClick={() => onOpenChange(false)}>
