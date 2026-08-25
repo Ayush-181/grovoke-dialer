@@ -12,4 +12,14 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    resolve: {
+      alias: [
+        // @twilio/voice-sdk extends Node's EventEmitter; without this the browser
+        // bundle resolves `events` to an empty stub and Device fails with
+        // "Class extends value undefined".
+        { find: /^events$/, replacement: "events/events.js" },
+      ],
+    },
+  },
 });
