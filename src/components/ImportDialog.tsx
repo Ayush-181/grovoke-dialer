@@ -97,6 +97,7 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
         row: {
           workspace_id: workspaceId,
           business_name: val("business_name") ?? "Unknown business",
+          owner_name: val("owner_name"),
           phone: toE164(rawPhone),
           phone_normalized: normalized,
           address: val("address"),
