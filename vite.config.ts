@@ -18,6 +18,7 @@ export default defineConfig({
     resolve: {
       alias: [
         { find: /^(node:)?events$/, replacement: path.resolve(__dirname, "src/polyfills/events-shim.ts") },
+      ],
     },
   },
 });
