@@ -156,6 +156,7 @@ export type Database = {
           metadata_json: Json
           notes: string | null
           outcome: Database["public"]["Enums"]["lead_outcome"] | null
+          owner_name: string | null
           phone: string
           phone_normalized: string
           state: string | null
@@ -177,6 +178,7 @@ export type Database = {
           metadata_json?: Json
           notes?: string | null
           outcome?: Database["public"]["Enums"]["lead_outcome"] | null
+          owner_name?: string | null
           phone: string
           phone_normalized: string
           state?: string | null
@@ -198,6 +200,7 @@ export type Database = {
           metadata_json?: Json
           notes?: string | null
           outcome?: Database["public"]["Enums"]["lead_outcome"] | null
+          owner_name?: string | null
           phone?: string
           phone_normalized?: string
           state?: string | null

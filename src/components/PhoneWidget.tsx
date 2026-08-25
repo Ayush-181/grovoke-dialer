@@ -152,6 +152,15 @@ export function PhoneWidget() {
           )}
         </div>
 
+        {dialer.target?.ownerName && (
+          <div className="rounded border-l-2 border-success bg-success/10 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Owner
+            </div>
+            <div className="truncate text-sm font-semibold">{dialer.target.ownerName}</div>
+          </div>
+        )}
+
         {/* DTMF keypad — visible from connecting through live/conferencing */}
         <div className="grid grid-cols-3 gap-2">
           {KEYS.map((k) => (

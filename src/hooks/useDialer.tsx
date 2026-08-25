@@ -22,6 +22,7 @@ export type DialTarget = {
   phone: string;
   leadId?: string | null;
   businessName?: string | null;
+  ownerName?: string | null;
   sessionId?: string | null;
   state?: string | null;
   mode?: "direct" | "conference";

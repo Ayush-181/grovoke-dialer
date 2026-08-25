@@ -9,7 +9,7 @@ import { useDialer } from "@/hooks/useDialer";
 import { PageHeader } from "@/components/AppShell";
 import { CompactTz } from "@/components/CompactTz";
 import { Button } from "@/components/ui/button";
-import { OUTCOMES, formatDuration, statusForOutcome } from "@/lib/outcomes";
+import { formatDuration, statusForOutcome } from "@/lib/outcomes";
 import type { Outcome } from "@/lib/outcomes";
 import { formatPhone } from "@/lib/phone";
 import { cn } from "@/lib/utils";
@@ -32,17 +32,45 @@ export const Route = createFileRoute("/_authenticated/sessions/$sessionId")({
 type QueueRow = {
   id: string;
   status: string;
+  outcome: string | null;
   queue_position: number;
   lead_id: string;
   leads: {
     id: string;
     business_name: string;
+    owner_name: string | null;
     phone: string;
     city: string | null;
     state: string | null;
     notes: string | null;
   } | null;
 };
+
+const DISPOSITION_GROUPS = [
+  {
+    label: "Attempt outcomes",
+    items: [
+      { key: "1", label: "No Answer", value: "no_answer", accent: "border-l-muted-foreground/50" },
+      { key: "2", label: "Voicemail", value: "voicemail", accent: "border-l-muted-foreground/50" },
+      { key: "3", label: "Hung Up", value: "busy", accent: "border-l-warning" },
+      { key: "4", label: "Gatekeeper", value: "connected_gk", accent: "border-l-primary" },
+      { key: "5", label: "Wrong/DC", value: "bad_number", accent: "border-l-destructive" },
+    ],
+  },
+  {
+    label: "Conversation outcomes",
+    items: [
+      { key: "Q", label: "Not Interested", value: "not_interested", accent: "border-l-destructive" },
+      { key: "W", label: "Callback Later", value: "callback_requested", accent: "border-l-warning" },
+      { key: "E", label: "Appt Booked", value: "appointment_set", accent: "border-l-success" },
+      { key: "R", label: "Left Live Msg", value: "connected_other", accent: "border-l-primary" },
+      { key: "T", label: "DNC", value: "do_not_call", accent: "border-l-destructive" },
+    ],
+  },
+] as const satisfies ReadonlyArray<{
+  label: string;
+  items: ReadonlyArray<{ key: string; label: string; value: Outcome; accent: string }>;
+}>;
 
 function SessionPage() {
   const { sessionId } = Route.useParams();
@@ -51,6 +79,9 @@ function SessionPage() {
   const qc = useQueryClient();
   const [auto, setAuto] = useState(false);
   const [pendingLogId, setPendingLogId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [noteFor, setNoteFor] = useState<string | null>(null);
+  const [savingNote, setSavingNote] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session", sessionId],
@@ -70,7 +101,7 @@ function SessionPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("session_leads")
-        .select("id, status, queue_position, lead_id, leads(id, business_name, phone, city, state, notes)")
+        .select("id, status, outcome, queue_position, lead_id, leads(id, business_name, owner_name, phone, city, state, notes)")
         .eq("session_id", sessionId)
         .order("queue_position", { ascending: true });
       if (error) throw error;
@@ -90,6 +121,7 @@ function SessionPage() {
       phone: current.leads.phone,
       leadId: current.leads.id,
       businessName: current.leads.business_name,
+      ownerName: current.leads.owner_name,
       state: current.leads.state,
       sessionId,
     });
@@ -154,6 +186,40 @@ function SessionPage() {
     toast.success("Session closed");
   };
 
+  /* Notes are scoped to the lead currently on screen, keyed by its phone number. */
+  useEffect(() => {
+    const phone = current?.leads?.phone ?? null;
+    if (phone !== noteFor) {
+      setNoteFor(phone);
+      setNoteDraft(current?.leads?.notes ?? "");
+    }
+  }, [current?.leads?.phone, current?.leads?.notes, noteFor]);
+
+  const saveNote = async () => {
+    if (!current?.leads) return;
+    if ((current.leads.notes ?? "") === noteDraft) return;
+    setSavingNote(true);
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update({ notes: noteDraft || null })
+        .eq("id", current.leads.id);
+      if (error) throw error;
+      void qc.invalidateQueries({ queryKey: ["session-queue", sessionId] });
+      toast.success("Note saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save note");
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const counts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const r of rows) if (r.outcome) m[r.outcome] = (m[r.outcome] ?? 0) + 1;
+    return m;
+  }, [rows]);
+
   const pct = rows.length ? (done / rows.length) * 100 : 0;
 
   return (
@@ -199,6 +265,14 @@ function SessionPage() {
                   <h2 className="text-xl font-semibold tracking-tight">
                     {current.leads?.business_name}
                   </h2>
+                  {current.leads?.owner_name && (
+                    <div className="mt-1 inline-flex items-center gap-2 rounded-md border-l-2 border-success bg-success/10 px-2.5 py-1">
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Owner
+                      </span>
+                      <span className="text-sm font-semibold">{current.leads.owner_name}</span>
+                    </div>
+                  )}
                   <div className="mono mt-1 text-lg text-primary">
                     {formatPhone(current.leads?.phone ?? "")}
                   </div>
@@ -221,11 +295,29 @@ function SessionPage() {
                 </div>
               </div>
 
-              {current.leads?.notes && (
-                <p className="mt-3 rounded border border-border bg-background p-2 text-xs text-muted-foreground">
-                  {current.leads.notes}
-                </p>
-              )}
+              <div className="mt-3">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Notes for {formatPhone(current.leads?.phone ?? "")}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={savingNote}
+                    onClick={() => void saveNote()}
+                  >
+                    {savingNote ? "Saving…" : "Save note"}
+                  </Button>
+                </div>
+                <textarea
+                  value={noteDraft}
+                  onChange={(e) => setNoteDraft(e.target.value)}
+                  onBlur={() => void saveNote()}
+                  rows={3}
+                  placeholder="Anything worth remembering next time this lead comes up…"
+                  className="w-full rounded-md border border-border bg-background p-2 text-xs outline-none focus:border-primary"
+                />
+              </div>
 
               <div className="mt-4 flex gap-2">
                 <Button onClick={() => void dialCurrent()} disabled={!idle}>
@@ -236,26 +328,39 @@ function SessionPage() {
                 </Button>
               </div>
 
-              <div className="mt-5">
-                <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="mt-5 space-y-4">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   {pendingLogId ? "Disposition this call to continue" : "Quick disposition"}
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {OUTCOMES.map((o) => (
-                    <button
-                      key={o.value}
-                      onClick={() => void disposition(o.value)}
-                      className={cn(
-                        "rounded border px-2.5 py-1.5 text-xs transition-colors",
-                        pendingLogId
-                          ? "border-primary/40 text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary"
-                          : "border-border text-muted-foreground hover:border-primary hover:text-foreground",
-                      )}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
+                {DISPOSITION_GROUPS.map((group) => (
+                  <div key={group.label}>
+                    <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {group.label}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                      {group.items.map((item) => (
+                        <button
+                          key={item.key}
+                          onClick={() => void disposition(item.value)}
+                          className={cn(
+                            "relative rounded-lg border border-l-4 bg-background p-3 text-left transition-colors hover:bg-surface-raised",
+                            item.accent,
+                          )}
+                        >
+                          <span className="absolute right-2 top-2 rounded border border-border px-1 text-[10px] uppercase text-muted-foreground">
+                            {item.key}
+                          </span>
+                          <div className="mono text-2xl font-semibold leading-none">
+                            {counts[item.value] ?? 0}
+                          </div>
+                          <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                            {item.label}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           )}
