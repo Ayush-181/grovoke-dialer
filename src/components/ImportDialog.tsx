@@ -189,7 +189,7 @@ export function ImportDialog({ open, onOpenChange, workspaceId, onImported }: Pr
         onOpenChange(o);
       }}
     >
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="flex max-h-[85vh] w-[min(100vw-2rem,48rem)] max-w-none flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Import leads from CSV</DialogTitle>
           <DialogDescription>
