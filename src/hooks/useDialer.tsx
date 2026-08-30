@@ -8,13 +8,46 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Call, Device } from "@twilio/voice-sdk";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { getVoiceToken } from "@/lib/twilio.functions";
 import { toE164 } from "@/lib/phone";
+
+// Twilio Voice SDK is loaded as a plain <script> tag from public/vendor/twilio.min.js
+// instead of bundled via npm import. This sidesteps a bundler-level incompatibility
+// where the SDK's internal `import { EventEmitter } from 'events'` fails to resolve
+// correctly in this project's production build (confirmed via two independent fix
+// attempts at the module-resolution level, both producing the same
+// "Class extends value undefined is not a constructor or null" crash). A plain
+// script tag isn't processed by the bundler at all, so this class of issue can't
+// occur — Twilio sets window.Twilio itself once the script loads.
+declare global {
+  interface Window {
+    Twilio: any;
+  }
+}
+
+let twilioScriptPromise: Promise<void> | null = null;
+function loadTwilioScript(): Promise<void> {
+  if (typeof window !== "undefined" && window.Twilio?.Device) {
+    return Promise.resolve();
+  }
+  if (twilioScriptPromise) return twilioScriptPromise;
+  twilioScriptPromise = new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "/vendor/twilio.min.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      twilioScriptPromise = null;
+      reject(new Error("Failed to load Twilio Voice SDK script"));
+    };
+    document.head.appendChild(script);
+  });
+  return twilioScriptPromise;
+}
 
 export type CallStatus = "offline" | "idle" | "connecting" | "live" | "conferencing";
 
@@ -115,8 +148,8 @@ export function DialerProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { workspace } = useWorkspace();
 
-  const deviceRef = useRef<Device | null>(null);
-  const callRef = useRef<Call | null>(null);
+  const deviceRef = useRef<any | null>(null);
+  const callRef = useRef<any | null>(null);
   const ringbackRef = useRef<Ringback>(new Ringback());
   const startedAtRef = useRef<number | null>(null);
   const logIdRef = useRef<string | null>(null);
@@ -136,7 +169,7 @@ export function DialerProvider({ children }: { children: ReactNode }) {
     const device = deviceRef.current;
     if (!device) return;
     const list: { id: string; label: string }[] = [];
-    device.audio?.availableInputDevices?.forEach((info, id) => {
+    device.audio?.availableInputDevices?.forEach((info: any, id: string) => {
       list.push({ id, label: info.label || `Microphone ${list.length + 1}` });
     });
     setInputDevices(list);
@@ -154,7 +187,8 @@ export function DialerProvider({ children }: { children: ReactNode }) {
         setStatus("offline");
         return;
       }
-      const { Device: TwilioDevice } = await import("@twilio/voice-sdk");
+      await loadTwilioScript();
+      const TwilioDevice = window.Twilio.Device;
       const device = new TwilioDevice(result.token, {
         logLevel: "error",
         codecPreferences: ["opus", "pcmu"] as never,
