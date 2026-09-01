@@ -19,6 +19,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedTimezonesRouteImport } from './routes/_authenticated/timezones'
 import { Route as AuthenticatedSessionsIndexRouteImport } from './routes/_authenticated/sessions.index'
 import { Route as AuthenticatedSessionsSessionIdRouteImport } from './routes/_authenticated/sessions.$sessionId'
+import { Route as ApiRecordingsCallLogIdRouteImport } from './routes/api/recordings/$callLogId'
 import { Route as ApiPublicTwimlRecordingRouteImport } from './routes/api/public/twiml/recording'
 import { Route as ApiPublicTwimlVoiceRouteImport } from './routes/api/public/twiml/voice'
 
@@ -73,6 +74,11 @@ const AuthenticatedSessionsSessionIdRoute =
     path: '/sessions/$sessionId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiRecordingsCallLogIdRoute = ApiRecordingsCallLogIdRouteImport.update({
+  id: '/api/recordings/$callLogId',
+  path: '/api/recordings/$callLogId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTwimlRecordingRoute = ApiPublicTwimlRecordingRouteImport.update({
   id: '/api/public/twiml/recording',
   path: '/api/public/twiml/recording',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/timezones': typeof AuthenticatedTimezonesRoute
   '/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
+  '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/sessions/': typeof AuthenticatedSessionsIndexRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/timezones': typeof AuthenticatedTimezonesRoute
   '/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
+  '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/sessions': typeof AuthenticatedSessionsIndexRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/timezones': typeof AuthenticatedTimezonesRoute
   '/_authenticated/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
+  '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/_authenticated/sessions/': typeof AuthenticatedSessionsIndexRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/timezones'
     | '/sessions/$sessionId'
+    | '/api/recordings/$callLogId'
     | '/sessions/'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/timezones'
     | '/sessions/$sessionId'
+    | '/api/recordings/$callLogId'
     | '/sessions'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/timezones'
     | '/_authenticated/sessions/$sessionId'
+    | '/api/recordings/$callLogId'
     | '/_authenticated/sessions/'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
@@ -172,6 +184,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiRecordingsCallLogIdRoute: typeof ApiRecordingsCallLogIdRoute
   ApiPublicTwimlRecordingRoute: typeof ApiPublicTwimlRecordingRoute
   ApiPublicTwimlVoiceRoute: typeof ApiPublicTwimlVoiceRoute
 }
@@ -248,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSessionsSessionIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/recordings/$callLogId': {
+      id: '/api/recordings/$callLogId'
+      path: '/api/recordings/$callLogId'
+      fullPath: '/api/recordings/$callLogId'
+      preLoaderRoute: typeof ApiRecordingsCallLogIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twiml/recording': {
       id: '/api/public/twiml/recording'
       path: '/api/public/twiml/recording'
@@ -292,6 +312,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiRecordingsCallLogIdRoute: ApiRecordingsCallLogIdRoute,
   ApiPublicTwimlRecordingRoute: ApiPublicTwimlRecordingRoute,
   ApiPublicTwimlVoiceRoute: ApiPublicTwimlVoiceRoute,
 }
