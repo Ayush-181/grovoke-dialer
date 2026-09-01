@@ -34,6 +34,7 @@ const TWILIO_FIELDS = [
   { key: "twilio_api_key_secret", label: "API Key Secret", secret: true },
   { key: "twilio_twiml_app_sid", label: "TwiML App SID", secret: false },
   { key: "twilio_phone_number", label: "Caller ID number (E.164)", secret: false },
+  { key: "fallback_phone_number", label: "Fallback cell number (E.164)", secret: false },
 ] as const;
 
 function SettingsPage() {
@@ -100,6 +101,7 @@ function SettingsPage() {
             twilio_api_key_secret: t("twilio_api_key_secret"),
             twilio_twiml_app_sid: t("twilio_twiml_app_sid"),
             twilio_phone_number: t("twilio_phone_number"),
+            fallback_phone_number: t("fallback_phone_number"),
           },
           { onConflict: "workspace_id" },
         ),
@@ -157,7 +159,10 @@ function SettingsPage() {
           <p className="text-xs text-muted-foreground">
             Stored per workspace and only read server-side when minting browser call tokens. Point
             your TwiML App voice URL at{" "}
-            <code className="mono text-primary">/api/public/twiml/voice</code>.
+            <code className="mono text-primary">/api/public/twiml/voice</code>. For incoming
+            calls, point the phone number’s “A call comes in” webhook at{" "}
+            <code className="mono text-primary">/api/public/twiml/inbound?ws=&lt;workspace-id&gt;</code>{" "}
+            — unanswered calls roll over to the fallback number below after 20 seconds.
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">

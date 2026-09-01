@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -53,11 +54,12 @@ function CallsPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [outcome, setOutcome] = useState("");
+  const [direction, setDirection] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
 
   const { data, isFetching } = useQuery({
-    queryKey: ["calls", workspace?.id, page, search, outcome],
+    queryKey: ["calls", workspace?.id, page, search, outcome, direction],
     enabled: !!workspace,
     queryFn: async () => {
       let q = supabase
@@ -71,6 +73,7 @@ function CallsPage() {
         q = q.or(`business_name.ilike.%${s}%,phone.ilike.%${s}%`);
       }
       if (outcome) q = q.eq("outcome", outcome as Outcome);
+      if (direction) q = q.eq("direction", direction);
       const { data, count, error } = await q;
       if (error) throw error;
       return { rows: data ?? [], count: count ?? 0 };
@@ -113,6 +116,18 @@ function CallsPage() {
               }}
               className="h-8 w-56 text-xs"
             />
+            <select
+              value={direction}
+              onChange={(e) => {
+                setPage(0);
+                setDirection(e.target.value);
+              }}
+              className="h-8 rounded border border-border bg-background px-2 text-xs outline-none focus:border-primary"
+            >
+              <option value="">All directions</option>
+              <option value="outbound">Outbound</option>
+              <option value="inbound">Inbound</option>
+            </select>
             <select
               value={outcome}
               onChange={(e) => {
@@ -166,7 +181,19 @@ function CallsPage() {
                     {new Date(r.called_at).toLocaleString()}
                   </td>
                   <td className="max-w-[220px] truncate px-3 py-2">{r.business_name ?? "—"}</td>
-                  <td className="mono px-3 py-2 text-xs">{formatPhone(r.phone)}</td>
+                  <td className="mono px-3 py-2 text-xs">
+                    <span className="flex items-center gap-1">
+                      {r.direction === "inbound" ? (
+                        <ArrowDownLeft className="h-3.5 w-3.5 text-success" aria-label="Inbound" />
+                      ) : (
+                        <ArrowUpRight
+                          className="h-3.5 w-3.5 text-muted-foreground"
+                          aria-label="Outbound"
+                        />
+                      )}
+                      {formatPhone(r.phone)}
+                    </span>
+                  </td>
                   <td className="mono px-3 py-2 text-xs">{formatDuration(r.duration_seconds)}</td>
                   <td className="px-3 py-2">
                     <OutcomeBadge value={r.outcome} />
