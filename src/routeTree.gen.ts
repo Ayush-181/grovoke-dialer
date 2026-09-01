@@ -20,6 +20,7 @@ import { Route as AuthenticatedTimezonesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSessionsIndexRouteImport } from './routes/_authenticated/sessions.index'
 import { Route as AuthenticatedSessionsSessionIdRouteImport } from './routes/_authenticated/sessions.$sessionId'
 import { Route as ApiRecordingsCallLogIdRouteImport } from './routes/api/recordings/$callLogId'
+import { Route as ApiPublicTwimlInboundRouteImport } from './routes/api/public/twiml/inbound'
 import { Route as ApiPublicTwimlRecordingRouteImport } from './routes/api/public/twiml/recording'
 import { Route as ApiPublicTwimlVoiceRouteImport } from './routes/api/public/twiml/voice'
 
@@ -79,6 +80,11 @@ const ApiRecordingsCallLogIdRoute = ApiRecordingsCallLogIdRouteImport.update({
   path: '/api/recordings/$callLogId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwimlInboundRoute = ApiPublicTwimlInboundRouteImport.update({
+  id: '/api/public/twiml/inbound',
+  path: '/api/public/twiml/inbound',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTwimlRecordingRoute = ApiPublicTwimlRecordingRouteImport.update({
   id: '/api/public/twiml/recording',
   path: '/api/public/twiml/recording',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
   '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/sessions/': typeof AuthenticatedSessionsIndexRoute
+  '/api/public/twiml/inbound': typeof ApiPublicTwimlInboundRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
   '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/sessions': typeof AuthenticatedSessionsIndexRoute
+  '/api/public/twiml/inbound': typeof ApiPublicTwimlInboundRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/_authenticated/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
   '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/_authenticated/sessions/': typeof AuthenticatedSessionsIndexRoute
+  '/api/public/twiml/inbound': typeof ApiPublicTwimlInboundRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
   '/api/public/twiml/voice': typeof ApiPublicTwimlVoiceRoute
 }
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/sessions/$sessionId'
     | '/api/recordings/$callLogId'
     | '/sessions/'
+    | '/api/public/twiml/inbound'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
   fileRoutesByTo: FileRoutesByTo
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/sessions/$sessionId'
     | '/api/recordings/$callLogId'
     | '/sessions'
+    | '/api/public/twiml/inbound'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
   id:
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sessions/$sessionId'
     | '/api/recordings/$callLogId'
     | '/_authenticated/sessions/'
+    | '/api/public/twiml/inbound'
     | '/api/public/twiml/recording'
     | '/api/public/twiml/voice'
   fileRoutesById: FileRoutesById
@@ -185,6 +197,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiRecordingsCallLogIdRoute: typeof ApiRecordingsCallLogIdRoute
+  ApiPublicTwimlInboundRoute: typeof ApiPublicTwimlInboundRoute
   ApiPublicTwimlRecordingRoute: typeof ApiPublicTwimlRecordingRoute
   ApiPublicTwimlVoiceRoute: typeof ApiPublicTwimlVoiceRoute
 }
@@ -268,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRecordingsCallLogIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twiml/inbound': {
+      id: '/api/public/twiml/inbound'
+      path: '/api/public/twiml/inbound'
+      fullPath: '/api/public/twiml/inbound'
+      preLoaderRoute: typeof ApiPublicTwimlInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twiml/recording': {
       id: '/api/public/twiml/recording'
       path: '/api/public/twiml/recording'
@@ -313,6 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiRecordingsCallLogIdRoute: ApiRecordingsCallLogIdRoute,
+  ApiPublicTwimlInboundRoute: ApiPublicTwimlInboundRoute,
   ApiPublicTwimlRecordingRoute: ApiPublicTwimlRecordingRoute,
   ApiPublicTwimlVoiceRoute: ApiPublicTwimlVoiceRoute,
 }
