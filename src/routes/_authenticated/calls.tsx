@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { PageHeader } from "@/components/AppShell";
+import { RecordingPlayer } from "@/components/RecordingPlayer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OUTCOMES, formatDuration, outcomeLabel, outcomeTone, statusForOutcome } from "@/lib/outcomes";
@@ -216,9 +217,7 @@ function CallsPage() {
                           >
                             Save notes
                           </Button>
-                          {r.recording_url && (
-                            <audio controls src={r.recording_url} className="mt-2 w-full" />
-                          )}
+                          {r.recording_url && <RecordingPlayer callLogId={r.id} />}
                         </div>
                       </div>
                     </td>
