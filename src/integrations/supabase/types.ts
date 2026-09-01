@@ -398,6 +398,7 @@ export type Database = {
       }
       workspace_settings: {
         Row: {
+          fallback_phone_number: string | null
           twilio_account_sid: string | null
           twilio_api_key_secret: string | null
           twilio_api_key_sid: string | null
@@ -408,6 +409,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          fallback_phone_number?: string | null
           twilio_account_sid?: string | null
           twilio_api_key_secret?: string | null
           twilio_api_key_sid?: string | null
@@ -418,6 +420,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          fallback_phone_number?: string | null
           twilio_account_sid?: string | null
           twilio_api_key_secret?: string | null
           twilio_api_key_sid?: string | null
