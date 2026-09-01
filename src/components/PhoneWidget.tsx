@@ -9,6 +9,7 @@ import {
   Users,
   X,
   Grid3x3,
+  PhoneIncoming,
 } from "lucide-react";
 import { useDialer } from "@/hooks/useDialer";
 import { useWorkspace } from "@/hooks/useWorkspace";
@@ -74,6 +75,7 @@ export function PhoneWidget() {
               dialer.status === "idle" && "bg-primary",
               dialer.status === "offline" && "bg-muted-foreground",
               dialer.status === "connecting" && "bg-warning live-dot",
+              dialer.status === "incoming" && "bg-success live-dot",
               (dialer.status === "live" || dialer.status === "conferencing") &&
                 "bg-primary live-dot",
             )}
@@ -106,6 +108,31 @@ export function PhoneWidget() {
       </div>
 
       <div className="space-y-3 p-3">
+        {dialer.incoming && (
+          <div className="space-y-2 rounded border border-success bg-success/10 p-3">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-success">
+              <PhoneIncoming className="h-3.5 w-3.5" /> Incoming call
+            </div>
+            <div className="mono truncate text-lg">{formatPhone(dialer.incoming.from)}</div>
+            {dialer.incoming.businessName && (
+              <div className="truncate text-xs text-muted-foreground">
+                {dialer.incoming.businessName}
+              </div>
+            )}
+            {dialer.incoming.ownerName && (
+              <div className="truncate text-sm font-semibold">{dialer.incoming.ownerName}</div>
+            )}
+            <div className="flex gap-2">
+              <Button className="flex-1" onClick={() => void dialer.acceptIncoming()}>
+                <Phone className="mr-2 h-4 w-4" /> Accept
+              </Button>
+              <Button variant="destructive" className="flex-1" onClick={dialer.rejectIncoming}>
+                <PhoneOff className="mr-2 h-4 w-4" /> Reject
+              </Button>
+            </div>
+          </div>
+        )}
+
         {dialer.status === "offline" && (
           <div className="space-y-2">
             {dialer.error && <p className="text-xs text-destructive">{dialer.error}</p>}
