@@ -49,7 +49,14 @@ function loadTwilioScript(): Promise<void> {
   return twilioScriptPromise;
 }
 
-export type CallStatus = "offline" | "idle" | "connecting" | "live" | "conferencing";
+export type CallStatus = "offline" | "idle" | "incoming" | "connecting" | "live" | "conferencing";
+
+export type IncomingCall = {
+  from: string;
+  businessName: string | null;
+  ownerName: string | null;
+  leadId: string | null;
+};
 
 export type DialTarget = {
   phone: string;
@@ -78,6 +85,7 @@ type DialerState = {
   muted: boolean;
   durationSeconds: number;
   target: DialTarget | null;
+  incoming: IncomingCall | null;
   lastCall: LastCall | null;
   inputDevices: { id: string; label: string }[];
   selectedInput: string | null;
@@ -89,6 +97,8 @@ type DialerState = {
   toggleMute: () => void;
   sendDigit: (digit: string) => void;
   setInputDevice: (deviceId: string) => Promise<void>;
+  acceptIncoming: () => Promise<void>;
+  rejectIncoming: () => void;
   clearLastCall: () => void;
 };
 
@@ -160,6 +170,7 @@ export function DialerProvider({ children }: { children: ReactNode }) {
   const [muted, setMuted] = useState(false);
   const [durationSeconds, setDuration] = useState(0);
   const [target, setTarget] = useState<DialTarget | null>(null);
+  const [incoming, setIncoming] = useState<IncomingCall | null>(null);
   const [lastCall, setLastCall] = useState<LastCall | null>(null);
   const [inputDevices, setInputDevices] = useState<{ id: string; label: string }[]>([]);
   const [selectedInput, setSelectedInput] = useState<string | null>(null);
@@ -201,6 +212,51 @@ export function DialerProvider({ children }: { children: ReactNode }) {
       device.on("error", (e: { message?: string }) => {
         setError(e?.message ?? "Twilio device error");
       });
+      device.on("incoming", (call: any) => {
+        if (callRef.current) {
+          call.reject();
+          return;
+        }
+        const from = (call.parameters as Record<string, string>)?.["From"] ?? "";
+        callRef.current = call;
+        setIncoming({ from, businessName: null, ownerName: null, leadId: null });
+        setStatus("incoming");
+        setWidgetOpen(true);
+        const normalized = from.replace(/\D/g, "").slice(-10);
+        if (normalized) {
+          void supabase
+            .from("leads")
+            .select("id, business_name, owner_name")
+            .eq("workspace_id", workspace.id)
+            .like("phone_normalized", `%${normalized}`)
+            .limit(1)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (!data) return;
+              setIncoming((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      leadId: data.id,
+                      businessName: data.business_name,
+                      ownerName: data.owner_name,
+                    }
+                  : prev,
+              );
+            });
+        }
+        call.on("cancel", () => {
+          setIncoming(null);
+          callRef.current = null;
+          setStatus(deviceRef.current ? "idle" : "offline");
+        });
+        call.on("disconnect", () => void finalizeRef.current?.());
+        call.on("reject", () => {
+          setIncoming(null);
+          callRef.current = null;
+          setStatus(deviceRef.current ? "idle" : "offline");
+        });
+      });
       device.on("tokenWillExpire", async () => {
         const next = await getVoiceToken({ data: { workspaceId: workspace.id } });
         if (next.ok) device.updateToken(next.token);
@@ -233,6 +289,8 @@ export function DialerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(t);
   }, [status]);
 
+  const finalizeRef = useRef<(() => Promise<void>) | null>(null);
+
   const finalize = useCallback(async () => {
     ringbackRef.current.stop();
     const seconds = startedAtRef.current
@@ -261,8 +319,52 @@ export function DialerProvider({ children }: { children: ReactNode }) {
     setDuration(0);
     setMuted(false);
     setTarget(null);
+    setIncoming(null);
     setStatus(deviceRef.current ? "idle" : "offline");
   }, [target]);
+
+  useEffect(() => {
+    finalizeRef.current = finalize;
+  }, [finalize]);
+
+  const acceptIncoming = useCallback(async () => {
+    const call = callRef.current;
+    if (!call || !incoming || !workspace || !user) return;
+    call.accept();
+    startedAtRef.current = Date.now();
+    setStatus("live");
+    setTarget({
+      phone: incoming.from,
+      leadId: incoming.leadId,
+      businessName: incoming.businessName,
+      ownerName: incoming.ownerName,
+    });
+    const callSid = (call.parameters as Record<string, string>)?.["CallSid"] ?? null;
+    const { data } = await supabase
+      .from("dial_call_logs")
+      .insert({
+        workspace_id: workspace.id,
+        user_id: user.id,
+        lead_id: incoming.leadId,
+        call_sid: callSid,
+        phone: incoming.from,
+        business_name: incoming.businessName,
+        direction: "inbound",
+        outcome: "connected_dm",
+        called_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+    logIdRef.current = data?.id ?? null;
+    setIncoming(null);
+  }, [incoming, workspace, user]);
+
+  const rejectIncoming = useCallback(() => {
+    callRef.current?.reject();
+    callRef.current = null;
+    setIncoming(null);
+    setStatus(deviceRef.current ? "idle" : "offline");
+  }, []);
 
   const dial = useCallback(
     async (next: DialTarget) => {
@@ -376,6 +478,7 @@ export function DialerProvider({ children }: { children: ReactNode }) {
       muted,
       durationSeconds,
       target,
+      incoming,
       lastCall,
       inputDevices,
       selectedInput,
@@ -387,6 +490,8 @@ export function DialerProvider({ children }: { children: ReactNode }) {
       toggleMute,
       sendDigit,
       setInputDevice,
+      acceptIncoming,
+      rejectIncoming,
       clearLastCall: () => setLastCall(null),
     }),
     [
@@ -396,6 +501,7 @@ export function DialerProvider({ children }: { children: ReactNode }) {
       muted,
       durationSeconds,
       target,
+      incoming,
       lastCall,
       inputDevices,
       selectedInput,
@@ -406,6 +512,8 @@ export function DialerProvider({ children }: { children: ReactNode }) {
       toggleMute,
       sendDigit,
       setInputDevice,
+      acceptIncoming,
+      rejectIncoming,
     ],
   );
 

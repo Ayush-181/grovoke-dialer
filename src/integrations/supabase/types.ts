@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -398,6 +398,7 @@ export type Database = {
       }
       workspace_settings: {
         Row: {
+          fallback_phone_number: string | null
           twilio_account_sid: string | null
           twilio_api_key_secret: string | null
           twilio_api_key_sid: string | null
@@ -408,6 +409,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          fallback_phone_number?: string | null
           twilio_account_sid?: string | null
           twilio_api_key_secret?: string | null
           twilio_api_key_sid?: string | null
@@ -418,6 +420,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          fallback_phone_number?: string | null
           twilio_account_sid?: string | null
           twilio_api_key_secret?: string | null
           twilio_api_key_sid?: string | null
