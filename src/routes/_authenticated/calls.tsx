@@ -53,6 +53,8 @@ export function OutcomeBadge({ value }: { value?: string | null }) {
 function CallsPage() {
   const { workspace } = useWorkspace();
   const qc = useQueryClient();
+  const { dial } = useDialer();
+
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [outcome, setOutcome] = useState("");
