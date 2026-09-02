@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, PhoneOutgoing } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useDialer } from "@/hooks/useDialer";
 import { PageHeader } from "@/components/AppShell";
 import { RecordingPlayer } from "@/components/RecordingPlayer";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { OUTCOMES, formatDuration, outcomeLabel, outcomeTone, statusForOutcome }
 import type { Outcome } from "@/lib/outcomes";
 import { formatPhone } from "@/lib/phone";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/calls")({
   head: () => ({
