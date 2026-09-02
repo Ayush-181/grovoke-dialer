@@ -20,6 +20,7 @@ import { Route as AuthenticatedTimezonesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSessionsIndexRouteImport } from './routes/_authenticated/sessions.index'
 import { Route as AuthenticatedSessionsSessionIdRouteImport } from './routes/_authenticated/sessions.$sessionId'
 import { Route as ApiRecordingsCallLogIdRouteImport } from './routes/api/recordings/$callLogId'
+import { Route as ApiPublicTwimlFallbackStatusRouteImport } from './routes/api/public/twiml/fallback-status'
 import { Route as ApiPublicTwimlInboundRouteImport } from './routes/api/public/twiml/inbound'
 import { Route as ApiPublicTwimlInboundFallbackRouteImport } from './routes/api/public/twiml/inbound-fallback'
 import { Route as ApiPublicTwimlRecordingRouteImport } from './routes/api/public/twiml/recording'
@@ -81,6 +82,12 @@ const ApiRecordingsCallLogIdRoute = ApiRecordingsCallLogIdRouteImport.update({
   path: '/api/recordings/$callLogId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTwimlFallbackStatusRoute =
+  ApiPublicTwimlFallbackStatusRouteImport.update({
+    id: '/api/public/twiml/fallback-status',
+    path: '/api/public/twiml/fallback-status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTwimlInboundRoute = ApiPublicTwimlInboundRouteImport.update({
   id: '/api/public/twiml/inbound',
   path: '/api/public/twiml/inbound',
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
   '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/sessions/': typeof AuthenticatedSessionsIndexRoute
+  '/api/public/twiml/fallback-status': typeof ApiPublicTwimlFallbackStatusRoute
   '/api/public/twiml/inbound': typeof ApiPublicTwimlInboundRoute
   '/api/public/twiml/inbound-fallback': typeof ApiPublicTwimlInboundFallbackRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
@@ -130,6 +138,7 @@ export interface FileRoutesByTo {
   '/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
   '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/sessions': typeof AuthenticatedSessionsIndexRoute
+  '/api/public/twiml/fallback-status': typeof ApiPublicTwimlFallbackStatusRoute
   '/api/public/twiml/inbound': typeof ApiPublicTwimlInboundRoute
   '/api/public/twiml/inbound-fallback': typeof ApiPublicTwimlInboundFallbackRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
@@ -148,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/sessions/$sessionId': typeof AuthenticatedSessionsSessionIdRoute
   '/api/recordings/$callLogId': typeof ApiRecordingsCallLogIdRoute
   '/_authenticated/sessions/': typeof AuthenticatedSessionsIndexRoute
+  '/api/public/twiml/fallback-status': typeof ApiPublicTwimlFallbackStatusRoute
   '/api/public/twiml/inbound': typeof ApiPublicTwimlInboundRoute
   '/api/public/twiml/inbound-fallback': typeof ApiPublicTwimlInboundFallbackRoute
   '/api/public/twiml/recording': typeof ApiPublicTwimlRecordingRoute
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/sessions/$sessionId'
     | '/api/recordings/$callLogId'
     | '/sessions/'
+    | '/api/public/twiml/fallback-status'
     | '/api/public/twiml/inbound'
     | '/api/public/twiml/inbound-fallback'
     | '/api/public/twiml/recording'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/sessions/$sessionId'
     | '/api/recordings/$callLogId'
     | '/sessions'
+    | '/api/public/twiml/fallback-status'
     | '/api/public/twiml/inbound'
     | '/api/public/twiml/inbound-fallback'
     | '/api/public/twiml/recording'
@@ -199,6 +211,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sessions/$sessionId'
     | '/api/recordings/$callLogId'
     | '/_authenticated/sessions/'
+    | '/api/public/twiml/fallback-status'
     | '/api/public/twiml/inbound'
     | '/api/public/twiml/inbound-fallback'
     | '/api/public/twiml/recording'
@@ -210,6 +223,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiRecordingsCallLogIdRoute: typeof ApiRecordingsCallLogIdRoute
+  ApiPublicTwimlFallbackStatusRoute: typeof ApiPublicTwimlFallbackStatusRoute
   ApiPublicTwimlInboundRoute: typeof ApiPublicTwimlInboundRoute
   ApiPublicTwimlInboundFallbackRoute: typeof ApiPublicTwimlInboundFallbackRoute
   ApiPublicTwimlRecordingRoute: typeof ApiPublicTwimlRecordingRoute
@@ -295,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRecordingsCallLogIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/twiml/fallback-status': {
+      id: '/api/public/twiml/fallback-status'
+      path: '/api/public/twiml/fallback-status'
+      fullPath: '/api/public/twiml/fallback-status'
+      preLoaderRoute: typeof ApiPublicTwimlFallbackStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/twiml/inbound': {
       id: '/api/public/twiml/inbound'
       path: '/api/public/twiml/inbound'
@@ -354,6 +375,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiRecordingsCallLogIdRoute: ApiRecordingsCallLogIdRoute,
+  ApiPublicTwimlFallbackStatusRoute: ApiPublicTwimlFallbackStatusRoute,
   ApiPublicTwimlInboundRoute: ApiPublicTwimlInboundRoute,
   ApiPublicTwimlInboundFallbackRoute: ApiPublicTwimlInboundFallbackRoute,
   ApiPublicTwimlRecordingRoute: ApiPublicTwimlRecordingRoute,
