@@ -339,24 +339,51 @@ export function DialerProvider({ children }: { children: ReactNode }) {
       businessName: incoming.businessName,
       ownerName: incoming.ownerName,
     });
-    const callSid = (call.parameters as Record<string, string>)?.["CallSid"] ?? null;
+    const parentSid =
+      (call.customParameters as Map<string, string> | undefined)?.get("parentCallSid") ?? null;
+    const childSid = (call.parameters as Record<string, string>)?.["CallSid"] ?? null;
+
+    // The webhook already logged this call when it started ringing — update
+    // that row instead of creating a duplicate.
+    if (parentSid) {
+      const { data: existing } = await supabase
+        .from("dial_call_logs")
+        .update({
+          user_id: user.id,
+          outcome: "connected_dm",
+          missed_call_acknowledged: true,
+          business_name: incoming.businessName,
+          lead_id: incoming.leadId,
+        })
+        .eq("call_sid", parentSid)
+        .select("id")
+        .maybeSingle();
+      if (existing?.id) {
+        logIdRef.current = existing.id;
+        setIncoming(null);
+        return;
+      }
+    }
+
     const { data } = await supabase
       .from("dial_call_logs")
       .insert({
         workspace_id: workspace.id,
         user_id: user.id,
         lead_id: incoming.leadId,
-        call_sid: callSid,
+        call_sid: parentSid ?? childSid,
         phone: incoming.from,
         business_name: incoming.businessName,
         direction: "inbound",
         outcome: "connected_dm",
+        missed_call_acknowledged: true,
         called_at: new Date().toISOString(),
       })
       .select("id")
       .single();
     logIdRef.current = data?.id ?? null;
     setIncoming(null);
+
   }, [incoming, workspace, user]);
 
   const rejectIncoming = useCallback(() => {
