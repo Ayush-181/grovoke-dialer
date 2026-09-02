@@ -221,8 +221,27 @@ function CallsPage() {
                     <OutcomeBadge value={r.outcome} />
                   </td>
                   <td className="px-3 py-2 text-right text-xs text-muted-foreground">
-                    {r.recording_url ? "audio" : "—"}
+                    <span className="flex items-center justify-end gap-2">
+                      {r.recording_url ? "audio" : "—"}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void dial({
+                            phone: r.phone,
+                            leadId: r.lead_id,
+                            businessName: r.business_name,
+                          });
+                        }}
+                      >
+                        <PhoneOutgoing className="mr-1 h-3 w-3" />
+                        Redial
+                      </Button>
+                    </span>
                   </td>
+
                 </tr>
                 {openId === r.id && (
                   <tr key={`${r.id}-detail`} className="border-b border-border bg-surface">
