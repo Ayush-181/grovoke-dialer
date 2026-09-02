@@ -20,15 +20,18 @@ async function handle(request: Request) {
   if (!/^[0-9a-fA-F-]{36}$/.test(workspaceId)) return xml("<Hangup/>");
 
   let status = url.searchParams.get("DialCallStatus") ?? "";
+  let callSid = url.searchParams.get("CallSid") ?? "";
   if (request.method === "POST") {
     const body = new URLSearchParams(await request.text());
     status = body.get("DialCallStatus") ?? status;
+    callSid = body.get("CallSid") ?? callSid;
   }
 
-  // A browser agent picked up — nothing left to do.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  // A browser agent picked up — the accept handler owns the log row.
   if (status === "completed" || status === "answered") return xml("<Hangup/>");
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: settings } = await supabaseAdmin
     .from("workspace_settings")
     .select("fallback_phone_number")
@@ -36,9 +39,20 @@ async function handle(request: Request) {
     .maybeSingle();
 
   const fallback = settings?.fallback_phone_number?.trim();
-  if (!fallback) return xml("<Say>Sorry, nobody is available. Please try again later.</Say>");
+  if (!fallback) {
+    if (callSid) {
+      await supabaseAdmin
+        .from("dial_call_logs")
+        .update({ outcome: "no_answer" })
+        .eq("call_sid", callSid);
+    }
+    return xml("<Say>Sorry, nobody is available. Please try again later.</Say>");
+  }
 
-  return xml(`<Dial timeout="30"><Number>${esc(fallback)}</Number></Dial>`);
+  const action = `${url.origin}/api/public/twiml/fallback-status?ws=${encodeURIComponent(workspaceId)}`;
+  return xml(
+    `<Dial timeout="30" action="${esc(action)}" method="POST"><Number>${esc(fallback)}</Number></Dial>`,
+  );
 }
 
 export const Route = createFileRoute("/api/public/twiml/inbound-fallback")({
