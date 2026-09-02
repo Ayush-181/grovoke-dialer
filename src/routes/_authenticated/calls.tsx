@@ -85,6 +85,24 @@ function CallsPage() {
   const rows = data?.rows ?? [];
   const total = data?.count ?? 0;
 
+  // Visiting the Call Log marks the missed calls shown here as reviewed,
+  // which clears the nav badge.
+  useEffect(() => {
+    const unseen = rows
+      .filter((r) => r.direction === "inbound" && r.outcome === "no_answer" && !r.missed_call_acknowledged)
+      .map((r) => r.id);
+    if (unseen.length === 0) return;
+    void supabase
+      .from("dial_call_logs")
+      .update({ missed_call_acknowledged: true })
+      .in("id", unseen)
+      .then(() => {
+        void qc.invalidateQueries({ queryKey: ["missed-calls"] });
+      });
+  }, [rows, qc]);
+
+
+
   const saveRow = async (id: string, patch: { outcome?: Outcome; notes?: string }, leadId: string | null) => {
     const { error } = await supabase.from("dial_call_logs").update(patch).eq("id", id);
     if (error) {
