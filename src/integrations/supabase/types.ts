@@ -71,6 +71,7 @@ export type Database = {
           duration_seconds: number
           id: string
           lead_id: string | null
+          missed_call_acknowledged: boolean
           notes: string | null
           outcome: Database["public"]["Enums"]["lead_outcome"] | null
           phone: string
@@ -90,6 +91,7 @@ export type Database = {
           duration_seconds?: number
           id?: string
           lead_id?: string | null
+          missed_call_acknowledged?: boolean
           notes?: string | null
           outcome?: Database["public"]["Enums"]["lead_outcome"] | null
           phone: string
@@ -109,6 +111,7 @@ export type Database = {
           duration_seconds?: number
           id?: string
           lead_id?: string | null
+          missed_call_acknowledged?: boolean
           notes?: string | null
           outcome?: Database["public"]["Enums"]["lead_outcome"] | null
           phone?: string
