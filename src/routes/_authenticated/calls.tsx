@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, PhoneOutgoing } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useDialer } from "@/hooks/useDialer";
 import { PageHeader } from "@/components/AppShell";
 import { RecordingPlayer } from "@/components/RecordingPlayer";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { OUTCOMES, formatDuration, outcomeLabel, outcomeTone, statusForOutcome }
 import type { Outcome } from "@/lib/outcomes";
 import { formatPhone } from "@/lib/phone";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/calls")({
   head: () => ({
@@ -51,6 +53,8 @@ export function OutcomeBadge({ value }: { value?: string | null }) {
 function CallsPage() {
   const { workspace } = useWorkspace();
   const qc = useQueryClient();
+  const { dial } = useDialer();
+
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [outcome, setOutcome] = useState("");
@@ -82,6 +86,24 @@ function CallsPage() {
 
   const rows = data?.rows ?? [];
   const total = data?.count ?? 0;
+
+  // Visiting the Call Log marks the missed calls shown here as reviewed,
+  // which clears the nav badge.
+  useEffect(() => {
+    const unseen = rows
+      .filter((r) => r.direction === "inbound" && r.outcome === "no_answer" && !r.missed_call_acknowledged)
+      .map((r) => r.id);
+    if (unseen.length === 0) return;
+    void supabase
+      .from("dial_call_logs")
+      .update({ missed_call_acknowledged: true })
+      .in("id", unseen)
+      .then(() => {
+        void qc.invalidateQueries({ queryKey: ["missed-calls"] });
+      });
+  }, [rows, qc]);
+
+
 
   const saveRow = async (id: string, patch: { outcome?: Outcome; notes?: string }, leadId: string | null) => {
     const { error } = await supabase.from("dial_call_logs").update(patch).eq("id", id);
@@ -199,8 +221,27 @@ function CallsPage() {
                     <OutcomeBadge value={r.outcome} />
                   </td>
                   <td className="px-3 py-2 text-right text-xs text-muted-foreground">
-                    {r.recording_url ? "audio" : "—"}
+                    <span className="flex items-center justify-end gap-2">
+                      {r.recording_url ? "audio" : "—"}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void dial({
+                            phone: r.phone,
+                            leadId: r.lead_id,
+                            businessName: r.business_name,
+                          });
+                        }}
+                      >
+                        <PhoneOutgoing className="mr-1 h-3 w-3" />
+                        Redial
+                      </Button>
+                    </span>
                   </td>
+
                 </tr>
                 {openId === r.id && (
                   <tr key={`${r.id}-detail`} className="border-b border-border bg-surface">
