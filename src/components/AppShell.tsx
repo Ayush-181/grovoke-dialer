@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useMissedCallCount } from "@/hooks/useMissedCalls";
 import { PhoneWidget } from "@/components/PhoneWidget";
 import { HOME_ZONE, formatTimeInZone, zoneDef } from "@/lib/timezones";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { workspace } = useWorkspace();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const missedCalls = useMissedCallCount();
 
 
   return (
@@ -80,6 +82,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                 >
                   <item.icon className="h-3.5 w-3.5" />
                   {item.label}
+                  {item.to === "/calls" && missedCalls > 0 && (
+                    <span
+                      className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground"
+                      aria-label={`${missedCalls} missed calls`}
+                    >
+                      {missedCalls > 99 ? "99+" : missedCalls}
+                    </span>
+                  )}
                 </Link>
               );
             })}
