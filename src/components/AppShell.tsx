@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { useMissedCallCount } from "@/hooks/useMissedCalls";
 import { PhoneWidget } from "@/components/PhoneWidget";
-import { HOME_ZONE, ZONES, formatTimeInZone, zoneDef } from "@/lib/timezones";
+import { HOME_ZONE, formatTimeInZone, zoneDef } from "@/lib/timezones";
 import { cn } from "@/lib/utils";
 
 const NAV = [
