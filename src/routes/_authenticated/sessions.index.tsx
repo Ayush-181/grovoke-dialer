@@ -155,9 +155,9 @@ function SessionsPage() {
               {deleteSession.isPending ? "Deleting…" : "Delete session"}
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+        </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 
