@@ -108,7 +108,7 @@ function display(timeZone: string, kind: "time" | "date" | "abbr"): Intl.DateTim
   if (!f) {
     const opts: Intl.DateTimeFormatOptions =
       kind === "time"
-        ? { timeZone, hour: "numeric", minute: "2-digit", hour12: true }
+        ? { timeZone, hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }
         : kind === "date"
           ? { timeZone, weekday: "short", month: "short", day: "numeric" }
           : { timeZone, timeZoneName: "short", hour: "numeric" };
