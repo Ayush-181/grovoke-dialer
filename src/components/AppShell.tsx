@@ -25,7 +25,20 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
-const HEADER_CLOCKS = [HOME_ZONE, "America/New_York", "America/Los_Angeles"];
+const US_ZONE_IDS = [
+  "America/Puerto_Rico",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Phoenix",
+  "America/Los_Angeles",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Pacific/Guam",
+  "Pacific/Pago_Pago",
+];
+
+const HEADER_CLOCKS = [HOME_ZONE, ...US_ZONE_IDS];
 
 function HeaderClocks() {
   const [now, setNow] = useState(() => new Date());
@@ -35,9 +48,9 @@ function HeaderClocks() {
   }, []);
 
   return (
-    <div className="hidden items-center gap-3 rounded-full border border-border bg-surface px-3 py-1 xl:flex">
+    <div className="hidden max-w-md items-center gap-3 overflow-x-auto rounded-full border border-border bg-surface px-3 py-1.5 [scrollbar-width:none] [-ms-overflow-style:none] xl:flex" style={{ scrollbarWidth: "none" }}>
       {HEADER_CLOCKS.map((z) => (
-        <div key={z} className="flex items-baseline gap-1.5">
+        <div key={z} className="flex shrink-0 items-baseline gap-1.5">
           <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
             {zoneDef(z).short}
           </span>
