@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { PageHeader } from "@/components/AppShell";
+import { TwilioUsageCard } from "@/components/TwilioUsageCard";
+
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -126,6 +128,9 @@ function DashboardPage() {
           </div>
         )}
       </div>
+
+      <TwilioUsageCard />
     </div>
+
   );
 }
