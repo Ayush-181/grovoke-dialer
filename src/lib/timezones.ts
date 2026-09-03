@@ -7,6 +7,7 @@ export type ZoneDef = {
 
 export const ZONES: ZoneDef[] = [
   { id: "Asia/Kolkata", label: "India", short: "IST", home: true },
+  // US time zones
   { id: "America/New_York", label: "Eastern", short: "ET" },
   { id: "America/Chicago", label: "Central", short: "CT" },
   { id: "America/Denver", label: "Mountain", short: "MT" },
@@ -14,8 +15,11 @@ export const ZONES: ZoneDef[] = [
   { id: "America/Los_Angeles", label: "Pacific", short: "PT" },
   { id: "America/Anchorage", label: "Alaska", short: "AKT" },
   { id: "Pacific/Honolulu", label: "Hawaii", short: "HT" },
+  { id: "America/Puerto_Rico", label: "Atlantic", short: "AT" },
+  { id: "Pacific/Guam", label: "Chamorro", short: "ChT" },
+  { id: "Pacific/Pago_Pago", label: "Samoa", short: "SST" },
+  // Other calling zones
   { id: "Europe/London", label: "London", short: "UK" },
-
   { id: "Europe/Berlin", label: "Berlin", short: "CET" },
   { id: "Asia/Dubai", label: "Dubai", short: "GST" },
   { id: "Asia/Singapore", label: "Singapore", short: "SGT" },
