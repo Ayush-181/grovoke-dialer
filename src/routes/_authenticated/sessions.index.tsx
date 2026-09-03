@@ -1,10 +1,24 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/sessions/")({
   head: () => ({
@@ -23,6 +37,8 @@ export const Route = createFileRoute("/_authenticated/sessions/")({
 
 function SessionsPage() {
   const { workspace } = useWorkspace();
+  const qc = useQueryClient();
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data: sessions } = useQuery({
     queryKey: ["sessions", workspace?.id],
@@ -36,6 +52,23 @@ function SessionsPage() {
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const deleteSession = useMutation({
+    mutationFn: async (id: string) => {
+      // Queue entries go first; dial_call_logs are historical and stay put
+      // (their session_id FK is ON DELETE SET NULL).
+      const { error: leadsErr } = await supabase.from("session_leads").delete().eq("session_id", id);
+      if (leadsErr) throw leadsErr;
+      const { error } = await supabase.from("calling_sessions").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Session deleted");
+      setPendingDelete(null);
+      qc.invalidateQueries({ queryKey: ["sessions", workspace?.id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (
@@ -59,40 +92,73 @@ function SessionsPage() {
         {(sessions ?? []).map((s) => {
           const pct = s.total_leads ? (s.completed_leads / s.total_leads) * 100 : 0;
           return (
-            <Link
-              key={s.id}
-              to="/sessions/$sessionId"
-              params={{ sessionId: s.id }}
-              className="panel block p-4 transition-colors hover:border-primary/60"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h2 className="truncate text-sm font-medium">{s.name}</h2>
-                <span
-                  className={cn(
-                    "rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide",
-                    s.status === "active" && "bg-primary/15 text-primary",
-                    s.status === "paused" && "bg-warning/15 text-warning",
-                    s.status === "completed" && "bg-muted text-muted-foreground",
-                    s.status === "pending" && "bg-surface-raised text-muted-foreground",
-                  )}
-                >
-                  {s.status}
-                </span>
-              </div>
-              <div className="mono mt-3 flex items-baseline gap-1 text-2xl font-semibold">
-                {s.completed_leads}
-                <span className="text-sm text-muted-foreground">/ {s.total_leads}</span>
-              </div>
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-surface-raised">
-                <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
-              </div>
-              <div className="mt-2 text-[10px] text-muted-foreground">
-                Created {new Date(s.created_at).toLocaleString()}
-              </div>
-            </Link>
+            <div key={s.id} className="relative">
+              <button
+                type="button"
+                aria-label={`Delete session ${s.name}`}
+                onClick={() => setPendingDelete({ id: s.id, name: s.name })}
+                className="absolute right-2 top-2 z-10 rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+              <Link
+                to="/sessions/$sessionId"
+                params={{ sessionId: s.id }}
+                className="panel block p-4 transition-colors hover:border-primary/60"
+              >
+                <div className="flex items-start justify-between gap-2 pr-8">
+                  <h2 className="truncate text-sm font-medium">{s.name}</h2>
+                  <span
+                    className={cn(
+                      "rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide",
+                      s.status === "active" && "bg-primary/15 text-primary",
+                      s.status === "paused" && "bg-warning/15 text-warning",
+                      s.status === "completed" && "bg-muted text-muted-foreground",
+                      s.status === "pending" && "bg-surface-raised text-muted-foreground",
+                    )}
+                  >
+                    {s.status}
+                  </span>
+                </div>
+                <div className="mono mt-3 flex items-baseline gap-1 text-2xl font-semibold">
+                  {s.completed_leads}
+                  <span className="text-sm text-muted-foreground">/ {s.total_leads}</span>
+                </div>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-surface-raised">
+                  <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="mt-2 text-[10px] text-muted-foreground">
+                  Created {new Date(s.created_at).toLocaleString()}
+                </div>
+              </Link>
+            </div>
           );
         })}
       </div>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete “{pendingDelete?.name}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the session and its queued leads. Call log history is kept.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (pendingDelete) deleteSession.mutate(pendingDelete.id);
+              }}
+            >
+              {deleteSession.isPending ? "Deleting…" : "Delete session"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
+
 }
