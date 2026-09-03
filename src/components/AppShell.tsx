@@ -48,7 +48,7 @@ function HeaderClocks() {
   }, []);
 
   return (
-    <div className="hidden max-w-md items-center gap-3 overflow-x-auto rounded-full border border-border bg-surface px-3 py-1.5 scrollbar-hide xl:flex">
+    <div className="hidden max-w-md items-center gap-3 overflow-x-auto rounded-full border border-border bg-surface px-3 py-1.5 [scrollbar-width:none] [-ms-overflow-style:none] xl:flex" style={{ scrollbarWidth: "none" }}>
       {HEADER_CLOCKS.map((z) => (
         <div key={z} className="flex shrink-0 items-baseline gap-1.5">
           <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
