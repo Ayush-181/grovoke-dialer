@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
+  ChevronDown,
   Clock,
   LayoutList,
   ListChecks,
@@ -15,6 +16,12 @@ import { useMissedCallCount } from "@/hooks/useMissedCalls";
 import { PhoneWidget } from "@/components/PhoneWidget";
 import { HOME_ZONE, formatTimeInZone, zoneDef } from "@/lib/timezones";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -26,37 +33,75 @@ const NAV = [
 ] as const;
 
 const US_ZONE_IDS = [
-  "America/Puerto_Rico",
   "America/New_York",
   "America/Chicago",
   "America/Denver",
-  "America/Phoenix",
   "America/Los_Angeles",
   "America/Anchorage",
   "Pacific/Honolulu",
-  "Pacific/Guam",
-  "Pacific/Pago_Pago",
 ];
 
-const HEADER_CLOCKS = [HOME_ZONE, ...US_ZONE_IDS];
+function ClockPill({ zone, now, active }: { zone: string; now: Date; active?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "flex items-baseline gap-1.5 rounded-full border px-2.5 py-1.5",
+        active
+          ? "border-primary/20 bg-primary/10 text-primary"
+          : "border-border bg-surface",
+      )}
+    >
+      <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {zoneDef(zone).short}
+      </span>
+      <span className="mono text-xs font-semibold">{formatTimeInZone(now, zone)}</span>
+    </div>
+  );
+}
 
 function HeaderClocks() {
   const [now, setNow] = useState(() => new Date());
+  const [selectedUS, setSelectedUS] = useState("America/New_York");
+
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
   return (
-    <div className="hidden max-w-md items-center gap-3 overflow-x-auto rounded-full border border-border bg-surface px-3 py-1.5 [scrollbar-width:none] [-ms-overflow-style:none] xl:flex" style={{ scrollbarWidth: "none" }}>
-      {HEADER_CLOCKS.map((z) => (
-        <div key={z} className="flex shrink-0 items-baseline gap-1.5">
-          <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-            {zoneDef(z).short}
-          </span>
-          <span className="mono text-xs font-semibold">{formatTimeInZone(now, z)}</span>
-        </div>
-      ))}
+    <div className="hidden items-center gap-2 xl:flex">
+      <ClockPill zone={HOME_ZONE} now={now} active />
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface/80"
+          >
+            <ClockPill zone={selectedUS} now={now} />
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[10rem]">
+          {US_ZONE_IDS.map((z) => (
+            <DropdownMenuItem
+              key={z}
+              onSelect={() => setSelectedUS(z)}
+              className="flex items-center justify-between gap-4"
+            >
+              <span className="text-xs font-medium text-muted-foreground">
+                {zoneDef(z).label}
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {zoneDef(z).short}
+                </span>
+                <span className="mono text-xs font-semibold">{formatTimeInZone(now, z)}</span>
+              </div>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
