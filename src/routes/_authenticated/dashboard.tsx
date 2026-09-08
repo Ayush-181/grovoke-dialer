@@ -68,11 +68,11 @@ function DashboardPage() {
   const c = outcomes?.counts ?? {};
   const pct = (n: number) => (total ? (n / total) * 100 : 0);
   const connected =
-    (c.connected_dm ?? 0) +
-    (c.connected_gk ?? 0) +
-    (c.connected_other ?? 0) +
-    (c.appointment_set ?? 0) +
-    (c.callback_requested ?? 0);
+    (c['connected_dm'] ?? 0) +
+    (c['connected_gk'] ?? 0) +
+    (c['connected_other'] ?? 0) +
+    (c['appointment_set'] ?? 0) +
+    (c['callback_requested'] ?? 0);
 
   const daily = stats?.daily ?? [];
   const peak = Math.max(1, ...daily.map((d) => d.calls));
@@ -81,11 +81,11 @@ function DashboardPage() {
     { label: "Total calls made", value: total },
     { label: "Calls today", value: stats?.calls_today ?? 0 },
     { label: "Connection rate", value: `${pct(connected).toFixed(1)}%`, accent: true },
-    { label: "DM reached rate", value: `${pct(c.connected_dm ?? 0).toFixed(1)}%` },
-    { label: "Gatekeeper rate", value: `${pct(c.connected_gk ?? 0).toFixed(1)}%` },
-    { label: "Voicemail rate", value: `${pct(c.voicemail ?? 0).toFixed(1)}%` },
+    { label: "DM reached rate", value: `${pct(c['connected_dm'] ?? 0).toFixed(1)}%` },
+    { label: "Gatekeeper rate", value: `${pct(c['connected_gk'] ?? 0).toFixed(1)}%` },
+    { label: "Voicemail rate", value: `${pct(c['voicemail'] ?? 0).toFixed(1)}%` },
     { label: "Unique leads reached", value: stats?.unique_leads ?? 0 },
-    { label: "Appointments set", value: c.appointment_set ?? 0 },
+    { label: "Appointments set", value: c['appointment_set'] ?? 0 },
   ];
 
   return (
