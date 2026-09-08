@@ -48,41 +48,51 @@ function DashboardPage() {
     },
   });
 
-  const { data: leadCounts } = useQuery({
-    queryKey: ["lead-counts", workspace?.id],
+  const { data: outcomes } = useQuery({
+    queryKey: ["outcome-mix", workspace?.id],
     enabled: !!workspace,
+    refetchInterval: 30_000,
     queryFn: async () => {
-      const { count: total } = await supabase
-        .from("leads")
-        .select("id", { count: "exact", head: true })
+      const { data, error } = await supabase
+        .from("dial_call_logs")
+        .select("outcome")
         .eq("workspace_id", workspace!.id);
-      const { count: uncalled } = await supabase
-        .from("leads")
-        .select("id", { count: "exact", head: true })
-        .eq("workspace_id", workspace!.id)
-        .eq("status", "new");
-      return { total: total ?? 0, uncalled: uncalled ?? 0 };
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const r of data ?? []) counts[r.outcome ?? "none"] = (counts[r.outcome ?? "none"] ?? 0) + 1;
+      return { counts, total: data?.length ?? 0 };
     },
   });
 
-  const connectionRate = stats?.calls_total ? (stats.connected / stats.calls_total) * 100 : 0;
+  const total = outcomes?.total ?? 0;
+  const c = outcomes?.counts ?? {};
+  const pct = (n: number) => (total ? (n / total) * 100 : 0);
+  const connected =
+    (c.connected_dm ?? 0) +
+    (c.connected_gk ?? 0) +
+    (c.connected_other ?? 0) +
+    (c.appointment_set ?? 0) +
+    (c.callback_requested ?? 0);
+
   const daily = stats?.daily ?? [];
   const peak = Math.max(1, ...daily.map((d) => d.calls));
 
   const kpis = [
+    { label: "Total calls made", value: total },
     { label: "Calls today", value: stats?.calls_today ?? 0 },
-    { label: "Calls this week", value: stats?.calls_week ?? 0 },
-    { label: "Connection rate", value: `${connectionRate.toFixed(1)}%`, accent: true },
+    { label: "Connection rate", value: `${pct(connected).toFixed(1)}%`, accent: true },
+    { label: "DM reached rate", value: `${pct(c.connected_dm ?? 0).toFixed(1)}%` },
+    { label: "Gatekeeper rate", value: `${pct(c.connected_gk ?? 0).toFixed(1)}%` },
+    { label: "Voicemail rate", value: `${pct(c.voicemail ?? 0).toFixed(1)}%` },
     { label: "Unique leads reached", value: stats?.unique_leads ?? 0 },
-    { label: "Leads in workspace", value: leadCounts?.total ?? 0 },
-    { label: "Never called", value: leadCounts?.uncalled ?? 0 },
+    { label: "Appointments set", value: c.appointment_set ?? 0 },
   ];
 
   return (
     <div>
       <PageHeader title="Dashboard" subtitle="Last 30 days of dialing activity." />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {kpis.map((k) => (
           <div key={k.label} className="panel p-3">
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -99,6 +109,7 @@ function DashboardPage() {
           </div>
         ))}
       </div>
+
 
       <div className="panel mt-4 p-4">
         <div className="mb-3 flex items-baseline justify-between">
