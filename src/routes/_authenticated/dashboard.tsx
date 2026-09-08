@@ -118,26 +118,30 @@ function DashboardPage() {
             peak {peak}
           </span>
         </div>
-        {daily.length === 0 ? (
+        {total === 0 ? (
           <p className="py-10 text-center text-xs text-muted-foreground">
             No calls logged yet. Import leads and start a session.
           </p>
         ) : (
           <div className="flex h-40 items-end gap-1">
-            {daily.map((d) => (
+            {last30.map((d) => (
               <div key={d.day} className="group flex flex-1 flex-col items-center justify-end">
                 <span className="mono mb-1 text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
                   {d.calls}
                 </span>
                 <div
                   className="w-full rounded-sm bg-primary/70 transition-colors group-hover:bg-primary"
-                  style={{ height: `${(d.calls / peak) * 100}%` }}
+                  style={{
+                    height: d.calls ? `${Math.max(6, (d.calls / peak) * 100)}%` : "2px",
+                    opacity: d.calls ? 1 : 0.25,
+                  }}
                   title={`${d.day}: ${d.calls} calls`}
                 />
               </div>
             ))}
           </div>
         )}
+
       </div>
 
       <TwilioUsageCard />
