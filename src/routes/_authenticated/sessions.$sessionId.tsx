@@ -149,8 +149,22 @@ function SessionPage() {
   const disposition = async (outcome: Outcome) => {
     if (!current) return;
     try {
-      if (pendingLogId) {
-        await supabase.from("dial_call_logs").update({ outcome }).eq("id", pendingLogId);
+      let logId = pendingLogId;
+      if (!logId && current.lead_id) {
+        // Fallback: the call ended before its log id reached this screen —
+        // attach the outcome to the most recent call for this lead in this session.
+        const { data: recent } = await supabase
+          .from("dial_call_logs")
+          .select("id")
+          .eq("session_id", sessionId)
+          .eq("lead_id", current.lead_id)
+          .order("called_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        logId = recent?.id ?? null;
+      }
+      if (logId) {
+        await supabase.from("dial_call_logs").update({ outcome }).eq("id", logId);
       }
       await Promise.all([
         supabase.from("session_leads").update({ status: "done", outcome }).eq("id", current.id),
