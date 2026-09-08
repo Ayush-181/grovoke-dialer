@@ -76,6 +76,14 @@ function DashboardPage() {
 
   const daily = stats?.daily ?? [];
   const peak = Math.max(1, ...daily.map((d) => d.calls));
+  const byDay = new Map(daily.map((d) => [d.day, d.calls]));
+  const last30 = Array.from({ length: 30 }, (_, i) => {
+    const dt = new Date();
+    dt.setDate(dt.getDate() - (29 - i));
+    const day = dt.toISOString().slice(0, 10);
+    return { day, calls: byDay.get(day) ?? 0 };
+  });
+
 
   const kpis = [
     { label: "Total calls made", value: total },
