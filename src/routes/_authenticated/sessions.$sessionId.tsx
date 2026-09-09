@@ -236,7 +236,9 @@ function SessionPage() {
     if (phone !== noteFor) {
       setNoteFor(phone);
       setNoteDraft(current?.leads?.notes ?? "");
+      setFlags({ triage_held: false, appointment_offered: false });
     }
+
   }, [current?.leads?.phone, current?.leads?.notes, noteFor]);
 
   const saveNote = async () => {
