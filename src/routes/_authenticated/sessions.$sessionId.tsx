@@ -82,6 +82,11 @@ function SessionPage() {
   const [noteDraft, setNoteDraft] = useState("");
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [savingNote, setSavingNote] = useState(false);
+  const [flags, setFlags] = useState<{ triage_held: boolean; appointment_offered: boolean }>({
+    triage_held: false,
+    appointment_offered: false,
+  });
+
 
   const { data: session } = useQuery({
     queryKey: ["session", sessionId],
@@ -146,26 +151,51 @@ function SessionPage() {
     return () => clearTimeout(t);
   }, [auto, pendingLogId, current, idle, dialCurrent]);
 
+  const resolveLogId = async (): Promise<string | null> => {
+    if (pendingLogId) return pendingLogId;
+    if (!current?.lead_id) return null;
+    const { data: recent } = await supabase
+      .from("dial_call_logs")
+      .select("id")
+      .eq("session_id", sessionId)
+      .eq("lead_id", current.lead_id)
+      .order("called_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return recent?.id ?? null;
+  };
+
+  const toggleFlag = async (field: "triage_held" | "appointment_offered") => {
+    const logId = await resolveLogId();
+    if (!logId) {
+      toast.error("Place the call first, then tag it");
+      return;
+    }
+    const next = !flags[field];
+    setFlags((f) => ({ ...f, [field]: next }));
+    const { error } = await supabase
+      .from("dial_call_logs")
+      .update(
+        field === "triage_held" ? { triage_held: next } : { appointment_offered: next },
+      )
+
+      .eq("id", logId);
+    if (error) {
+      setFlags((f) => ({ ...f, [field]: !next }));
+      toast.error("Could not save that tag");
+      return;
+    }
+    void qc.invalidateQueries({ queryKey: ["dashboard"] });
+  };
+
   const disposition = async (outcome: Outcome) => {
     if (!current) return;
     try {
-      let logId = pendingLogId;
-      if (!logId && current.lead_id) {
-        // Fallback: the call ended before its log id reached this screen —
-        // attach the outcome to the most recent call for this lead in this session.
-        const { data: recent } = await supabase
-          .from("dial_call_logs")
-          .select("id")
-          .eq("session_id", sessionId)
-          .eq("lead_id", current.lead_id)
-          .order("called_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        logId = recent?.id ?? null;
-      }
+      const logId = await resolveLogId();
       if (logId) {
         await supabase.from("dial_call_logs").update({ outcome }).eq("id", logId);
       }
+
       await Promise.all([
         supabase.from("session_leads").update({ status: "done", outcome }).eq("id", current.id),
         supabase
@@ -206,7 +236,9 @@ function SessionPage() {
     if (phone !== noteFor) {
       setNoteFor(phone);
       setNoteDraft(current?.leads?.notes ?? "");
+      setFlags({ triage_held: false, appointment_offered: false });
     }
+
   }, [current?.leads?.phone, current?.leads?.notes, noteFor]);
 
   const saveNote = async () => {
@@ -342,12 +374,44 @@ function SessionPage() {
                 </Button>
               </div>
 
+              <div className="mt-5">
+
+                <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Call tags
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      { field: "triage_held", label: "Triage Held" },
+                      { field: "appointment_offered", label: "Offered Appointment" },
+                    ] as const
+                  ).map((chip) => (
+                    <button
+                      key={chip.field}
+                      type="button"
+                      aria-pressed={flags[chip.field]}
+                      onClick={() => void toggleFlag(chip.field)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                        flags[chip.field]
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-dashed border-border text-muted-foreground hover:border-primary/60 hover:text-foreground",
+                      )}
+                    >
+                      {flags[chip.field] ? "✓ " : "+ "}
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="mt-5 space-y-4">
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   {pendingLogId ? "Disposition this call to continue" : "Quick disposition"}
                 </div>
                 {DISPOSITION_GROUPS.map((group) => (
                   <div key={group.label}>
+
                     <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
                       {group.label}
                     </div>

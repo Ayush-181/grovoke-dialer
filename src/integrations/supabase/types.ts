@@ -63,6 +63,7 @@ export type Database = {
       }
       dial_call_logs: {
         Row: {
+          appointment_offered: boolean
           business_name: string | null
           call_sid: string | null
           called_at: string
@@ -78,11 +79,13 @@ export type Database = {
           recording_url: string | null
           session_id: string | null
           transcript: string | null
+          triage_held: boolean
           updated_at: string
           user_id: string | null
           workspace_id: string
         }
         Insert: {
+          appointment_offered?: boolean
           business_name?: string | null
           call_sid?: string | null
           called_at?: string
@@ -98,11 +101,13 @@ export type Database = {
           recording_url?: string | null
           session_id?: string | null
           transcript?: string | null
+          triage_held?: boolean
           updated_at?: string
           user_id?: string | null
           workspace_id: string
         }
         Update: {
+          appointment_offered?: boolean
           business_name?: string | null
           call_sid?: string | null
           called_at?: string
@@ -118,6 +123,7 @@ export type Database = {
           recording_url?: string | null
           session_id?: string | null
           transcript?: string | null
+          triage_held?: boolean
           updated_at?: string
           user_id?: string | null
           workspace_id?: string
