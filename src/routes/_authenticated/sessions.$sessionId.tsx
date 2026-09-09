@@ -175,7 +175,10 @@ function SessionPage() {
     setFlags((f) => ({ ...f, [field]: next }));
     const { error } = await supabase
       .from("dial_call_logs")
-      .update({ [field]: next })
+      .update(
+        field === "triage_held" ? { triage_held: next } : { appointment_offered: next },
+      )
+
       .eq("id", logId);
     if (error) {
       setFlags((f) => ({ ...f, [field]: !next }));
