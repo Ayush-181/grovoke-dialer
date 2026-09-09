@@ -146,26 +146,48 @@ function SessionPage() {
     return () => clearTimeout(t);
   }, [auto, pendingLogId, current, idle, dialCurrent]);
 
+  const resolveLogId = async (): Promise<string | null> => {
+    if (pendingLogId) return pendingLogId;
+    if (!current?.lead_id) return null;
+    const { data: recent } = await supabase
+      .from("dial_call_logs")
+      .select("id")
+      .eq("session_id", sessionId)
+      .eq("lead_id", current.lead_id)
+      .order("called_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return recent?.id ?? null;
+  };
+
+  const toggleFlag = async (field: "triage_held" | "appointment_offered") => {
+    const logId = await resolveLogId();
+    if (!logId) {
+      toast.error("Place the call first, then tag it");
+      return;
+    }
+    const next = !flags[field];
+    setFlags((f) => ({ ...f, [field]: next }));
+    const { error } = await supabase
+      .from("dial_call_logs")
+      .update({ [field]: next })
+      .eq("id", logId);
+    if (error) {
+      setFlags((f) => ({ ...f, [field]: !next }));
+      toast.error("Could not save that tag");
+      return;
+    }
+    void qc.invalidateQueries({ queryKey: ["dashboard"] });
+  };
+
   const disposition = async (outcome: Outcome) => {
     if (!current) return;
     try {
-      let logId = pendingLogId;
-      if (!logId && current.lead_id) {
-        // Fallback: the call ended before its log id reached this screen —
-        // attach the outcome to the most recent call for this lead in this session.
-        const { data: recent } = await supabase
-          .from("dial_call_logs")
-          .select("id")
-          .eq("session_id", sessionId)
-          .eq("lead_id", current.lead_id)
-          .order("called_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        logId = recent?.id ?? null;
-      }
+      const logId = await resolveLogId();
       if (logId) {
         await supabase.from("dial_call_logs").update({ outcome }).eq("id", logId);
       }
+
       await Promise.all([
         supabase.from("session_leads").update({ status: "done", outcome }).eq("id", current.id),
         supabase
