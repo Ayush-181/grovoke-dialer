@@ -375,11 +375,43 @@ function SessionPage() {
               </div>
 
               <div className="mt-5 space-y-4">
+              <div className="mt-5">
+                <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Call tags
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      { field: "triage_held", label: "Triage Held" },
+                      { field: "appointment_offered", label: "Offered Appointment" },
+                    ] as const
+                  ).map((chip) => (
+                    <button
+                      key={chip.field}
+                      type="button"
+                      aria-pressed={flags[chip.field]}
+                      onClick={() => void toggleFlag(chip.field)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                        flags[chip.field]
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-dashed border-border text-muted-foreground hover:border-primary/60 hover:text-foreground",
+                      )}
+                    >
+                      {flags[chip.field] ? "✓ " : "+ "}
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 space-y-4">
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   {pendingLogId ? "Disposition this call to continue" : "Quick disposition"}
                 </div>
                 {DISPOSITION_GROUPS.map((group) => (
                   <div key={group.label}>
+
                     <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
                       {group.label}
                     </div>
