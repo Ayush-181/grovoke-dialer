@@ -139,10 +139,25 @@ function DashboardPage() {
     { label: "Booked", value: s?.appointments_booked ?? 0 },
   ];
 
+  const OUTCOME_STAT_KEY: Record<string, keyof Stats> = {
+    connected_dm: "dm_reached",
+    connected_gk: "gatekeeper",
+    connected_other: "connected_other",
+    appointment_set: "appointments_booked",
+    callback_requested: "callback_requested",
+    voicemail: "voicemail",
+    busy: "busy",
+    no_answer: "no_answer",
+    dialed: "dialed",
+    not_interested: "not_interested",
+    bad_number: "bad_number",
+    do_not_call: "do_not_call",
+  };
   const outcomeCounts: { label: string; value: number }[] = OUTCOMES.map((o) => ({
     label: outcomeLabel(o.value),
-    value: (s?.[o.value as keyof Stats] as number) ?? 0,
+    value: (s?.[OUTCOME_STAT_KEY[o.value]!] as number) ?? 0,
   })).filter((r) => r.value > 0);
+
   const outcomeTotal = outcomeCounts.reduce((a, b) => a + b.value, 0);
   const outcomeMax = Math.max(1, ...outcomeCounts.map((r) => r.value));
 
