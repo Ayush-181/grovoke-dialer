@@ -82,6 +82,11 @@ function SessionPage() {
   const [noteDraft, setNoteDraft] = useState("");
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [savingNote, setSavingNote] = useState(false);
+  const [flags, setFlags] = useState<{ triage_held: boolean; appointment_offered: boolean }>({
+    triage_held: false,
+    appointment_offered: false,
+  });
+
 
   const { data: session } = useQuery({
     queryKey: ["session", sessionId],
