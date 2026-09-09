@@ -374,8 +374,8 @@ function SessionPage() {
                 </Button>
               </div>
 
-              <div className="mt-5 space-y-4">
               <div className="mt-5">
+
                 <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
                   Call tags
                 </div>
