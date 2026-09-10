@@ -478,7 +478,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      dashboard_stats: { Args: { _workspace_id: string }; Returns: Json }
+      dashboard_stats:
+        | { Args: { _workspace_id: string }; Returns: Json }
+        | {
+            Args: { _month_start?: string; _workspace_id: string }
+            Returns: Json
+          }
       is_workspace_member: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean

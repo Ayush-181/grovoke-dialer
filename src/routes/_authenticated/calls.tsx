@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, PhoneOutgoing } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, PhoneOutgoing, Trash2 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -10,6 +10,16 @@ import { PageHeader } from "@/components/AppShell";
 import { RecordingPlayer } from "@/components/RecordingPlayer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { OUTCOMES, formatDuration, outcomeLabel, outcomeTone, statusForOutcome } from "@/lib/outcomes";
 import type { Outcome } from "@/lib/outcomes";
 import { formatPhone } from "@/lib/phone";
@@ -61,6 +71,23 @@ function CallsPage() {
   const [direction, setDirection] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteRow = async (id: string) => {
+    setDeleting(true);
+    const { error } = await supabase.from("dial_call_logs").delete().eq("id", id);
+    setDeleting(false);
+    setDeleteId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Call log deleted");
+    void qc.invalidateQueries({ queryKey: ["calls"] });
+    void qc.invalidateQueries({ queryKey: ["dashboard"] });
+    void qc.invalidateQueries({ queryKey: ["missed-calls"] });
+  };
 
   const { data, isFetching } = useQuery({
     queryKey: ["calls", workspace?.id, page, search, outcome, direction],
@@ -239,6 +266,18 @@ function CallsPage() {
                         <PhoneOutgoing className="mr-1 h-3 w-3" />
                         Redial
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label="Delete call log"
+                        className="h-7 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(r.id);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </span>
                   </td>
 
@@ -315,6 +354,30 @@ function CallsPage() {
           </Button>
         </div>
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this call log?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the call record, including its notes and outcome. Dashboard
+              stats update right away. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteId) void deleteRow(deleteId);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
