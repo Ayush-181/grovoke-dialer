@@ -266,6 +266,18 @@ function CallsPage() {
                         <PhoneOutgoing className="mr-1 h-3 w-3" />
                         Redial
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label="Delete call log"
+                        className="h-7 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(r.id);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </span>
                   </td>
 
