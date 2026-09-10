@@ -71,6 +71,23 @@ function CallsPage() {
   const [direction, setDirection] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteRow = async (id: string) => {
+    setDeleting(true);
+    const { error } = await supabase.from("dial_call_logs").delete().eq("id", id);
+    setDeleting(false);
+    setDeleteId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Call log deleted");
+    void qc.invalidateQueries({ queryKey: ["calls"] });
+    void qc.invalidateQueries({ queryKey: ["dashboard"] });
+    void qc.invalidateQueries({ queryKey: ["missed-calls"] });
+  };
 
   const { data, isFetching } = useQuery({
     queryKey: ["calls", workspace?.id, page, search, outcome, direction],
