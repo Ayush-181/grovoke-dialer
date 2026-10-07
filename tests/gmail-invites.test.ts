@@ -86,3 +86,42 @@ test("network loss is ambiguous and cannot be automatically resent", async () =>
     expect((e as GmailInviteError).definiteFailure).toBe(false);
   }
 });
+test("email includes formatted recipient time, IST, HTML, and a separate calendar attachment", () => {
+  const mime = buildInviteMime(booking, "ash@grovoke.com");
+  expect(mime).toContain("Content-Type: multipart/mixed");
+  expect(mime).toContain('Content-Disposition: attachment; filename="invitation.ics"');
+  const decodePart = (type: string) =>
+    Buffer.from(
+      mime
+        .split(`Content-Type: ${type}`)[1]!
+        .split("\r\n\r\n")[1]!
+        .split("\r\n--")[0]!
+        .replace(/\r\n/g, ""),
+      "base64",
+    ).toString();
+  const plain = decodePart("text/plain"),
+    html = decodePart("text/html");
+  expect(plain).toContain("10:00 AM EST");
+  expect(plain).toContain("8:30 PM IST");
+  expect(plain).not.toContain("2026-12-14T15:00:00Z to");
+  expect(html).toContain("Add to Google Calendar");
+  expect(html).toContain("ash@grovoke.com");
+  expect(html).toContain("dates=20261214T150000Z%2F20261214T153000Z");
+});
+test("email HTML escapes user-entered text", () => {
+  const mime = buildInviteMime(
+    { ...booking, title: '<img src=x onerror="alert(1)">', notes: "<script>alert(1)</script>" },
+    "ash@grovoke.com",
+  );
+  const html = Buffer.from(
+    mime
+      .split("Content-Type: text/html")[1]!
+      .split("\r\n\r\n")[1]!
+      .split("\r\n--")[0]!
+      .replace(/\r\n/g, ""),
+    "base64",
+  ).toString();
+  expect(html).not.toContain("<img src=x");
+  expect(html).not.toContain("<script>");
+  expect(html).toContain("&lt;script&gt;");
+});

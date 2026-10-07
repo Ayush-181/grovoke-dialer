@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Check, Clock3, ExternalLink, Plus, RefreshCw, Video, X } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  Clock3,
+  ExternalLink,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Video,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -15,6 +25,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
@@ -56,6 +75,9 @@ function BookingsPage() {
   const [view, setView] = useState<"upcoming" | "past">("upcoming");
   const [page, setPage] = useState(0);
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Booking | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const bookings = useQuery({
     queryKey: ["bookings", workspace?.id, view, page],
     enabled: !!workspace,
@@ -89,6 +111,33 @@ function BookingsPage() {
     } finally {
       setRetrying(null);
       refresh();
+    }
+  };
+
+  const removeBooking = async () => {
+    if (!deleteTarget || !workspace || !user) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .delete()
+        .eq("id", deleteTarget.id)
+        .eq("workspace_id", workspace.id)
+        .eq("created_by", user.id)
+        .select("id")
+        .single();
+      if (error) throw error;
+      setDeleteTarget(null);
+      setPage(0);
+      refresh();
+      toast.success("Booking record deleted. The calendar event and sent invitations remain.");
+    } catch (error) {
+      setDeleteError(
+        `Could not delete the booking record. ${bookingErrorMessage(error)} If delete permissions are missing, apply drizzle/migrations/0003_booking_delete.sql in Lovable.`,
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -242,6 +291,21 @@ function BookingsPage() {
                   </td>
                   <td className="p-4">
                     <div className="flex flex-col items-start gap-2">
+                      {booking.created_by === user?.id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          disabled={!!retrying || deleting}
+                          aria-label={`Delete booking ${booking.title}`}
+                          onClick={() => {
+                            setDeleteTarget(booking);
+                            setDeleteError(null);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </Button>
+                      )}
                       {booking.google_event_url && (
                         <a
                           href={booking.google_event_url}
@@ -318,6 +382,36 @@ function BookingsPage() {
           </div>
         </div>
       )}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(next) => {
+          if (!next && !deleting) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete booking record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes “{deleteTarget?.title}” from the app. It does not cancel the Google
+              Calendar event, remove it from invitees’ calendars, or send cancellation emails.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && (
+            <p className="text-sm text-destructive" role="alert">
+              {deleteError}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Keep booking</AlertDialogCancel>
+            <Button variant="destructive" disabled={deleting} onClick={() => void removeBooking()}>
+              {deleting ? "Deleting…" : "Delete record"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Dialog open={open} onOpenChange={setOpen}>
         {open && workspace && user && (
           <BookingForm
