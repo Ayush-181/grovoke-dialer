@@ -16,10 +16,6 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
-          invite_from: string | null
-          delivery_method: string
-          email_delivery_status: string
-          gmail_message_id: string | null
           add_meet: boolean
           attendees: string[]
           created_at: string
@@ -40,10 +36,6 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
-          invite_from?: string | null
-          delivery_method?: string
-          email_delivery_status?: string
-          gmail_message_id?: string | null
           add_meet?: boolean
           attendees?: string[]
           created_at?: string
@@ -64,10 +56,6 @@ export type Database = {
           workspace_id: string
         }
         Update: {
-          invite_from?: string | null
-          delivery_method?: string
-          email_delivery_status?: string
-          gmail_message_id?: string | null
           add_meet?: boolean
           attendees?: string[]
           created_at?: string
