@@ -15,6 +15,13 @@
       "when": 1791389109501,
       "tag": "0001_professional_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791393441753,
+      "tag": "0002_professional_invites",
+      "breakpoints": true
     }
   ]
 }

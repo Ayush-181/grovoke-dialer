@@ -20,11 +20,15 @@ export type Database = {
           attendees: string[]
           created_at: string
           created_by: string
+          delivery_method: string
+          email_delivery_status: string
           ends_at: string
+          gmail_message_id: string | null
           google_account_email: string
           google_event_id: string
           google_event_url: string | null
           id: string
+          invite_from: string | null
           lead_id: string | null
           lead_timezone: string
           location: string
@@ -40,11 +44,15 @@ export type Database = {
           attendees?: string[]
           created_at?: string
           created_by: string
+          delivery_method?: string
+          email_delivery_status?: string
           ends_at: string
+          gmail_message_id?: string | null
           google_account_email: string
           google_event_id: string
           google_event_url?: string | null
           id?: string
+          invite_from?: string | null
           lead_id?: string | null
           lead_timezone: string
           location?: string
@@ -60,11 +68,15 @@ export type Database = {
           attendees?: string[]
           created_at?: string
           created_by?: string
+          delivery_method?: string
+          email_delivery_status?: string
           ends_at?: string
+          gmail_message_id?: string | null
           google_account_email?: string
           google_event_id?: string
           google_event_url?: string | null
           id?: string
+          invite_from?: string | null
           lead_id?: string | null
           lead_timezone?: string
           location?: string
