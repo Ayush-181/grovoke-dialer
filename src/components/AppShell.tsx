@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
+  CalendarDays,
   ChevronDown,
   Clock,
   LayoutList,
@@ -28,6 +29,7 @@ const NAV = [
   { to: "/leads", label: "Leads", icon: LayoutList },
   { to: "/sessions", label: "Sessions", icon: ListChecks },
   { to: "/calls", label: "Call Log", icon: PhoneCall },
+  { to: "/bookings", label: "Bookings", icon: CalendarDays },
   { to: "/timezones", label: "Time Zones", icon: Clock },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -46,9 +48,7 @@ function ClockPill({ zone, now, active }: { zone: string; now: Date; active?: bo
     <div
       className={cn(
         "flex items-baseline gap-1.5 rounded-full border px-2.5 py-1.5",
-        active
-          ? "border-primary/20 bg-primary/10 text-primary"
-          : "border-border bg-surface",
+        active ? "border-primary/20 bg-primary/10 text-primary" : "border-border bg-surface",
       )}
     >
       <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -89,9 +89,7 @@ function HeaderClocks() {
               onSelect={() => setSelectedUS(z)}
               className="flex items-center justify-between gap-4"
             >
-              <span className="text-xs font-medium text-muted-foreground">
-                {zoneDef(z).label}
-              </span>
+              <span className="text-xs font-medium text-muted-foreground">{zoneDef(z).label}</span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
                   {zoneDef(z).short}
@@ -112,19 +110,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const missedCalls = useMissedCallCount();
 
-
   return (
     <div className="min-h-screen bg-surface">
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
         <div className="flex h-14 items-center gap-6 px-4">
-          <Link to="/dashboard" className="flex items-center gap-2">
+          <Link to="/dashboard" className="flex shrink-0 items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <PhoneCall className="h-3.5 w-3.5" />
             </span>
-            <span className="mono text-sm font-semibold tracking-tight">CALL BOARD</span>
+            <span className="mono whitespace-nowrap text-sm font-semibold tracking-tight">
+              CALL BOARD
+            </span>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             {NAV.map((item) => {
               const active = pathname.startsWith(item.to);
               return (
@@ -132,7 +131,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+                    "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
                     active
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-surface hover:text-foreground",
