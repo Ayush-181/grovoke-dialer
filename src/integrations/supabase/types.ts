@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          add_meet: boolean
+          attendees: string[]
+          created_at: string
+          created_by: string
+          ends_at: string
+          google_account_email: string
+          google_event_id: string
+          google_event_url: string | null
+          id: string
+          lead_id: string | null
+          lead_timezone: string
+          location: string
+          meet_url: string | null
+          notes: string
+          starts_at: string
+          status: string
+          title: string
+          workspace_id: string
+        }
+        Insert: {
+          add_meet?: boolean
+          attendees?: string[]
+          created_at?: string
+          created_by: string
+          ends_at: string
+          google_account_email: string
+          google_event_id: string
+          google_event_url?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_timezone: string
+          location?: string
+          meet_url?: string | null
+          notes?: string
+          starts_at: string
+          status?: string
+          title: string
+          workspace_id: string
+        }
+        Update: {
+          add_meet?: boolean
+          attendees?: string[]
+          created_at?: string
+          created_by?: string
+          ends_at?: string
+          google_account_email?: string
+          google_event_id?: string
+          google_event_url?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_timezone?: string
+          location?: string
+          meet_url?: string | null
+          notes?: string
+          starts_at?: string
+          status?: string
+          title?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calling_sessions: {
         Row: {
           completed_leads: number
