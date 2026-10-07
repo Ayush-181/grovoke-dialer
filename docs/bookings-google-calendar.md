@@ -4,7 +4,7 @@ The Bookings tab supports a lead lookup or a manually entered appointment, weekd
 
 ## Enable storage
 
-Apply `supabase/migrations/20261007160000_bookings.sql` to the same Supabase project used by the application. Use your usual Supabase/Lovable migration deployment workflow. This adds the `bookings` table, index, and row-level security: workspace members read bookings and creators insert/update their own bookings. Existing tables are preserved.
+Apply `drizzle/migrations/0000_bookings.sql` to the same Supabase project used by the application. Use your usual Lovable database migration deployment workflow. This adds the `bookings` table, index, and row-level security: workspace members read bookings and creators insert/update their own bookings. Existing tables are preserved.
 
 This migration is included in the repository; it has **not** been applied to the hosted project by this change. Without it, the page shows a storage error and invites cannot be sent. Google credentials are never saved to this table.
 
@@ -42,3 +42,7 @@ node_modules/.bin/tsc --noEmit
 The tests cover IST/US date rollover, seasonal offsets, DST gaps/folds, Arizona, duration conflicts, Google error handling, invitation payloads, and retry deduplication. They mock Google requests and do not send real invitations.
 
 After configuration and migration deployment, use a test Google account to confirm an existing busy event disables overlapping slots, then submit a future appointment to a test invitee. Verify the event time in both zones, invitation receipt, and that retrying after a failed status save reuses the same event. Hosted migration, real OAuth consent, and actual invitation delivery require configured access and have not been validated locally.
+
+## Configured deployment
+
+The public Google OAuth client ID is configured in the tracked `.env` as `VITE_GOOGLE_CALENDAR_CLIENT_ID` for `https://grovoke-dialer.lovable.app`. This is a public browser identifier, not a client secret. Register `https://grovoke-dialer.lovable.app` as an Authorized JavaScript origin in this Google OAuth client. Preview origins need separate registration. A deployment environment value with the same name overrides `.env`; ensure any existing override uses the intended client ID. Rebuild and publish in Lovable after syncing this change.
