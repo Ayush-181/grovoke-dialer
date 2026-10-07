@@ -1,7 +1,7 @@
 CREATE TABLE public.bookings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id uuid NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
-  created_by uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_by uuid NOT NULL,
   lead_id uuid REFERENCES public.leads(id) ON DELETE SET NULL,
   title text NOT NULL CHECK (char_length(title) BETWEEN 1 AND 200),
   starts_at timestamptz NOT NULL,
@@ -20,9 +20,9 @@ CREATE TABLE public.bookings (
   UNIQUE (google_account_email, google_event_id)
 );
 CREATE INDEX bookings_workspace_start_idx ON public.bookings(workspace_id, starts_at DESC);
-ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE ON public.bookings TO authenticated;
 GRANT ALL ON public.bookings TO service_role;
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "workspace members read bookings" ON public.bookings FOR SELECT TO authenticated
   USING (public.is_workspace_member(workspace_id, auth.uid()));
 CREATE POLICY "members create own bookings" ON public.bookings FOR INSERT TO authenticated
