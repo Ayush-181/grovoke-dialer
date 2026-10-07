@@ -16,19 +16,19 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
-          invite_from: string | null
-          delivery_method: string
-          email_delivery_status: string
-          gmail_message_id: string | null
           add_meet: boolean
           attendees: string[]
           created_at: string
           created_by: string
+          delivery_method: string
+          email_delivery_status: string
           ends_at: string
+          gmail_message_id: string | null
           google_account_email: string
           google_event_id: string
           google_event_url: string | null
           id: string
+          invite_from: string | null
           lead_id: string | null
           lead_timezone: string
           location: string
@@ -40,19 +40,19 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
-          invite_from?: string | null
-          delivery_method?: string
-          email_delivery_status?: string
-          gmail_message_id?: string | null
           add_meet?: boolean
           attendees?: string[]
           created_at?: string
           created_by: string
+          delivery_method?: string
+          email_delivery_status?: string
           ends_at: string
+          gmail_message_id?: string | null
           google_account_email: string
           google_event_id: string
           google_event_url?: string | null
           id?: string
+          invite_from?: string | null
           lead_id?: string | null
           lead_timezone: string
           location?: string
@@ -64,19 +64,19 @@ export type Database = {
           workspace_id: string
         }
         Update: {
-          invite_from?: string | null
-          delivery_method?: string
-          email_delivery_status?: string
-          gmail_message_id?: string | null
           add_meet?: boolean
           attendees?: string[]
           created_at?: string
           created_by?: string
+          delivery_method?: string
+          email_delivery_status?: string
           ends_at?: string
+          gmail_message_id?: string | null
           google_account_email?: string
           google_event_id?: string
           google_event_url?: string | null
           id?: string
+          invite_from?: string | null
           lead_id?: string | null
           lead_timezone?: string
           location?: string
