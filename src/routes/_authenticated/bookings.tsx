@@ -111,7 +111,7 @@ function BookingsPage() {
             <h2 className="text-sm font-semibold">Google Calendar</h2>
             <p className="text-xs text-muted-foreground">
               {google.email
-                ? `Connected as ${google.email} · primary calendar`
+                ? `Invitations sent as ${google.email} · primary calendar`
                 : "Connect your calendar to check availability and send invitations."}
             </p>
             {!google.configured && (
@@ -128,7 +128,7 @@ function BookingsPage() {
         </div>
         {google.email ? (
           <Button variant="outline" onClick={google.disconnect} disabled={!!retrying}>
-            Disconnect
+            Change account
           </Button>
         ) : (
           <Button

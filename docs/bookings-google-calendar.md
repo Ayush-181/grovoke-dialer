@@ -17,7 +17,7 @@ This migration is included in the repository; it has **not** been applied to the
 5. Set the public client ID as `VITE_GOOGLE_CALENDAR_CLIENT_ID` in deployment/environment settings. For local development, put it in the existing ignored `.env.local` file without overwriting other settings. Restart development or rebuild the deployed app after setting it. The value ends in `.apps.googleusercontent.com`; no client secret is needed or used.
 6. Open Bookings, click **Connect Google Calendar**, choose the account whose primary calendar you want to use, and grant all requested permissions.
 
-The browser uses Google Identity Services’ OAuth token flow. It requests Calendar event permissions, free/busy permissions, and the Google account’s email to identify which calendar is connected. Access tokens live only in memory; they are not written to browser storage or the database. Reconnect after expiry, reloading, or leaving the page. Disconnect revokes the connection.
+The browser uses Google Identity Services’ OAuth token flow. It requests Calendar event permissions, free/busy permissions, and the Google account’s email to identify which calendar is connected. Short-lived access tokens are retained in tab-session storage, scoped to the signed-in app user, so reloading or leaving and returning to Bookings preserves the active connection. They are never stored in the database. Reconnect after token expiry or closing the tab. Automatic renewal across token expiry requires a backend authorization-code flow with securely stored refresh tokens. Disconnect revokes the connection and clears its cached authorization. Signing out of the app also clears the cached Google authorization.
 
 Allow the browser to reach `accounts.google.com` and `www.googleapis.com`. If cloud browser network rules restrict these destinations, add them alongside the existing Supabase domain. Account consent happens in the user’s browser.
 
@@ -46,3 +46,7 @@ After configuration and migration deployment, use a test Google account to confi
 ## Configured deployment
 
 The public Google OAuth client ID is configured in the tracked `.env` as `VITE_GOOGLE_CALENDAR_CLIENT_ID` for `https://grovoke-dialer.lovable.app`. This is a public browser identifier, not a client secret. Register `https://grovoke-dialer.lovable.app` as an Authorized JavaScript origin in this Google OAuth client. Preview origins need separate registration. A deployment environment value with the same name overrides `.env`; ensure any existing override uses the intended client ID. Rebuild and publish in Lovable after syncing this change.
+
+## Professional invitation sender
+
+Google sends invitations from the connected account’s primary calendar. To use a professional Google Workspace email, choose **Change account**, reconnect, and select that Workspace account. Add it to Google OAuth test users if the app is in Testing. A non-Google address or email alias cannot replace the organizer by editing booking details. Use a calendar owned by the professional account or a separate email-delivery integration. Existing bookings remain associated with the account originally used.

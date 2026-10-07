@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  readCalendarSession,
+  GOOGLE_CALENDAR_SESSION_PREFIX,
+  type SavedConnection,
+} from "@/lib/calendar-session";
+import { useAuth } from "@/hooks/useAuth";
 import { GOOGLE_CALENDAR_SCOPES } from "@/lib/google-calendar";
 
 type TokenResponse = { access_token: string; expires_in: number; scope: string; error?: string };
@@ -52,6 +58,18 @@ function loadGoogleIdentity(): Promise<void> {
 }
 
 export function useGoogleCalendar() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const sessionKey = userId ? `${GOOGLE_CALENDAR_SESSION_PREFIX}${userId}` : null;
+  const forgetSession = useCallback(() => {
+    if (sessionKey) {
+      try {
+        sessionStorage.removeItem(sessionKey);
+      } catch {
+        /* Storage can be unavailable in private browsing. */
+      }
+    }
+  }, [sessionKey]);
   const clientId = import.meta.env["VITE_GOOGLE_CALENDAR_CLIENT_ID"] as string | undefined;
   const [ready, setReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -65,8 +83,23 @@ export function useGoogleCalendar() {
   );
 
   useEffect(() => {
-    if (!clientId) return;
+    token.current = null;
+    setEmail(null);
+    setExpiresAt(0);
+    setReady(false);
+    if (!clientId || !sessionKey) return;
     let alive = true;
+    let saved: SavedConnection | null = null;
+    try {
+      saved = readCalendarSession(sessionStorage, sessionKey);
+    } catch {
+      /* Connect still works without storage. */
+    }
+    if (saved) {
+      token.current = saved.token;
+      setEmail(saved.email);
+      setExpiresAt(saved.expiresAt);
+    }
     void loadGoogleIdentity()
       .then(() => {
         if (!alive || !window.google) return;
@@ -104,7 +137,20 @@ export function useGoogleCalendar() {
                 if (!alive || generation.current !== current) return;
                 token.current = response.access_token;
                 setEmail(info.email);
-                setExpiresAt(Date.now() + response.expires_in * 1000 - 30_000);
+                const expiry = Date.now() + response.expires_in * 1000 - 30_000;
+                setExpiresAt(expiry);
+                try {
+                  sessionStorage.setItem(
+                    sessionKey,
+                    JSON.stringify({
+                      token: response.access_token,
+                      email: info.email,
+                      expiresAt: expiry,
+                    }),
+                  );
+                } catch {
+                  /* Current connection remains usable without persistence. */
+                }
                 setError(null);
               })
               .catch((e: unknown) => {
@@ -126,13 +172,14 @@ export function useGoogleCalendar() {
       token.current = null;
       client.current = null;
     };
-  }, [clientId]);
+  }, [clientId, sessionKey]);
 
   useEffect(() => {
     if (!expiresAt) return;
     const timer = setTimeout(
       () => {
         token.current = null;
+        forgetSession();
         setEmail(null);
         setExpiresAt(0);
         setError("Google connection expired. Reconnect to continue booking.");
@@ -140,7 +187,7 @@ export function useGoogleCalendar() {
       Math.max(0, expiresAt - Date.now()),
     );
     return () => clearTimeout(timer);
-  }, [expiresAt]);
+  }, [expiresAt, forgetSession]);
 
   const getToken = useCallback(() => {
     if (!token.current || Date.now() >= expiresAt)
@@ -158,12 +205,13 @@ export function useGoogleCalendar() {
     connect: () => {
       setError(null);
       setConnecting(true);
-      client.current?.requestAccessToken({ prompt: "consent" });
+      client.current?.requestAccessToken({ prompt: "select_account" });
     },
     disconnect: () => {
       generation.current++;
       if (token.current) window.google?.accounts.oauth2.revoke(token.current, () => {});
       token.current = null;
+      forgetSession();
       setEmail(null);
       setExpiresAt(0);
       setError(null);

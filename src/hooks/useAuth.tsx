@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { GOOGLE_CALENDAR_SESSION_PREFIX } from "@/lib/calendar-session";
 import { supabase } from "@/integrations/supabase/client";
 
 type AuthState = {
@@ -56,6 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         initialized,
         signOut: async () => {
+          try {
+            if (session?.user.id)
+              sessionStorage.removeItem(`${GOOGLE_CALENDAR_SESSION_PREFIX}${session.user.id}`);
+          } catch {
+            /* Google session caching may be unavailable. */
+          }
           await supabase.auth.signOut();
         },
       }}
