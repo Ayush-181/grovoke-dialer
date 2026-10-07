@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import { EmbeddedCalendar } from "@/components/EmbeddedCalendar";
 import { supabase } from "@/integrations/supabase/client";
 import {
   bookingInstants,
@@ -139,6 +140,7 @@ function BookingsPage() {
           </Button>
         )}
       </div>
+      <EmbeddedCalendar connectedEmail={google.email} />
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex gap-1 rounded-lg border border-border bg-background p-1">
           {(["upcoming", "past"] as const).map((tab) => (
