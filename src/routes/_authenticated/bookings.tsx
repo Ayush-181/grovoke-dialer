@@ -27,6 +27,7 @@ import {
   overlapsBusy,
 } from "@/lib/booking-time";
 import { calendarBusy } from "@/lib/google-calendar";
+import { bookingErrorMessage } from "@/lib/booking-errors";
 import { deliverBooking } from "@/lib/bookings";
 import { HOME_ZONE, ZONES, deriveLeadZone, toDateTimeLocalValue, zoneDef } from "@/lib/timezones";
 import { cn } from "@/lib/utils";
@@ -514,7 +515,7 @@ function BookingForm({
       );
       close();
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Could not send the invitation.";
+      const message = bookingErrorMessage(e);
       if (saved) {
         close();
         toast.error(`${message} Your booking is saved as pending; use Retry sync to continue.`);
