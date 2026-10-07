@@ -1,6 +1,6 @@
 # Bookings and native Google Calendar invitations
 
-The Bookings tab supports lead lookup or manual appointments, weekday suggestions, custom dates/times, 15/30/45/60-minute durations, invitees, notes, location, and optional Google Meet. Select IST or the invitee’s US timezone as the input timezone. The form shows both full dates and times to avoid scheduling mistakes. DST gaps are rejected and repeated times offer both occurrences.
+The Bookings tab supports lead lookup or manual appointments, weekday suggestions, all 24 hourly slots, custom dates/times, 15/30/45/60-minute durations, invitees, notes, location, and optional Google Meet. Select IST or the invitee’s US timezone as the input timezone. The form shows both full dates and times to avoid scheduling mistakes. Selecting a lead sets the editable invite title to `Ash x {business_name}`. Past times and calendar conflicts remain disabled; the custom time input supports times between the hourly slots. DST gaps are rejected and repeated times offer both occurrences.
 
 ## Invitation delivery
 

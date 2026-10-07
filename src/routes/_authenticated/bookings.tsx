@@ -63,7 +63,7 @@ const US_ZONES = ZONES.filter(
 );
 const selectClass =
   "h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
-const SLOT_TIMES = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00"];
+const SLOT_TIMES = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, "0")}:00`);
 type GoogleConnection = ReturnType<typeof useGoogleCalendar>;
 
 function BookingsPage() {
@@ -446,7 +446,7 @@ function BookingForm({
   close: () => void;
   refresh: () => void;
 }) {
-  const [title, setTitle] = useState("Discovery call");
+  const [title, setTitle] = useState("Ash x Appointment");
   const [lead, setLead] = useState<Tables<"leads"> | null>(null);
   const [search, setSearch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -527,7 +527,7 @@ function BookingForm({
   const selectLead = (selected: Tables<"leads">) => {
     setLead(selected);
     setSearch(selected.business_name);
-    setTitle(`${selected.business_name} · Discovery call`.slice(0, 200));
+    setTitle(`Ash x ${selected.business_name}`.slice(0, 200));
     if (selected.email)
       setEmails((current) => [...new Set([...current, selected.email!.trim().toLowerCase()])]);
     const derived = deriveLeadZone(selected.state, selected.phone);
@@ -818,7 +818,15 @@ function BookingForm({
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            <p className="text-xs text-muted-foreground">
+              All 24 hours in the selected timezone. Past times and calendar conflicts are
+              unavailable.
+            </p>
+            <div
+              role="group"
+              aria-label="Hourly appointment slots"
+              className="grid max-h-64 grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4"
+            >
               {SLOT_TIMES.map((slot) => {
                 const candidate = bookingInstants(`${day}T${slot}`, zone)[0];
                 const unavailable =
