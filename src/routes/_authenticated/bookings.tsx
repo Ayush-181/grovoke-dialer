@@ -161,7 +161,7 @@ function BookingsPage() {
             <h2 className="text-sm font-semibold">Google Calendar</h2>
             <p className="text-xs text-muted-foreground">
               {google.email
-                ? `Invitations sent as ${google.professionalFrom ?? google.email} · calendar: ${google.email}`
+                ? `Invitations sent as ${google.email} · calendar: ${google.email}`
                 : "Connect your calendar to check availability and send invitations."}
             </p>
             {!google.configured && (
@@ -342,10 +342,16 @@ function BookingsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            disabled={!google.email || !!retrying}
+                            disabled={
+                              !google.email || !!retrying || booking.delivery_method === "gmail"
+                            }
                             onClick={() => void retry(booking)}
                           >
-                            {retrying === booking.id ? "Syncing…" : "Retry sync"}
+                            {booking.delivery_method === "gmail"
+                              ? "Legacy email booking"
+                              : retrying === booking.id
+                                ? "Syncing…"
+                                : "Retry sync"}
                           </Button>
                         )
                       )}
@@ -595,8 +601,8 @@ function BookingForm({
           location: location.trim(),
           add_meet: addMeet,
           google_account_email: google.email,
-          invite_from: google.professionalFrom ?? google.email,
-          delivery_method: google.professionalFrom ? "gmail" : "google_calendar",
+          invite_from: google.email,
+          delivery_method: "google_calendar",
           google_event_id: id.replace(/-/g, ""),
         })
         .select("*")
@@ -990,9 +996,7 @@ function BookingForm({
             </div>
             <p className="text-xs text-muted-foreground">
               Add the business contact and teammates. All invitees receive a calendar invitation
-              {google.professionalFrom
-                ? ` from ${google.professionalFrom}.`
-                : " from your Google account."}
+              {" directly from Google Calendar."}
             </p>
           </div>
           <details className="rounded-lg border border-border p-3">

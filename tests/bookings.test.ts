@@ -142,11 +142,26 @@ describe("Google Calendar requests", () => {
     await expect(sendCalendarInvite("test-token", booking)).rejects.toThrow("cancelled");
   });
 });
-test("professional email flow creates a private calendar copy without personal-account notifications", async () => {
+test("legacy email mode cannot create an event or send an invitation", async () => {
+  let requests = 0;
+  mockFetch(() => {
+    requests++;
+    return json({});
+  });
+  await expect(
+    sendCalendarInvite("test-token", { ...booking, delivery_method: "gmail" }),
+  ).rejects.toThrow("disabled");
+  expect(requests).toBe(0);
+});
+test("native invitations contain attendees and omit organizer timezone summaries", async () => {
   mockFetch((url, init) => {
-    expect(url).toContain("sendUpdates=none");
-    expect(JSON.parse(init!.body as string).attendees).toEqual([]);
+    expect(url).toContain("sendUpdates=all");
+    const payload = JSON.parse(init!.body as string);
+    expect(payload.attendees).toEqual([{ email: "guest@example.com" }]);
+    expect(payload.description).toBe("Discovery");
+    expect(payload.description).not.toContain("IST");
+    expect(payload.description).not.toContain("Organizer’s time");
     return json({ id: booking.google_event_id });
   });
-  await sendCalendarInvite("test-token", { ...booking, delivery_method: "gmail" });
+  await sendCalendarInvite("test-token", { ...booking, delivery_method: "google_calendar" });
 });
