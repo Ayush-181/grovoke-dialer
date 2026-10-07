@@ -14,69 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      bookings: {
-        Row: {
-          id: string
-          workspace_id: string
-          created_by: string
-          lead_id: string | null
-          title: string
-          starts_at: string
-          ends_at: string
-          lead_timezone: string
-          attendees: string[]
-          notes: string
-          location: string
-          add_meet: boolean
-          google_account_email: string
-          google_event_id: string
-          google_event_url: string | null
-          meet_url: string | null
-          status: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          workspace_id: string
-          created_by: string
-          lead_id?: string | null
-          title: string
-          starts_at: string
-          ends_at: string
-          lead_timezone: string
-          attendees?: string[]
-          notes?: string
-          location?: string
-          add_meet?: boolean
-          google_account_email: string
-          google_event_id: string
-          google_event_url?: string | null
-          meet_url?: string | null
-          status?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          workspace_id?: string
-          created_by?: string
-          lead_id?: string | null
-          title?: string
-          starts_at?: string
-          ends_at?: string
-          lead_timezone?: string
-          attendees?: string[]
-          notes?: string
-          location?: string
-          add_meet?: boolean
-          google_account_email?: string
-          google_event_id?: string
-          google_event_url?: string | null
-          meet_url?: string | null
-          status?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       calling_sessions: {
         Row: {
           completed_leads: number
