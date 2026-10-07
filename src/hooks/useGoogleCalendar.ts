@@ -5,6 +5,7 @@ import {
   type SavedConnection,
 } from "@/lib/calendar-session";
 import { useAuth } from "@/hooks/useAuth";
+import { GMAIL_INVITE_SCOPES, verifyInviteSender } from "@/lib/gmail-invites";
 import { GOOGLE_CALENDAR_SCOPES } from "@/lib/google-calendar";
 
 type TokenResponse = { access_token: string; expires_in: number; scope: string; error?: string };
@@ -59,6 +60,10 @@ function loadGoogleIdentity(): Promise<void> {
 
 export function useGoogleCalendar() {
   const { user } = useAuth();
+  const professionalFrom = import.meta.env["VITE_BOOKING_INVITE_FROM"] as string | undefined;
+  const scopes = professionalFrom
+    ? `${GOOGLE_CALENDAR_SCOPES} ${GMAIL_INVITE_SCOPES}`
+    : GOOGLE_CALENDAR_SCOPES;
   const userId = user?.id;
   const sessionKey = userId ? `${GOOGLE_CALENDAR_SESSION_PREFIX}${userId}` : null;
   const forgetSession = useCallback(() => {
@@ -91,7 +96,12 @@ export function useGoogleCalendar() {
     let alive = true;
     let saved: SavedConnection | null = null;
     try {
-      saved = readCalendarSession(sessionStorage, sessionKey);
+      saved = readCalendarSession(
+        sessionStorage,
+        sessionKey,
+        Date.now(),
+        professionalFrom ?? "calendar",
+      );
     } catch {
       /* Connect still works without storage. */
     }
@@ -105,7 +115,7 @@ export function useGoogleCalendar() {
         if (!alive || !window.google) return;
         client.current = window.google.accounts.oauth2.initTokenClient({
           client_id: clientId,
-          scope: GOOGLE_CALENDAR_SCOPES,
+          scope: scopes,
           error_callback: () => {
             if (alive) {
               setConnecting(false);
@@ -117,10 +127,7 @@ export function useGoogleCalendar() {
             const current = ++generation.current;
             if (
               response.error ||
-              !window.google?.accounts.oauth2.hasGrantedAllScopes(
-                response,
-                ...GOOGLE_CALENDAR_SCOPES.split(" "),
-              )
+              !window.google?.accounts.oauth2.hasGrantedAllScopes(response, ...scopes.split(" "))
             ) {
               setConnecting(false);
               setError("Allow Calendar access to check availability and send invitations.");
@@ -134,6 +141,8 @@ export function useGoogleCalendar() {
                 if (!r.ok) throw new Error("Could not verify the connected Google account.");
                 const info = (await r.json()) as { email?: string };
                 if (!info.email) throw new Error("Google did not return an account email.");
+                if (professionalFrom)
+                  await verifyInviteSender(response.access_token, professionalFrom);
                 if (!alive || generation.current !== current) return;
                 token.current = response.access_token;
                 setEmail(info.email);
@@ -146,6 +155,7 @@ export function useGoogleCalendar() {
                       token: response.access_token,
                       email: info.email,
                       expiresAt: expiry,
+                      permissionsKey: professionalFrom ?? "calendar",
                     }),
                   );
                 } catch {
@@ -172,7 +182,7 @@ export function useGoogleCalendar() {
       token.current = null;
       client.current = null;
     };
-  }, [clientId, sessionKey]);
+  }, [clientId, sessionKey, professionalFrom, scopes]);
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -197,6 +207,7 @@ export function useGoogleCalendar() {
 
   return {
     configured: !!clientId,
+    professionalFrom,
     ready,
     connecting,
     email,

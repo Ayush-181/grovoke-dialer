@@ -69,6 +69,7 @@ export type CalendarInvite = {
   location: string;
   add_meet: boolean;
   google_event_id: string;
+  delivery_method?: string;
 };
 export type CalendarEvent = {
   id: string;
@@ -87,7 +88,7 @@ export async function sendCalendarInvite(
   try {
     return await googleRequest<CalendarEvent>(
       token,
-      "/calendars/primary/events?sendUpdates=all&conferenceDataVersion=1",
+      `/calendars/primary/events?sendUpdates=${booking.delivery_method === "gmail" ? "none" : "all"}&conferenceDataVersion=1`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -97,7 +98,10 @@ export async function sendCalendarInvite(
           location: booking.location,
           start: { dateTime: booking.starts_at, timeZone: booking.lead_timezone },
           end: { dateTime: booking.ends_at, timeZone: booking.lead_timezone },
-          attendees: booking.attendees.map((email) => ({ email })),
+          attendees:
+            booking.delivery_method === "gmail"
+              ? []
+              : booking.attendees.map((email) => ({ email })),
           ...(booking.add_meet
             ? {
                 conferenceData: {

@@ -1,9 +1,15 @@
 export const GOOGLE_CALENDAR_SESSION_PREFIX = "call-board:google-calendar:";
-export type SavedConnection = { token: string; email: string; expiresAt: number };
+export type SavedConnection = {
+  token: string;
+  email: string;
+  expiresAt: number;
+  permissionsKey?: string;
+};
 export function readCalendarSession(
   storage: Pick<Storage, "getItem" | "removeItem">,
   key: string,
   now = Date.now(),
+  permissionsKey?: string,
 ): SavedConnection | null {
   try {
     const raw = storage.getItem(key);
@@ -17,7 +23,8 @@ export function readCalendarSession(
       typeof saved.expiresAt !== "number" ||
       !Number.isFinite(saved.expiresAt) ||
       saved.expiresAt <= now ||
-      saved.expiresAt > now + 86_400_000
+      saved.expiresAt > now + 86_400_000 ||
+      (permissionsKey !== undefined && saved.permissionsKey !== permissionsKey)
     ) {
       storage.removeItem(key);
       return null;

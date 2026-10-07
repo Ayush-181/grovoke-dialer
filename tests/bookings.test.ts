@@ -142,3 +142,11 @@ describe("Google Calendar requests", () => {
     await expect(sendCalendarInvite("test-token", booking)).rejects.toThrow("cancelled");
   });
 });
+test("professional email flow creates a private calendar copy without personal-account notifications", async () => {
+  mockFetch((url, init) => {
+    expect(url).toContain("sendUpdates=none");
+    expect(JSON.parse(init!.body as string).attendees).toEqual([]);
+    return json({ id: booking.google_event_id });
+  });
+  await sendCalendarInvite("test-token", { ...booking, delivery_method: "gmail" });
+});

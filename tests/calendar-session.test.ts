@@ -51,3 +51,14 @@ test("unavailable storage does not break the booking page", () => {
     ),
   ).toBeNull();
 });
+test("changed sender permissions invalidate the old cached authorization", () => {
+  const store = storage(
+    JSON.stringify({
+      token: "test-token",
+      email: "user@example.com",
+      expiresAt: now + 3600_000,
+      permissionsKey: "calendar",
+    }),
+  );
+  expect(readCalendarSession(store, key, now, "ash@grovoke.com")).toBeNull();
+});

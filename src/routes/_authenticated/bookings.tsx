@@ -111,7 +111,7 @@ function BookingsPage() {
             <h2 className="text-sm font-semibold">Google Calendar</h2>
             <p className="text-xs text-muted-foreground">
               {google.email
-                ? `Invitations sent as ${google.email} · primary calendar`
+                ? `Invitations sent as ${google.professionalFrom ?? google.email} · calendar: ${google.email}`
                 : "Connect your calendar to check availability and send invitations."}
             </p>
             {!google.configured && (
@@ -261,15 +261,28 @@ function BookingsPage() {
                           <Video className="h-3 w-3" /> Join Meet
                         </a>
                       )}
-                      {booking.status === "pending" && booking.created_by === user?.id && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={!google.email || !!retrying}
-                          onClick={() => void retry(booking)}
+                      {booking.status === "pending" &&
+                      ["sending", "uncertain"].includes(booking.email_delivery_status) ? (
+                        <a
+                          href="https://mail.google.com/mail/u/0/#sent"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary"
                         >
-                          {retrying === booking.id ? "Syncing…" : "Retry sync"}
-                        </Button>
+                          Review Gmail Sent mail
+                        </a>
+                      ) : (
+                        booking.status === "pending" &&
+                        booking.created_by === user?.id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!google.email || !!retrying}
+                            onClick={() => void retry(booking)}
+                          >
+                            {retrying === booking.id ? "Syncing…" : "Retry sync"}
+                          </Button>
+                        )
                       )}
                     </div>
                   </td>
@@ -487,6 +500,8 @@ function BookingForm({
           location: location.trim(),
           add_meet: addMeet,
           google_account_email: google.email,
+          invite_from: google.professionalFrom ?? google.email,
+          delivery_method: google.professionalFrom ? "gmail" : "google_calendar",
           google_event_id: id.replace(/-/g, ""),
         })
         .select("*")
@@ -879,8 +894,10 @@ function BookingForm({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Add the business contact and teammates. All invitees receive a Google Calendar
-              invitation.
+              Add the business contact and teammates. All invitees receive a calendar invitation
+              {google.professionalFrom
+                ? ` from ${google.professionalFrom}.`
+                : " from your Google account."}
             </p>
           </div>
           <details className="rounded-lg border border-border p-3">
