@@ -43,6 +43,13 @@
       "when": 1791475200000,
       "tag": "0005_lead_call_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791433296983,
+      "tag": "0006_lead_call_counts",
+      "breakpoints": true
     }
   ]
 }
