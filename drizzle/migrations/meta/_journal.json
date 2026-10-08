@@ -36,6 +36,13 @@
       "when": 1791394214624,
       "tag": "0004_booking_delete_idempotent",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791475200000,
+      "tag": "0005_lead_call_counts",
+      "breakpoints": true
     }
   ]
 }

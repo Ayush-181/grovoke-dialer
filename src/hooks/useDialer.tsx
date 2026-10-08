@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
@@ -155,6 +156,7 @@ class Ringback {
 }
 
 export function DialerProvider({ children }: { children: ReactNode }) {
+  const qc = useQueryClient();
   const { user } = useAuth();
   const { workspace } = useWorkspace();
 
@@ -433,7 +435,7 @@ export function DialerProvider({ children }: { children: ReactNode }) {
           startedAtRef.current = Date.now();
           setStatus(next.mode === "conference" ? "conferencing" : "live");
           const callSid = (call.parameters as Record<string, string>)?.["CallSid"] ?? null;
-          const { data } = await supabase
+          const { data, error: logError } = await supabase
             .from("dial_call_logs")
             .insert({
               workspace_id: workspace.id,
@@ -443,17 +445,20 @@ export function DialerProvider({ children }: { children: ReactNode }) {
               call_sid: callSid,
               phone: to,
               business_name: next.businessName ?? null,
+              direction: "outbound",
               outcome: "dialed",
               called_at: new Date().toISOString(),
             })
             .select("id")
             .single();
           logIdRef.current = data?.id ?? null;
+          if (logError) toast.error("Could not save this call to the call log.");
           if (next.leadId) {
             await supabase
               .from("leads")
               .update({ last_called_at: new Date().toISOString(), status: "in_progress" })
               .eq("id", next.leadId);
+            void qc.invalidateQueries({ queryKey: ["leads"] });
           }
         });
         call.on("disconnect", () => void finalize());
@@ -470,7 +475,7 @@ export function DialerProvider({ children }: { children: ReactNode }) {
         toast.error(e instanceof Error ? e.message : "Could not place the call");
       }
     },
-    [workspace, user, connect, error, finalize],
+    [workspace, user, connect, error, finalize, qc],
   );
 
   const hangup = useCallback(() => {
