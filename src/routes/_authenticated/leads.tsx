@@ -144,15 +144,15 @@ function LeadsPage() {
               <Upload className="mr-1.5 h-3.5 w-3.5" /> Import CSV
             </Button>
             {selected.length > 0 && (
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => setConfirmDelete(selected)}
-              >
+              <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(selected)}>
                 <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete selected ({selected.length})
               </Button>
             )}
-            <Button size="sm" onClick={() => void startSession()} disabled={creating || total === 0}>
+            <Button
+              size="sm"
+              onClick={() => void startSession()}
+              disabled={creating || total === 0}
+            >
               <ListPlus className="mr-1.5 h-3.5 w-3.5" />
               {creating ? "Building…" : "Start session from filter"}
             </Button>
@@ -181,7 +181,7 @@ function LeadsPage() {
         </select>
         <select
           value={filters.outcome ?? ""}
-          onChange={(e) => set({ outcome: e.target.value })}
+          onChange={(e) => set({ outcome: e.target.value, neverCalled: false })}
           className="h-8 rounded border border-border bg-background px-2 text-xs outline-none focus:border-primary"
         >
           <option value="">All outcomes</option>
@@ -207,7 +207,9 @@ function LeadsPage() {
           <input
             type="checkbox"
             checked={!!filters.neverCalled}
-            onChange={(e) => set({ neverCalled: e.target.checked })}
+            onChange={(e) =>
+              set({ neverCalled: e.target.checked, ...(e.target.checked ? { outcome: "" } : {}) })
+            }
             className="accent-[var(--color-primary)]"
           />
           Never called
@@ -232,9 +234,7 @@ function LeadsPage() {
                   type="checkbox"
                   aria-label="Select all leads"
                   checked={allSelected}
-                  onChange={(e) =>
-                    setSelected(e.target.checked ? rows.map((r) => r.id) : [])
-                  }
+                  onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])}
                   className="accent-[var(--color-primary)]"
                 />
               </th>
@@ -336,7 +336,12 @@ function LeadsPage() {
           {total === 0 ? 0 : page * PAGE + 1}–{Math.min(total, (page + 1) * PAGE)} of {total}
         </span>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={page === 0}
+            onClick={() => setPage(page - 1)}
+          >
             Previous
           </Button>
           <Button

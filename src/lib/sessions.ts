@@ -10,8 +10,7 @@ export type LeadFilters = {
 };
 
 /** Applies lead filters to a supabase query builder. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function applyLeadFilters<T extends any>(query: T, filters: LeadFilters): T {
+export function applyLeadFilters<T>(query: T, filters: LeadFilters): T {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q = query as any;
   if (filters.search?.trim()) {
@@ -19,10 +18,11 @@ export function applyLeadFilters<T extends any>(query: T, filters: LeadFilters):
     q = q.or(`business_name.ilike.%${s}%,phone.ilike.%${s}%,city.ilike.%${s}%`);
   }
   if (filters.status) q = q.eq("status", filters.status);
-  if (filters.outcome) q = q.eq("outcome", filters.outcome);
+  // Outcome is a nullable enum: blank outcomes are stored as NULL.
+  if (filters.neverCalled) q = q.is("outcome", null);
+  else if (filters.outcome) q = q.eq("outcome", filters.outcome);
   if (filters.state) q = q.ilike("state", filters.state);
   if (filters.city) q = q.ilike("city", filters.city);
-  if (filters.neverCalled) q = q.eq("call_count", 0);
   return q as T;
 }
 
