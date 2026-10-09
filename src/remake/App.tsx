@@ -14,6 +14,8 @@ import {
   ListFilter,
   ListOrdered,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Moon,
   Phone,
   PhoneOff,
@@ -23,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import { initialState, isDirty, reducer } from "./model";
+import { zones } from "./model";
 import { Modal } from "./components";
 import {
   Overview,
@@ -48,7 +51,7 @@ const navigation = [
 ] as const;
 export type Page = (typeof navigation)[number]["id"];
 const titles: Record<Page, [string, string]> = {
-  overview: ["A clear view of your day.", "Your calling activity, conversations & next steps."],
+  overview: ["A clear view of your month.", "Your calling activity, conversations & next steps."],
   leads: [
     "Good conversations start here.",
     "Find the right businesses and keep every detail close.",
@@ -75,6 +78,7 @@ export function App() {
   );
   const [now, setNow] = useState(() => new Date());
   const [menu, setMenu] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState<(() => void) | null>(null);
   const [navigationError, setNavigationError] = useState("");
@@ -89,6 +93,7 @@ export function App() {
       location.hash = next;
       setPage(next);
       setMenu(false);
+      setNotice("");
     });
   }
   function openLead(id: string) {
@@ -163,7 +168,7 @@ export function App() {
   }, [dirty, page, state.call?.active]);
   const common = { state, dispatch, notify: setNotice, openLead };
   return (
-    <div className="workspace">
+    <div className={`workspace ${collapsed ? "nav-collapsed" : ""}`}>
       <a
         href="#main-content"
         className="skip-link"
@@ -197,6 +202,8 @@ export function App() {
           {navigation.map(({ id, label, icon: Icon }) => (
             <a
               href={`#${id}`}
+              aria-label={label}
+              title={collapsed ? label : undefined}
               key={id}
               className={page === id ? "active" : ""}
               aria-current={page === id ? "page" : undefined}
@@ -249,6 +256,18 @@ export function App() {
             >
               <Menu aria-hidden="true" size={20} />
             </button>
+            <button
+              className="icon-button desktop-menu"
+              aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+              aria-expanded={!collapsed}
+              onClick={() => setCollapsed((value) => !value)}
+            >
+              {collapsed ? (
+                <PanelLeftOpen aria-hidden="true" size={20} />
+              ) : (
+                <PanelLeftClose aria-hidden="true" size={20} />
+              )}
+            </button>
             <span>Workspace</span>
             <ChevronRight aria-hidden="true" size={14} />
             <strong>{navigation.find((n) => n.id === page)?.label}</strong>
@@ -260,7 +279,20 @@ export function App() {
               <strong>{timeAt(now, "Asia/Kolkata")}</strong>
             </div>
             <div className="header-clock">
-              <small>LEAD TIME</small>
+              <label className="header-zone">
+                <span className="sr-only">Lead timezone</span>
+                <select
+                  name="header-lead-zone"
+                  value={state.draft.zone}
+                  onChange={(e) => dispatch({ type: "edit", patch: { zone: e.target.value } })}
+                >
+                  {zones.map((zone) => (
+                    <option key={zone.value} value={zone.value}>
+                      {zone.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <strong>{timeAt(now, state.draft.zone)}</strong>
             </div>
             <button
@@ -280,31 +312,36 @@ export function App() {
           </div>
         </header>
         <main id="main-content" tabIndex={-1} className={`content page-${page}`}>
-          <div className="page-heading">
-            <div>
-              <span className="eyebrow">
-                {page === "overview" ? dateAt(now) : navigation.find((n) => n.id === page)?.label}
-              </span>
-              <h1>{titles[page][0]}</h1>
-              <p>{titles[page][1]}</p>
+          {page !== "dialer" ? (
+            <div className="page-heading">
+              <div>
+                <span className="eyebrow">
+                  {page === "overview" ? dateAt(now) : navigation.find((n) => n.id === page)?.label}
+                </span>
+                <h1>{titles[page][0]}</h1>
+                <p>{titles[page][1]}</p>
+              </div>
+              {page === "overview" && (
+                <button className="button primary" onClick={() => navigate("dialer")}>
+                  <Phone aria-hidden="true" size={16} />
+                  Open dialer
+                  <ArrowRight aria-hidden="true" size={16} />
+                </button>
+              )}
             </div>
-            {page === "overview" && (
-              <button className="button primary" onClick={() => navigate("dialer")}>
-                <Phone aria-hidden="true" size={16} />
-                Open dialer
-                <ArrowRight aria-hidden="true" size={16} />
-              </button>
-            )}
-          </div>
+          ) : (
+            <h1 className="sr-only">Calling workspace</h1>
+          )}
           {page === "overview" && <Overview {...common} navigate={navigate} />}
           {page === "leads" && <LeadsPage {...common} />}
           {page === "dialer" && <Dialer {...common} guarded={guarded} now={now} />}
           {page === "sessions" && (
             <SessionsPage
               {...common}
-              startQueue={(ids) =>
+              now={now}
+              startQueue={(id) =>
                 guarded(() => {
-                  dispatch({ type: "queue", ids });
+                  dispatch({ type: "startSession", id, now: Date.now() });
                   location.hash = "dialer";
                   setPage("dialer");
                 })
@@ -404,7 +441,6 @@ export function App() {
               pending?.();
               setPending(null);
               setNavigationError("");
-              setNotice("Lead saved in this preview.");
             }}
           >
             Save & continue

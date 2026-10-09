@@ -28,8 +28,10 @@ import {
 } from "lucide-react";
 import type { State, Action } from "./model";
 import { zones } from "./model";
-import { Panel, PanelHead, Stat, Empty, Field, Modal } from "./components";
+import { Panel, PanelHead, Empty, Field, Modal } from "./components";
 import { formatDuration, outcomeLabel, outcomeTone, OUTCOMES } from "../lib/outcomes";
+import { MetricsGrid, Funnel, PeriodChart } from "./Analytics";
+import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "./metrics";
 import type { Page } from "./App";
 
 type Props = {
@@ -38,180 +40,117 @@ type Props = {
   notify: (message: string) => void;
   openLead: (id: string) => void;
 };
-const weeklyDials = [22, 25, 24, 28, 35, 26, 24];
-const funnel = [
-  ["Dials", 184, "100%"],
-  ["Pickups", 76, "41%"],
-  ["Conversations", 43, "23%"],
-  ["Offered", 12, "7%"],
-  ["Booked", 7, "4%"],
-] as const;
 export function Overview({ state, navigate }: Props & { navigate: (page: Page) => void }) {
+  const [month, setMonth] = useState(() => dateKey(new Date()).slice(0, 7));
+  const [year, setYear] = useState(() => dateKey(new Date()).slice(0, 4));
+  const logs = inPeriod(state.logs, month);
+  const yearly = inPeriod(state.logs, year);
   return (
     <>
-      <div className="overview-caption">
-        <span className="badge neutral">Sample week · Oct 5–11</span>
-        <span>Illustrative analytics for design review</span>
+      <div className="period-picker">
+        <div>
+          <strong>Monthly overview</strong>
+          <p>Totals from your call log · IST dates</p>
+        </div>
+        <label className="field">
+          <span>Month</span>
+          <input
+            aria-label="Overview month"
+            name="overview-month"
+            type="month"
+            value={month}
+            onChange={(e) => {
+              if (e.target.value) setMonth(e.target.value);
+            }}
+          />
+        </label>
       </div>
-      <div className="stats-grid">
-        <Stat icon={Phone} label="Dials" value="184" change="12%" />
-        <Stat icon={Users} label="Connected" value="43" change="8%" tone="blue" />
-        <Stat icon={CalendarDays} label="Bookings" value="7" change="133%" tone="amber" />
-        <Stat icon={Clock3} label="Talk time" value="2h 12m" change="21%" />
+      <MetricsGrid logs={logs} />
+      <div className="monthly-charts">
+        <Panel>
+          <PanelHead
+            title="Calling activity"
+            subtitle="Dials, connections and appointments by day"
+          />
+          <PeriodChart logs={logs} period={month} />
+        </Panel>
+        <Funnel logs={logs} />
       </div>
-      <div className="dashboard-grid">
-        <Panel className="activity-chart">
-          <PanelHead title="Calling activity" subtitle="Every conversation starts with a dial" />
-          <div className="chart-legend">
-            <span>
-              <i className="series-blue" />
-              Dials
-            </span>
-            <span>
-              <i className="series-jade" />
-              Connected
-            </span>
-            <span>
-              <i className="series-amber" />
-              Bookings
-            </span>
+      <details className="annual-summary panel">
+        <summary>
+          Yearly summary <span>Explore a full year</span>
+        </summary>
+        <div className="annual-content">
+          <label className="field">
+            <span>Year</span>
+            <select
+              aria-label="Overview year"
+              name="overview-year"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
+              {Array.from({ length: 5 }, (_, i) =>
+                String(Number(dateKey(new Date()).slice(0, 4)) - i),
+              ).map((value) => (
+                <option key={value}>{value}</option>
+              ))}
+            </select>
+          </label>
+          <div className="annual-totals">
+            <strong>{metrics(yearly).dials} dials</strong>
+            <strong>{metrics(yearly).connected} connected</strong>
+            <strong>{metrics(yearly).triage} triage held</strong>
+            <strong>{metrics(yearly).offered} offered</strong>
+            <strong>{metrics(yearly).booked} booked</strong>
+            <strong>{formatDuration(metrics(yearly).talk)} talk time</strong>
+            <strong>{metrics(yearly).callbacks} callbacks</strong>
+            <strong>{metrics(yearly).connectionRate}% connection rate</strong>
           </div>
-          <figure
-            className="chart-figure"
-            aria-label="Sample calling activity: 184 dials, 43 connections and 7 bookings over seven days"
-          >
-            <div className="bar-chart">
-              <div className="chart-axis">
-                {[40, 30, 20, 10, 0].map((n) => (
-                  <span key={n}>{n}</span>
-                ))}
-              </div>
-              <div className="chart-columns">
-                {weeklyDials.map((n, i) => (
-                  <div className="chart-day" key={i}>
-                    <div className="bar-group">
-                      <span
-                        className="bar series-blue"
-                        style={{ height: `${(n / 40) * 100}%` }}
-                        title={`${n} dials`}
-                      />
-                      <span
-                        className="bar series-jade"
-                        style={{ height: `${([5, 7, 4, 6, 9, 7, 5][i]! / 40) * 100}%` }}
-                      />
-                      <span
-                        className="bar series-amber"
-                        style={{ height: `${([1, 1, 0, 1, 2, 1, 1][i]! / 40) * 100}%` }}
-                      />
-                    </div>
-                    <small>
-                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i]}
-                      <span>Oct {5 + i}</span>
-                    </small>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <figcaption>Connections, not just activity. Keep building your momentum.</figcaption>
-          </figure>
-        </Panel>
-        <Panel className="funnel-panel">
-          <PanelHead title="Booking funnel" subtitle="From first dial to next steps" />
-          <div className="funnel">
-            {funnel.map(([label, count, percent], i) => (
-              <div className="funnel-row" key={label}>
-                <div className="funnel-stage">
-                  <svg
-                    viewBox="0 0 100 44"
-                    role="img"
-                    aria-label={`${label}: ${count}, ${percent} of dials`}
-                    style={{ width: `${100 - i * 13}%` }}
-                  >
-                    <path
-                      className={`funnel-fill stage-${i}`}
-                      d="M5 0 H95 Q100 0 98 6 L86 40 Q85 44 80 44 H20 Q15 44 14 40 L2 6 Q0 0 5 0 Z"
-                    />
-                  </svg>
-                </div>
-                <strong className="mono">{count}</strong>
-                <span>{label}</span>
-                <small>{percent}</small>
-              </div>
-            ))}
-          </div>
-          <p className="funnel-note">
-            <span className="status-dot" />
-            3.8% of dials become bookings
-          </p>
-        </Panel>
-        <Panel className="appointments-panel">
+          <PeriodChart logs={yearly} period={year} annual />
+        </div>
+      </details>
+      <div className="overview-bottom">
+        <Panel>
           <PanelHead
             title="Upcoming appointments"
-            subtitle="Your next conversations"
             action={
               <button className="text-button" onClick={() => navigate("bookings")}>
-                View all
-                <ArrowRight aria-hidden="true" size={14} />
+                View all <ArrowRight aria-hidden="true" size={16} />
               </button>
             }
           />
           <div className="appointments-list">
-            {state.bookings.slice(0, 3).map((b) => (
-              <button className="appointment" key={b.id} onClick={() => navigate("bookings")}>
-                <span className="appointment-icon">
-                  <CalendarDays aria-hidden="true" size={19} />
-                </span>
+            {state.bookings.slice(0, 3).map((booking) => (
+              <button className="appointment" key={booking.id} onClick={() => navigate("bookings")}>
+                <CalendarDays aria-hidden="true" size={20} />
                 <span>
-                  <strong>{state.leads.find((l) => l.id === b.leadId)?.business ?? b.title}</strong>
-                  <small>{b.title}</small>
-                  <span>
-                    {dateAt(b.at, b.zone)} · {timeAt(b.at, b.zone)}
-                  </span>
+                  <strong>{booking.title}</strong>
+                  <small>
+                    {dateAt(booking.at, booking.zone)} · {timeAt(booking.at, booking.zone)}
+                  </small>
                 </span>
-                <ChevronRight aria-hidden="true" size={15} />
+                <ChevronRight aria-hidden="true" size={16} />
               </button>
             ))}
           </div>
-          <div className="next-step">
-            <div>
-              <small>A GOOD NEXT STEP</small>
-              <strong>{state.leads.filter((l) => l.callback).length} lead worth a callback</strong>
-              <p>A follow-up can make all the difference.</p>
-            </div>
-            <button className="button" onClick={() => navigate("leads")}>
-              Review leads
-              <ArrowRight aria-hidden="true" size={14} />
-            </button>
-          </div>
         </Panel>
-      </div>
-      <div className="overview-bottom">
         <Panel>
           <PanelHead
-            title="A queue ready for your next session"
-            subtitle={`${state.leads.filter((l) => !l.outcome).length} untouched businesses to get to know`}
+            title="Your next calling session"
+            subtitle={`${state.leads.filter((lead) => !lead.outcome).length} leads with no outcome`}
           />
           <div className="session-preview">
-            <span className="stat-icon jade">
-              <ListOrdered aria-hidden="true" size={22} />
-            </span>
+            <ListOrdered aria-hidden="true" size={24} />
             <div>
-              <strong>Local businesses · First touch</strong>
-              <p>Take one lead at a time. Save before moving on.</p>
+              <strong>
+                {state.leads.filter((lead) => lead.callback).length} leads worth a callback
+              </strong>
+              <p>Review, call, then Save & next.</p>
             </div>
-            <button className="button primary" onClick={() => navigate("dialer")}>
-              Start calling
-              <ArrowRight aria-hidden="true" size={15} />
+            <button className="button primary" onClick={() => navigate("sessions")}>
+              View sessions <ArrowRight aria-hidden="true" size={16} />
             </button>
           </div>
-        </Panel>
-        <Panel className="quiet-card">
-          <ShieldCheck aria-hidden="true" size={24} />
-          <h2>Your original workspace stays safe.</h2>
-          <p>
-            This preview uses synthetic leads and simulated services. Your Lovable app stays
-            separate.
-          </p>
         </Panel>
       </div>
     </>
@@ -519,7 +458,8 @@ export function SessionsPage({
   dispatch,
   notify,
   startQueue,
-}: Props & { startQueue: (ids: string[]) => void }) {
+  now,
+}: Props & { startQueue: (id: string) => void; now: Date }) {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [filter, setFilter] = useState("new");
@@ -546,7 +486,7 @@ export function SessionsPage({
                   <ListOrdered aria-hidden="true" size={22} />
                 </span>
                 <span className="badge neutral">
-                  {s.paused ? "Paused" : completed === s.leadIds.length ? "Complete" : "Ready"}
+                  {s.status[0]!.toUpperCase() + s.status.slice(1)}
                 </span>
               </div>
               <h2>{s.name}</h2>
@@ -566,26 +506,90 @@ export function SessionsPage({
                   }}
                 />
               </div>
+              <div className="session-totals">
+                <div>
+                  <span>Session time</span>
+                  <strong className="mono" aria-label={`${s.name} session time`}>
+                    {sessionTime(sessionElapsed(s, now.getTime()))}
+                  </strong>
+                </div>
+                <div>
+                  <span>Talk time</span>
+                  <strong className="mono">
+                    {formatDuration(
+                      metrics(state.logs.filter((log) => log.sessionId === s.id)).talk,
+                    )}
+                  </strong>
+                </div>
+                <div>
+                  <span>Calls</span>
+                  <strong className="mono">
+                    {state.logs.filter((log) => log.sessionId === s.id).length}
+                  </strong>
+                </div>
+              </div>
               <div className="session-card-actions">
-                <button
-                  className="button"
-                  onClick={() => dispatch({ type: "pauseSession", id: s.id })}
-                >
-                  {s.paused ? (
-                    <Play aria-hidden="true" size={15} />
-                  ) : (
-                    <Pause aria-hidden="true" size={15} />
-                  )}
-                  {s.paused ? "Resume" : "Pause"}
-                </button>
-                <button
-                  className="button primary"
-                  disabled={Boolean(state.call?.active) || !s.leadIds.length || s.paused}
-                  onClick={() => startQueue(s.leadIds)}
-                >
-                  Open queue
-                  <ArrowRight aria-hidden="true" size={15} />
-                </button>
+                {s.status === "running" ? (
+                  <>
+                    <button
+                      className="button"
+                      disabled={Boolean(state.call?.active)}
+                      onClick={() =>
+                        dispatch({
+                          type: "setSessionStatus",
+                          id: s.id,
+                          status: "paused",
+                          now: now.getTime(),
+                        })
+                      }
+                    >
+                      <Pause aria-hidden="true" size={16} />
+                      Pause
+                    </button>
+                    <button
+                      className="button"
+                      onClick={() => {
+                        if (state.call?.active) dispatch({ type: "end", at: now.toISOString() });
+                        dispatch({
+                          type: "setSessionStatus",
+                          id: s.id,
+                          status: "stopped",
+                          now: now.getTime(),
+                        });
+                      }}
+                    >
+                      Stop session
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="button primary"
+                    disabled={
+                      Boolean(state.call?.active) ||
+                      !s.leadIds.length ||
+                      Boolean(state.activeSessionId && state.activeSessionId !== s.id)
+                    }
+                    onClick={() => startQueue(s.id)}
+                  >
+                    <Play aria-hidden="true" size={16} />
+                    {s.status === "paused" ? "Resume session" : "Start session"}
+                  </button>
+                )}
+                {s.status === "paused" && (
+                  <button
+                    className="button"
+                    onClick={() =>
+                      dispatch({
+                        type: "setSessionStatus",
+                        id: s.id,
+                        status: "stopped",
+                        now: now.getTime(),
+                      })
+                    }
+                  >
+                    Stop session
+                  </button>
+                )}
               </div>
             </Panel>
           );
@@ -613,7 +617,15 @@ export function SessionsPage({
             }
             dispatch({
               type: "session",
-              session: { id: crypto.randomUUID(), name, leadIds: ids, paused: false },
+              session: {
+                id: crypto.randomUUID(),
+                name,
+                leadIds: ids,
+                paused: false,
+                status: "ready",
+                elapsedMs: 0,
+                startedAt: null,
+              },
             });
             setCreating(false);
             setName("");
@@ -653,10 +665,12 @@ export function SessionsPage({
 }
 
 export function ActivityPage({ state, openLead }: Props) {
+  const [day, setDay] = useState(() => dateKey(new Date()));
+  const daily = inPeriod(state.logs, day);
   const [search, setSearch] = useState("");
   const [recordings, setRecordings] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
-  const visible = state.logs.filter(
+  const visible = daily.filter(
     (l) =>
       (!recordings || l.recording) &&
       `${state.leads.find((lead) => lead.id === l.leadId)?.business ?? "Deleted lead"} ${l.notes} ${outcomeLabel(l.outcome)}`
@@ -666,28 +680,30 @@ export function ActivityPage({ state, openLead }: Props) {
   const log = state.logs.find((l) => l.id === detail);
   return (
     <>
-      <div className="stats-grid activity-stats">
-        <Stat
-          icon={Phone}
-          label="Calls in this preview"
-          value={String(state.logs.length)}
-          change="Demo"
-        />
-        <Stat
-          icon={Clock3}
-          label="Recorded talk time"
-          value={formatDuration(state.logs.reduce((n, l) => n + l.seconds, 0))}
-          change="Demo"
-          tone="blue"
-        />
-        <Stat
-          icon={RotateCcw}
-          label="Worth a callback"
-          value={String(state.leads.filter((l) => l.callback).length)}
-          change="Demo"
-          tone="amber"
-        />
+      <div className="period-picker">
+        <div>
+          <strong>Daily activity / Call log</strong>
+          <p>All calls and metrics for the selected day · IST</p>
+        </div>
+        <div className="date-controls">
+          <label className="field">
+            <span>Day</span>
+            <input
+              name="activity-date"
+              aria-label="Activity date"
+              type="date"
+              value={day}
+              onChange={(e) => {
+                if (e.target.value) setDay(e.target.value);
+              }}
+            />
+          </label>
+          <button className="button" onClick={() => setDay(dateKey(new Date()))}>
+            Today
+          </button>
+        </div>
       </div>
+      <MetricsGrid logs={daily} detailed />
       <Panel>
         <div className="filters">
           <label className="search">
@@ -765,7 +781,7 @@ export function ActivityPage({ state, openLead }: Props) {
         {!visible.length && (
           <Empty
             title="No calls match"
-            description="Change your search or make a simulated call from the dialer."
+            description="Choose another day, change your search, or make a simulated call."
           />
         )}
       </Panel>

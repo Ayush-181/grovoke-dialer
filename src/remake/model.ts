@@ -22,6 +22,7 @@ export type Lead = {
   offered: boolean;
 };
 export type Call = {
+  at: string;
   id: string;
   leadId: string;
   active: boolean;
@@ -32,6 +33,11 @@ export type Call = {
   digits: string;
 };
 export type Log = {
+  triage: boolean;
+  offered: boolean;
+  booked: boolean;
+  callback: boolean;
+  sessionId: string | null;
   id: string;
   leadId: string;
   at: string;
@@ -51,7 +57,15 @@ export type Booking = {
   notes: string;
   meet: boolean;
 };
-export type Session = { id: string; name: string; leadIds: string[]; paused: boolean };
+export type Session = {
+  id: string;
+  name: string;
+  leadIds: string[];
+  paused: boolean;
+  status: "ready" | "running" | "paused" | "stopped";
+  elapsedMs: number;
+  startedAt: number | null;
+};
 export type State = {
   preferences: { workspaceName: string; displayName: string; email: string; microphone: string };
   leads: Lead[];
@@ -64,6 +78,7 @@ export type State = {
   sessions: Session[];
   queueIds: string[];
   queueComplete: boolean;
+  activeSessionId: string | null;
 };
 export const zones = [
   { value: "America/New_York", label: "Eastern · ET" },
@@ -131,11 +146,16 @@ export function initialState(): State {
     logs: [1, 4, 6].map((i) => ({
       id: `history-${i}`,
       leadId: leads[i]!.id,
-      at: "2026-10-08T17:00:00Z",
+      at: new Date(Date.now() - (i === 4 ? 86_400_000 : 0)).toISOString(),
       seconds: i === 6 ? 45 : 134,
       outcome: leads[i]!.outcome,
       notes: i === 4 ? "Try again after lunch." : "",
       recording: false,
+      triage: i === 1,
+      offered: false,
+      booked: false,
+      callback: i === 4,
+      sessionId: null,
     })),
     bookings: [
       {
@@ -156,10 +176,14 @@ export function initialState(): State {
         name: "Local businesses · First touch",
         leadIds: leads.filter((l) => !l.outcome).map((l) => l.id),
         paused: false,
+        status: "ready",
+        elapsedMs: 0,
+        startedAt: null,
       },
     ],
     queueIds: leads.map((l) => l.id),
     queueComplete: false,
+    activeSessionId: null,
   };
 }
 
@@ -174,7 +198,7 @@ export type Action =
   | { type: "select"; id: string }
   | { type: "discard" }
   | { type: "save"; next?: boolean }
-  | { type: "dial"; id: string }
+  | { type: "dial"; id: string; at?: string }
   | { type: "end"; at: string }
   | { type: "tick" }
   | { type: "mute" }
@@ -184,7 +208,9 @@ export type Action =
   | { type: "booking"; booking: Booking }
   | { type: "deleteBooking"; id: string }
   | { type: "session"; session: Session }
-  | { type: "pauseSession"; id: string }
+  | { type: "startSession"; id: string; now: number }
+  | { type: "setSessionStatus"; id: string; status: "paused" | "stopped"; now: number }
+  | { type: "milestone"; kind: "triage" | "offered" | "booked"; enabled: boolean }
   | { type: "import"; leads: Lead[] }
   | { type: "deleteLeads"; ids: string[] }
   | { type: "preferences"; patch: Partial<State["preferences"]> }
@@ -215,7 +241,12 @@ export function reducer(state: State, action: Action): State {
       const leads = state.leads.map((l) => (l.id === state.selectedId ? { ...state.draft } : l));
       const logs = state.logs.map((l) =>
         l.id === state.call?.id && l.leadId === state.selectedId
-          ? { ...l, outcome: state.draft.outcome, notes: state.draft.notes }
+          ? {
+              ...l,
+              outcome: state.draft.outcome,
+              notes: state.draft.notes,
+              callback: state.draft.callback,
+            }
           : l,
       );
       const index = state.queueIds.indexOf(state.selectedId);
@@ -234,6 +265,9 @@ export function reducer(state: State, action: Action): State {
     case "dial": {
       if (
         state.call?.active ||
+        state.sessions.some(
+          (session) => session.id === state.activeSessionId && session.status === "paused",
+        ) ||
         state.draft.outcome === "do_not_call" ||
         state.leads.find((lead) => lead.id === state.selectedId)?.outcome === "do_not_call"
       )
@@ -244,7 +278,25 @@ export function reducer(state: State, action: Action): State {
           l.id === state.selectedId ? { ...l, calls: l.calls + 1 } : l,
         ),
         draft: { ...state.draft, calls: state.draft.calls + 1 },
+        logs: [
+          {
+            id: action.id,
+            leadId: state.selectedId,
+            at: action.at ?? new Date().toISOString(),
+            seconds: 0,
+            outcome: "",
+            notes: "",
+            recording: state.recordingEnabled,
+            triage: false,
+            offered: false,
+            booked: false,
+            callback: false,
+            sessionId: state.activeSessionId,
+          },
+          ...state.logs,
+        ],
         call: {
+          at: action.at ?? new Date().toISOString(),
           id: action.id,
           leadId: state.selectedId,
           active: true,
@@ -261,23 +313,20 @@ export function reducer(state: State, action: Action): State {
       return {
         ...state,
         call: { ...state.call, active: false },
-        logs: [
-          {
-            id: state.call.id,
-            leadId: state.call.leadId,
-            at: action.at,
-            seconds: state.call.seconds,
-            outcome: "",
-            notes: "",
-            recording: state.call.recording,
-          },
-          ...state.logs,
-        ],
+        logs: state.logs.map((log) =>
+          log.id === state.call?.id ? { ...log, seconds: state.call!.seconds } : log,
+        ),
       };
     }
     case "tick":
       return state.call?.active
-        ? { ...state, call: { ...state.call, seconds: state.call.seconds + 1 } }
+        ? {
+            ...state,
+            call: { ...state.call, seconds: state.call.seconds + 1 },
+            logs: state.logs.map((log) =>
+              log.id === state.call?.id ? { ...log, seconds: state.call!.seconds + 1 } : log,
+            ),
+          }
         : state;
     case "mute":
       return state.call?.active
@@ -307,16 +356,105 @@ export function reducer(state: State, action: Action): State {
     case "preferences":
       return { ...state, preferences: { ...state.preferences, ...action.patch } };
     case "booking":
-      return { ...state, bookings: [...state.bookings, action.booking] };
+      return {
+        ...state,
+        bookings: [...state.bookings, action.booking],
+        logs: state.logs.map((log) =>
+          log.id === state.call?.id && log.leadId === action.booking.leadId
+            ? { ...log, booked: true }
+            : log,
+        ),
+      };
     case "deleteBooking":
       return { ...state, bookings: state.bookings.filter((b) => b.id !== action.id) };
     case "session":
       return { ...state, sessions: [...state.sessions, action.session] };
-    case "pauseSession":
+    case "milestone": {
+      if (!state.call || state.call.leadId !== state.selectedId) return state;
+      const outcome =
+        action.kind === "booked"
+          ? action.enabled
+            ? "appointment_set"
+            : state.draft.outcome === "appointment_set"
+              ? ""
+              : state.draft.outcome
+          : state.draft.outcome;
       return {
         ...state,
-        sessions: state.sessions.map((s) => (s.id === action.id ? { ...s, paused: !s.paused } : s)),
+        draft: {
+          ...state.draft,
+          outcome,
+          ...(action.kind === "triage"
+            ? { triage: action.enabled }
+            : action.kind === "offered"
+              ? { offered: action.enabled }
+              : {}),
+        },
+        logs: state.logs.map((log) =>
+          log.id === state.call?.id
+            ? {
+                ...log,
+                [action.kind]: action.enabled,
+                ...(action.kind === "booked"
+                  ? {
+                      outcome: action.enabled
+                        ? "appointment_set"
+                        : log.outcome === "appointment_set"
+                          ? ""
+                          : log.outcome,
+                    }
+                  : {}),
+              }
+            : log,
+        ),
       };
+    }
+    case "startSession": {
+      const session = state.sessions.find((item) => item.id === action.id);
+      if (
+        !session ||
+        state.call?.active ||
+        (isDirty(state) && state.activeSessionId !== session.id) ||
+        (state.activeSessionId && state.activeSessionId !== session.id)
+      )
+        return state;
+      const lead = state.leads.find((item) => item.id === session.leadIds[0]);
+      if (!lead) return state;
+      const alreadyOpen = state.activeSessionId === session.id;
+      return {
+        ...state,
+        activeSessionId: session.id,
+        queueIds: session.leadIds,
+        ...(alreadyOpen ? {} : { selectedId: lead.id, draft: { ...lead }, call: null }),
+        sessions: state.sessions.map((item) =>
+          item.id === session.id && item.status !== "running"
+            ? { ...item, paused: false, status: "running", startedAt: action.now }
+            : item,
+        ),
+      };
+    }
+    case "setSessionStatus": {
+      return {
+        ...state,
+        activeSessionId:
+          action.status === "stopped" && state.activeSessionId === action.id
+            ? null
+            : state.activeSessionId,
+        sessions: state.sessions.map((item) =>
+          item.id === action.id
+            ? {
+                ...item,
+                status: action.status,
+                paused: action.status === "paused",
+                elapsedMs:
+                  item.elapsedMs +
+                  (item.startedAt === null ? 0 : Math.max(0, action.now - item.startedAt)),
+                startedAt: null,
+              }
+            : item,
+        ),
+      };
+    }
     case "import": {
       const seen = new Set(state.leads.map((lead) => lead.phone));
       const added = action.leads.filter((lead) => {

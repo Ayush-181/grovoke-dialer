@@ -41,10 +41,14 @@ the recording preference are the only saved local settings. No audio is captured
   remembered manual choice thereafter. Native controls and chart colors adapt.
 - Charts use slate blue, teal, jade, ochre and terracotta. Text, legends, stage
   values and percentages carry meaning alongside color. The funnel keeps its
-  downward tapering trapezoids.
+  downward taper as one contiguous SVG, with shared edges between stages.
 - Three-column calling workspace: searchable queue left, lead context and
-  editable **ASK FOR** center, call controls and outcomes right. Tablet and mobile
-  layouts stack these sections while keeping navigation and save actions reachable.
+  editable **ASK FOR** and call/save controls center, outcomes and milestones right.
+  The global sidebar and lead queue collapse independently. Desktop/tablet keep
+  the center and outcome panels visible without internal scrolling; only the lead
+  queue scrolls. On shorter desktop screens, expanded contact/callback editors
+  stay anchored over their section so they do not push the call controls below
+  the viewport. Narrow phones stack panels with normal page scrolling.
 - Visible focus, labelled controls, reduced motion, dialog focus management,
   scrollable tables, draft navigation warnings and explicit do-not-call protection.
 - Existing React/Radix/lucide stack. The font stack prefers Manrope/Inter with
@@ -54,16 +58,24 @@ the recording preference are the only saved local settings. No audio is captured
 ## Calling flow
 
 1. Pick a lead or open a session queue. Navigation never starts a call.
-2. Edit the business, timezone and **ASK FOR** name, role, direct number and email.
+2. Edit **ASK FOR** name and role; expand it for direct number and email.
+   Override the lead timezone in the header, beside its live clock.
 3. Explicitly start a simulated dial. The counter increments once per attempt.
 4. Mute, send keypad digits, add/remove simulated teammates, or end the conference.
    Removing a teammate leaves the original call active. Hang-up stays visible.
-5. Choose an outcome and capture notes. Editing never advances or persists silently.
+5. Choose an outcome and capture notes. Editing never advances. **Triage held**,
+   **Appointment offered**, and **Appointment booked** update the current attempt’s
+   metrics immediately. They require an actual simulated dial, and a call with
+   overlapping milestones or a connected outcome counts only once in Connected.
+   Other lead/contact edits still require Save. Milestones remain recorded if
+   unsaved contact edits are discarded.
 6. Toggle **Worth a callback**, optionally adding lead-local date/time and reason.
    This stays separate from the actual call outcome and creates no automatic call.
 7. **Save** persists the draft without moving. **Save & next** persists it and opens
    the next lead without dialing. **Previous** revisits earlier leads. Save/advance
    are disabled during an active call. At the final lead, the queue completes.
+   These controls live inside the main dialer, without a hovering footer. End call
+   and Save use inline feedback and show no popup/toast.
 8. Leaving an edited lead prompts Keep editing / Discard & continue / Save & continue.
    The browser also warns before reloading a dirty draft or active simulated call.
 
@@ -76,17 +88,27 @@ mock state adapter. They do not access a device, microphone, phone number or SDK
 
 | Screen     | Interactive preview                                                                                                                                                                              |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Overview   | Sample weekly metrics, colored activity chart/funnel, upcoming demo bookings, navigation                                                                                                         |
+| Overview   | Selectable monthly metrics derived from the mock call log, contiguous colored funnel, daily chart, secondary expandable yearly summary, upcoming demo bookings                                   |
 | Leads      | Search, outcomes, never-called (blank outcome), callbacks, selection, confirmed deletion, synthetic CSV mapping/import                                                                           |
-| Dialer     | Approved calling flow, ASK FOR, notes/history, timezone, callback flag, recording indicator, mock conference and keypad                                                                          |
-| Sessions   | Create a named queue, choose new/callback/all eligible leads, pause/resume, progress, open a queue                                                                                               |
-| Activity   | Mock call history, outcomes, notes, durations and recording indicators                                                                                                                           |
+| Dialer     | Compact three-column calling flow, collapsible queue/ASK FOR, inline call/save controls, milestone buttons, callback flag, mock conference/keypad                                                |
+| Sessions   | Create a named queue, Start/Pause/Resume/Stop, elapsed working time (excluding pauses), talk time, calls, progress                                                                               |
+| Activity   | Daily metrics and date selection in IST, filtered call log, outcomes, notes, durations and recording indicators                                                                                  |
 | Bookings   | Editable `Ash x {business}` title, all 24 hourly slots, arbitrary time, duration, guests, notes/location/Meet, IST/US conversion, DST gap/fold handling, conflict checking, record-only deletion |
 | Time Zones | Live clocks and comparing a chosen IST instant across US zones, including Arizona                                                                                                                |
 | Settings   | Recording toggle, microphone preference, Day/Night, demo profile, integration setup explanation                                                                                                  |
 
-Analytics are **illustrative sample-week fixtures**, separate from the small demo
-queue; they do not claim to aggregate a real workspace. No invitation is sent.
+Analytics aggregate the **same synthetic call records** shown in Activity. Dials
+are logged at attempt start; durations update while the call runs. Daily, monthly
+and annual periods use IST calendar dates and the attempt’s start timestamp.
+An empty period shows zero, and overlapping milestones never duplicate a call
+in Connected. Deleting a booking record does not erase its call milestone.
+
+Starting a session opens its queue and starts the session timer without dialing.
+Pause freezes elapsed time and blocks dialing; Resume keeps the selected lead
+and its draft. Stop ends any active mock call and freezes elapsed time. A session
+counts only attempts started while it is active; talk time sums those attempts.
+Only one session can run at once. Restarting a stopped session retains its
+cumulative elapsed total. Reload clears all demo sessions. No invitation is sent.
 The original native Google Calendar invitation delivery is retained in the original
 app; a Gmail alias still cannot change the Google Calendar organizer.
 
@@ -118,7 +140,9 @@ as expected; all other sockets fail the check. No microphone permission is grant
 
 The smoke covers explicit save behavior, Previous, navigation drafts, saved ASK FOR,
 callbacks, call counts, recording snapshots, conference/mute/keypad, 24 hourly
-slots, bookings, sessions, keyboard focus, and every screen at 1280/768/390px.
+slots, bookings, session timers, milestone aggregation, IST period filters,
+collapsible navigation/queue/contact details, desktop scroll containment, keyboard
+focus, and every screen at 1280/768/390px.
 Screenshots are synthetic and remain ignored under `.playwright-cli`.
 
 Do not read dotenv, attach to an authenticated browser, enable live integrations,

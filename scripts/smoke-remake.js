@@ -33,10 +33,10 @@ async (page) => {
     }
     socket.close();
   });
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${origin}/remake/index.html`);
   try {
-    await page.getByRole("heading", { name: "A clear view of your day." }).waitFor();
+    await page.getByRole("heading", { name: "A clear view of your month." }).waitFor();
   } catch {
     throw new Error(
       "Preview failed to start. Browser errors: " +
@@ -45,6 +45,17 @@ async (page) => {
         forbidden.join("; "),
     );
   }
+  check(
+    !(await page.locator(".annual-summary").evaluate((element) => element.open)),
+    "Annual summary should start collapsed",
+  );
+  const month = await page.getByLabel("Overview month").inputValue();
+  await page.getByLabel("Overview month").fill("2025-01");
+  check(
+    (await page.locator('[data-metric="Dials"]').textContent()) === "0",
+    "Empty month kept stale totals",
+  );
+  await page.getByLabel("Overview month").fill(month);
   await page.screenshot({ path: ".playwright-cli/remake-overview-day.png", fullPage: true });
   await page.getByRole("button", { name: "Switch to night mode" }).click();
   await page.waitForTimeout(200);
@@ -62,6 +73,22 @@ async (page) => {
   await nav("Settings").click();
   await page.getByRole("switch", { name: "Automatically record calls" }).click();
   await nav("Dialer").click();
+  await page.getByRole("button", { name: "Collapse navigation", exact: true }).click();
+  check(await nav("Activity").isVisible(), "Collapsed navigation lost destinations");
+  await page.getByRole("button", { name: "Expand navigation", exact: true }).click();
+  await page.getByRole("button", { name: "Hide lead list", exact: true }).click();
+  check((await page.locator(".queue-panel").count()) === 0, "Lead list did not collapse");
+  await page.getByRole("button", { name: "Show lead list", exact: true }).click();
+  check(
+    (await page.getByLabel("Email", { exact: true }).count()) === 0,
+    "Contact details should start collapsed",
+  );
+  await page.getByRole("button", { name: /ASK FOR/ }).click();
+  check(
+    await page.getByLabel("Email", { exact: true }).isVisible(),
+    "Contact expansion lost editable fields",
+  );
+  await page.getByRole("button", { name: /ASK FOR/ }).click();
   await page.getByRole("button", { name: "Dial · simulated" }).click();
   check(
     await page.getByRole("button", { name: "Save & next", exact: true }).isDisabled(),
@@ -75,6 +102,42 @@ async (page) => {
     await page.getByRole("button", { name: "Unmute", exact: true }).isVisible(),
     "Mute state did not change",
   );
+  const fits = async () =>
+    await page.evaluate(() => ({
+      page: document.documentElement.scrollHeight <= innerHeight + 1,
+      panels: [...document.querySelectorAll(".lead-panel,.outcome-panel")].map((el) => ({
+        name: el.className,
+        fits: el.scrollHeight <= el.clientHeight + 1,
+        bottom: el.getBoundingClientRect().bottom,
+      })),
+    }));
+  let layout = await fits();
+  check(
+    layout.page && layout.panels.every((panel) => panel.fits && panel.bottom <= 900),
+    "Active dialer must fit desktop without scrolling: " + JSON.stringify(layout),
+  );
+  await page.getByRole("button", { name: /ASK FOR/ }).click();
+  layout = await fits();
+  check(
+    layout.page && layout.panels.every((panel) => panel.fits),
+    "Expanded contact details overflow center panel: " + JSON.stringify(layout),
+  );
+  await page.getByRole("button", { name: /ASK FOR/ }).click();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  layout = await fits();
+  check(
+    layout.page && layout.panels.every((panel) => panel.fits),
+    "Active dialer overflows a smaller laptop: " + JSON.stringify(layout),
+  );
+  await page.getByRole("button", { name: /ASK FOR/ }).click();
+  layout = await fits();
+  check(
+    layout.page && layout.panels.every((panel) => panel.fits),
+    "Short-screen contact editor pushes call controls out of view: " + JSON.stringify(layout),
+  );
+  await page.getByRole("button", { name: /ASK FOR/ }).click();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(4500);
   await page.screenshot({ path: ".playwright-cli/remake-dialer-day.png", fullPage: true });
   // Change the default while a call is active: the current call must keep its snapshot.
   await nav("Settings").click();
@@ -90,16 +153,31 @@ async (page) => {
     "Removing a participant ended the original call",
   );
   await page.getByRole("button", { name: "End call", exact: true }).click();
+  check(
+    (await page.getByRole("dialog").count()) === 0 && (await page.locator(".toast").count()) === 0,
+    "Ending a call showed a popup",
+  );
+  await page.getByRole("button", { name: "Triage held", exact: true }).click();
+  await page.getByRole("button", { name: "Appointment booked", exact: true }).click();
   await page.getByLabel("Name", { exact: true }).fill("Demo manager");
   await page.getByLabel("Context & conversation notes").fill("Ask for the manager after lunch.");
   await page.getByRole("button", { name: "Reached GK", exact: true }).click();
   await page.getByRole("button", { name: /^Worth a callback/ }).click();
   await page.getByLabel("Reason (optional)").fill("Owner returns after lunch.");
+  layout = await fits();
+  check(
+    layout.page && layout.panels.every((panel) => panel.fits),
+    "Callback details overflow right panel: " + JSON.stringify(layout),
+  );
   check(
     await page.getByRole("heading", { name: "Harborline Rentals", exact: true }).isVisible(),
     "Editing or outcome selection advanced the lead",
   );
   await page.getByRole("button", { name: "Save", exact: true }).click();
+  check(
+    (await page.getByRole("dialog").count()) === 0 && (await page.locator(".toast").count()) === 0,
+    "Saving showed a popup",
+  );
   check(
     await page.getByRole("heading", { name: "Harborline Rentals", exact: true }).isVisible(),
     "Save advanced the lead",
@@ -132,6 +210,29 @@ async (page) => {
   await nav("Activity").click();
   await page.getByRole("button", { name: "Save & continue" }).click();
   await page.getByRole("heading", { name: "Every conversation, remembered." }).waitFor();
+  check(
+    (await page.locator('[data-metric="Triage held"]').textContent()) === "2",
+    "Triage button did not update daily metric",
+  );
+  check(
+    (await page.locator('[data-metric="Appointments booked"]').textContent()) === "1",
+    "Booked button did not update daily metric",
+  );
+  check(
+    (await page.locator('[data-metric="Connected"]').textContent()) === "2",
+    "Milestones double-counted Connected",
+  );
+  const day = await page.getByLabel("Activity date").inputValue();
+  await page.getByLabel("Activity date").fill("2025-01-01");
+  check(
+    (await page.locator('[data-metric="Dials"]').textContent()) === "0",
+    "Empty date kept stale daily metrics",
+  );
+  check(
+    (await page.getByRole("button", { name: "View", exact: true }).count()) === 0,
+    "Date filter kept other-day calls",
+  );
+  await page.getByLabel("Activity date").fill(day);
   await nav("Leads").click();
   await page.getByLabel("Never called", { exact: true }).check();
   check(
@@ -182,6 +283,42 @@ async (page) => {
   await page.getByLabel("Include leads").selectOption("callbacks");
   await page.getByRole("button", { name: "Create session" }).click();
   await page.getByRole("heading", { name: "Demo callbacks", exact: true }).waitFor();
+  const sessionCard = page
+    .locator(".session-card")
+    .filter({ has: page.getByRole("heading", { name: "Demo callbacks", exact: true }) });
+  await sessionCard.getByRole("button", { name: "Start session", exact: true }).click();
+  await page.getByLabel("Session elapsed time").waitFor();
+  check(
+    (await page.getByRole("button", { name: "End call", exact: true }).count()) === 0,
+    "Session start dialed automatically",
+  );
+  await page.waitForTimeout(1200);
+  await page.getByRole("button", { name: "Pause session", exact: true }).click();
+  const frozen = await page.getByLabel("Session elapsed time").textContent();
+  await page.waitForTimeout(1200);
+  check(
+    (await page.getByLabel("Session elapsed time").textContent()) === frozen,
+    "Paused timer kept running",
+  );
+  check(
+    await page.getByRole("button", { name: "Dial · simulated", exact: true }).isDisabled(),
+    "Paused session allowed dialing",
+  );
+  await page.getByRole("button", { name: "Resume session", exact: true }).click();
+  await page.getByRole("button", { name: "Dial · simulated", exact: true }).click();
+  await page.waitForTimeout(1200);
+  await page.getByRole("button", { name: "Stop session", exact: true }).click();
+  check(
+    (await page.getByRole("button", { name: "End call", exact: true }).count()) === 0,
+    "Stop session left its call active",
+  );
+  await page.getByRole("button", { name: "Reached DM", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await nav("Sessions").click();
+  check(
+    (await sessionCard.locator(".session-totals").textContent()).includes("Calls1"),
+    "Session call total missed its call",
+  );
   for (const width of [1280, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const navigate = async (name) => {
@@ -218,6 +355,13 @@ async (page) => {
       );
     }
     await navigate("Dialer");
+    if (width >= 768) {
+      const layout = await fits();
+      check(
+        layout.page && layout.panels.every((panel) => panel.fits),
+        `Dialer scrolls at ${width}px: ` + JSON.stringify(layout),
+      );
+    }
     await page.getByRole("button", { name: "Switch to night mode" }).click();
     await page.waitForTimeout(200);
     await page.screenshot({
@@ -234,5 +378,5 @@ async (page) => {
   );
   check(errors.length === 0, "Browser errors: " + errors.join("; "));
   check(forbidden.length === 0, "Forbidden network: " + forbidden.join("; "));
-  return "PASS: isolated remake — 8 screens at 1280/768/390px, theme persistence, ASK FOR, explicit saving, Previous, draft guard, callback filter, call count, recording snapshot, simulated conferencing/mute/keypad, 24 booking slots, record-only deletion and sessions; zero provider requests.";
+  return "PASS: isolated remake — 8 screens at 1280/768/390px, theme persistence, ASK FOR, explicit saving, Previous, draft guard, callback filter, call count, recording snapshot, simulated conferencing/mute/keypad, 24 booking slots, record-only deletion, daily/monthly filters, milestone metrics, collapsible navigation/queue/contact details, desktop panel containment and session Start/Pause/Resume/Stop timers; zero provider requests.";
 };

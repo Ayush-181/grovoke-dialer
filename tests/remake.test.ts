@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "../src/remake/metrics";
 import { initialState, isDirty, reducer } from "../src/remake/model";
 
 describe("isolated calling workflow", () => {
@@ -117,5 +118,123 @@ describe("isolated calling workflow", () => {
     expect(state.bookings).toHaveLength(0);
     expect(state.leads).toBe(leads);
     expect(state.logs).toBe(logs);
+  });
+});
+
+describe("call metrics and session timing", () => {
+  test("milestones update their metric immediately and count one connection per call", () => {
+    let state = initialState();
+    expect(reducer(state, { type: "milestone", kind: "triage", enabled: true })).toBe(state);
+    state = reducer(state, { type: "dial", id: "metric-call", at: "2026-10-09T12:00:00Z" });
+    state = reducer(state, { type: "milestone", kind: "triage", enabled: true });
+    expect(metrics([state.logs[0]!])).toMatchObject({
+      dials: 1,
+      connected: 1,
+      triage: 1,
+      booked: 0,
+    });
+    state = reducer(state, { type: "milestone", kind: "booked", enabled: true });
+    state = reducer(state, { type: "milestone", kind: "offered", enabled: true });
+    state = reducer(state, { type: "milestone", kind: "booked", enabled: true });
+    expect(metrics([state.logs[0]!])).toMatchObject({
+      connected: 1,
+      triage: 1,
+      offered: 1,
+      booked: 1,
+    });
+    state = reducer(state, { type: "end", at: "2026-10-09T12:05:00Z" });
+    state = reducer(state, { type: "save" });
+    expect(metrics([state.logs[0]!]).connected).toBe(1);
+    state = reducer(state, { type: "milestone", kind: "booked", enabled: false });
+    state = reducer(state, { type: "milestone", kind: "offered", enabled: false });
+    expect(metrics([state.logs[0]!])).toMatchObject({ connected: 1, booked: 0, offered: 0 });
+    state = reducer(state, { type: "milestone", kind: "triage", enabled: false });
+    expect(metrics([state.logs[0]!]).connected).toBe(0);
+  });
+  test("dials are counted at start, durations stay live and ending never duplicates attempts", () => {
+    let state = reducer(initialState(), { type: "dial", id: "timed", at: "2026-10-09T18:29:00Z" });
+    expect(state.logs.filter((log) => log.id === "timed")).toHaveLength(1);
+    state = reducer(state, { type: "tick" });
+    expect(metrics([state.logs[0]!]).talk).toBe(1);
+    state = reducer(state, { type: "end", at: "2026-10-09T18:35:00Z" });
+    expect(state.logs[0]?.at).toBe("2026-10-09T18:29:00Z");
+    expect(state.logs.filter((log) => log.id === "timed")).toHaveLength(1);
+    expect(reducer(state, { type: "tick" })).toBe(state);
+  });
+  test("daily, monthly and annual filters use IST across UTC and year boundaries", () => {
+    const fixture = initialState().logs[0]!;
+    const logs = [
+      { ...fixture, id: "dec", at: "2026-12-31T18:29:59Z" },
+      { ...fixture, id: "jan", at: "2026-12-31T18:30:00Z" },
+    ];
+    expect(dateKey(logs[0]!.at)).toBe("2026-12-31");
+    expect(dateKey(logs[1]!.at)).toBe("2027-01-01");
+    expect(inPeriod(logs, "2027-01-01").map((log) => log.id)).toEqual(["jan"]);
+    expect(inPeriod(logs, "2026-12").map((log) => log.id)).toEqual(["dec"]);
+    expect(inPeriod(logs, "2027").map((log) => log.id)).toEqual(["jan"]);
+    expect(metrics([])).toMatchObject({
+      dials: 0,
+      connected: 0,
+      connectionRate: 0,
+      talk: 0,
+      average: 0,
+    });
+  });
+  test("a saved connected outcome and overlapping milestones never double-count Connected", () => {
+    const fixture = initialState().logs[0]!;
+    expect(
+      metrics([{ ...fixture, outcome: "connected_gk", triage: true, offered: true, booked: true }]),
+    ).toMatchObject({ dials: 1, connected: 1, triage: 1, offered: 1, booked: 1, gatekeeper: 1 });
+    expect(
+      metrics([
+        { ...fixture, outcome: "appointment_set", triage: false, offered: false, booked: false },
+      ]),
+    ).toMatchObject({ connected: 1, offered: 1, booked: 1 });
+  });
+  test("session start never dials, pause excludes elapsed time and resume keeps the selected lead", () => {
+    let state = initialState();
+    const id = state.sessions[0]!.id;
+    state = reducer(state, { type: "startSession", id, now: 1000 });
+    expect(state.activeSessionId).toBe(id);
+    expect(state.call).toBeNull();
+    expect(sessionElapsed(state.sessions[0]!, 61000)).toBe(60000);
+    state = reducer(state, { type: "select", id: state.queueIds[1]! });
+    const lead = state.selectedId;
+    state = reducer(state, { type: "setSessionStatus", id, status: "paused", now: 61000 });
+    expect(sessionElapsed(state.sessions[0]!, 121000)).toBe(60000);
+    expect(reducer(state, { type: "dial", id: "paused-call" })).toBe(state);
+    state = reducer(state, { type: "edit", patch: { notes: "Draft survives resume" } });
+    state = reducer(state, { type: "startSession", id, now: 121000 });
+    expect(state.selectedId).toBe(lead);
+    expect(state.draft.notes).toBe("Draft survives resume");
+    state = reducer(state, { type: "setSessionStatus", id, status: "stopped", now: 181000 });
+    expect(state.activeSessionId).toBeNull();
+    expect(sessionElapsed(state.sessions[0]!, 999000)).toBe(120000);
+    expect(sessionTime(3661000)).toBe("01:01:01");
+  });
+  test("session calls are attributed once and another session cannot take over", () => {
+    let state = initialState();
+    const id = state.sessions[0]!.id;
+    state = reducer(state, { type: "startSession", id, now: 1000 });
+    state = reducer(state, {
+      type: "session",
+      session: {
+        ...state.sessions[0]!,
+        id: "other",
+        status: "ready",
+        startedAt: null,
+        elapsedMs: 0,
+      },
+    });
+    expect(reducer(state, { type: "startSession", id: "other", now: 2000 })).toBe(state);
+    state = reducer(state, { type: "dial", id: "session-call" });
+    expect(state.logs[0]?.sessionId).toBe(id);
+    expect(reducer(state, { type: "startSession", id, now: 2000 })).toBe(state);
+    state = reducer(state, { type: "tick" });
+    state = reducer(state, { type: "end", at: "2026-10-09T12:00:00Z" });
+    expect(metrics(state.logs.filter((log) => log.sessionId === id))).toMatchObject({
+      dials: 1,
+      talk: 1,
+    });
   });
 });
