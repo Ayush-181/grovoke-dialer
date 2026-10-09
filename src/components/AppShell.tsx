@@ -76,10 +76,11 @@ function HeaderClocks() {
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface/80"
+            aria-label="Choose US clock timezone"
+            className="flex items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ClockPill zone={selectedUS} now={now} />
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            <ChevronDown aria-hidden="true" className="h-3 w-3 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[10rem]">
@@ -112,32 +113,45 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-surface">
+      <a
+        href="#workspace-content"
+        className="sr-only z-50 rounded-md bg-background px-4 py-3 text-sm font-medium text-primary focus:not-sr-only focus:fixed focus:left-4 focus:top-2 focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Skip to workspace
+      </a>
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
-        <div className="flex h-14 items-center gap-6 px-4">
-          <Link to="/dashboard" className="flex shrink-0 items-center gap-2">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-4 px-4 xl:h-14 xl:flex-nowrap">
+          <Link
+            to="/dashboard"
+            className="flex h-14 shrink-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <PhoneCall className="h-3.5 w-3.5" />
+              <PhoneCall aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
             <span className="mono whitespace-nowrap text-sm font-semibold tracking-tight">
               CALL BOARD
             </span>
           </Link>
 
-          <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+          <nav
+            aria-label="Workspace navigation"
+            className="order-last flex w-full min-w-0 items-center gap-1 overflow-x-auto border-t border-border py-1 xl:order-none xl:w-auto xl:flex-1 xl:border-0 xl:py-0"
+          >
             {NAV.map((item) => {
               const active = pathname.startsWith(item.to);
               return (
                 <Link
                   key={item.to}
                   to={item.to}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+                    "flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring xl:min-h-8 xl:px-2.5",
                     active
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-surface hover:text-foreground",
                   )}
                 >
-                  <item.icon className="h-3.5 w-3.5" />
+                  <item.icon aria-hidden="true" className="h-3.5 w-3.5" />
                   {item.label}
                   {item.to === "/calls" && missedCalls > 0 && (
                     <span
@@ -152,26 +166,38 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             <HeaderClocks />
-            <span className="hidden text-xs text-muted-foreground md:inline">
+            <span
+              className="hidden max-w-32 truncate text-xs text-muted-foreground md:inline"
+              title={workspace?.name}
+            >
               {workspace?.name}
             </span>
-            <span className="mono hidden text-xs text-muted-foreground lg:inline">
+            <span
+              className="mono hidden max-w-40 truncate text-xs text-muted-foreground 2xl:inline"
+              title={user?.email}
+            >
               {user?.email}
             </span>
 
             <button
               onClick={() => void signOut()}
-              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
+              className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-surface hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:min-h-8"
             >
-              <LogOut className="h-3.5 w-3.5" /> Sign out
+              <LogOut aria-hidden="true" className="h-3.5 w-3.5" /> Sign out
             </button>
           </div>
         </div>
       </header>
 
-      <main className="px-4 py-5">{children}</main>
+      <main
+        id="workspace-content"
+        tabIndex={-1}
+        className="mx-auto max-w-[1600px] scroll-mt-32 px-4 py-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring xl:scroll-mt-20"
+      >
+        {children}
+      </main>
       <PhoneWidget />
     </div>
   );
@@ -188,11 +214,13 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-      <div>
+      <div className="min-w-0">
         <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">{actions}</div>
+      )}
     </div>
   );
 }

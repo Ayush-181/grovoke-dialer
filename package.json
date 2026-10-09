@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "test:unit": "bun test tests/booking-errors.test.ts tests/bookings.test.ts tests/calendar-session.test.ts tests/lead-filters.test.ts",
     "smoke:dev": "node scripts/smoke-dev.mjs",
-    "smoke:auth": "node scripts/smoke-auth.mjs"
+    "smoke:auth": "node scripts/smoke-auth.mjs",
+    "smoke:leads": "node scripts/smoke-auth.mjs leads"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

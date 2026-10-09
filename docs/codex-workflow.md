@@ -1,6 +1,7 @@
 # Codex workflow for Grovoke Dialer
 
 ## Local prerequisites and first use
+
 Use Node.js 22.12+ (verified with 24.11.0), Bun (verified with 1.4.2), Git,
 and a signed-in Codex app/CLI. GitHub connector access does not automatically
 authenticate local Git. Sign in with your normal Git credential manager if needed.
@@ -23,6 +24,7 @@ Never paste tokens into chat or commit them.
    blanket skill installers or install deployment/Next.js/mobile skills.
 
 ## Safe checks
+
 Run `bun run test:unit`, `bun run lint`, and
 `bunx --no-install tsc --noEmit`. The explicit unit-test selection uses the
 existing pure/mocked tests, including mocked Google requests. No SQL tests or
@@ -34,6 +36,7 @@ Do not use the tracked .env for verification. No deploy or migration command is
 needed. A build passing is not evidence of live provider integration working.
 
 ## Anonymous browser smoke
+
 In one terminal run `bun run smoke:dev`. In a second run `bun run smoke:auth`.
 The server binds 127.0.0.1:4173 with strict port selection. It creates an ignored
 .smoke-work source copy from an explicit allowlist, excludes the repo's .env,
@@ -63,11 +66,12 @@ hydration error. Let optimization finish and rerun the anonymous smoke once in a
 fresh session. If it still fails, stop and investigate; do not suppress page errors
 or weaken the request guards. A warm run passed in this environment.
 
-Stop the server with Ctrl+C. The runner closes only grovoke-smoke. Scratch copies
+Stop the server with Ctrl+C. The runner closes only its named grovoke-smoke-auth or grovoke-smoke-leads session. Scratch copies
 and screenshots remain ignored locally; review/delete those local folders when
 done, without uploading sensitive output.
 
 ## Sources and scope
+
 - VoltAgent/awesome-design-md Linear reference informs DESIGN.md; adapted for the
   current light/blue operational application, with the MIT notice preserved.
 - Leonxlnx/taste-skill: a concise adaptation of redesign-skill preserves useful
@@ -79,3 +83,29 @@ done, without uploading sensitive output.
 
 Source revisions and licensing are recorded in docs/vendor-notices/SOURCES.md.
 Third-party guidance is subordinate to the project's safety and design rules.
+
+## Synthetic Leads workspace smoke
+
+Run `bun run smoke:leads` while `bun run smoke:dev` is running. This uses the same
+pinned CLI and isolated browser config, with a separate grovoke-smoke-leads session.
+The reviewed allowlist extension in `scripts/smoke-leads.js` adds only the local
+`/leads` route and synthetic read responses on `http://127.0.0.1:9`. It seeds a
+fabricated, short-lived session in that new browser context; it never reads saved
+browser authentication. Local mock reads cover auth user, workspace membership,
+preferences, missed-call count, and leads. No request reaches a provider.
+
+Mutation requests, server functions, other navigation, unknown mock reads, and
+WebSockets are blocked before navigation. Unexpected requests fail the smoke.
+The smoke tests filters, selection, opening/cancelling delete confirmation,
+keyboard access, scroll containment, error/retry and empty states. It never clicks
+call, session, import or final delete controls. Screenshots contain synthetic data
+only and remain ignored under `.playwright-cli`.
+
+In cloud containers where browser download hosts are unavailable, the pinned CLI
+supports `PLAYWRIGHT_MCP_EXECUTABLE_PATH=/usr/bin/chromium` for an already installed
+system Chromium. Use `XDG_CACHE_HOME` pointing to a writable workspace cache if
+needed. If the container cannot create the Chromium sandbox, its supported
+`PLAYWRIGHT_MCP_SANDBOX=false` setting can be used for this isolated smoke. Retain
+the committed config, headless isolated context, empty permissions, blocked service
+workers, and request/WebSocket guards. These runtime choices do not authorize
+attaching to a browser or accessing live services.

@@ -2,11 +2,14 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+const scenario = process.argv[2] ?? "auth";
+if (!["auth", "leads"].includes(scenario)) throw new Error("Unknown smoke scenario");
+const session = `grovoke-smoke-${scenario}`;
 const cli = resolve(".tools/playwright/node_modules/@playwright/cli/playwright-cli.js");
 if (!existsSync(cli)) throw new Error("Install the pinned CLI using docs/codex-workflow.md.");
 mkdirSync(".playwright-cli", { recursive: true });
 function run(args) {
-  const result = spawnSync(process.execPath, [cli, "-s=grovoke-smoke", ...args], {
+  const result = spawnSync(process.execPath, [cli, `-s=${session}`, ...args], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -20,9 +23,13 @@ function run(args) {
 let failed = false;
 try {
   run(["open", "about:blank", "--config=.playwright/cli.config.json"]);
-  const code = readFileSync("scripts/smoke-auth.js", "utf8").trim().replace(/;$/, "");
+  const code = readFileSync(`scripts/smoke-${scenario}.js`, "utf8").trim().replace(/;$/, "");
   const output = run(["run-code", code]);
-  if (!output.includes("PASS: anonymous auth controls"))
+  if (
+    !output.includes(
+      scenario === "auth" ? "PASS: anonymous auth controls" : "PASS: synthetic lead workspace",
+    )
+  )
     throw new Error("Smoke assertions did not complete");
 } catch (error) {
   failed = true;
