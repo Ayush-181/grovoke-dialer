@@ -13,7 +13,14 @@
     "test:unit": "bun test tests/booking-errors.test.ts tests/bookings.test.ts tests/calendar-session.test.ts tests/lead-filters.test.ts",
     "smoke:dev": "node scripts/smoke-dev.mjs",
     "smoke:auth": "node scripts/smoke-auth.mjs",
-    "smoke:leads": "node scripts/smoke-auth.mjs leads"
+    "smoke:leads": "node scripts/smoke-auth.mjs leads",
+    "remake:dev": "node scripts/remake.mjs",
+    "remake:build": "node scripts/remake.mjs --build",
+    "test:remake": "bun test tests/remake.test.ts",
+    "smoke:remake": "node scripts/smoke-auth.mjs remake",
+    "remake:export": "node scripts/remake.mjs --export",
+    "remake:preview": "node scripts/remake-preview.mjs",
+    "smoke:remake-export": "node scripts/smoke-auth.mjs remake-export"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
