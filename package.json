@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:unit": "bun test tests/booking-errors.test.ts tests/bookings.test.ts tests/calendar-session.test.ts tests/lead-filters.test.ts",
+    "smoke:dev": "node scripts/smoke-dev.mjs",
+    "smoke:auth": "node scripts/smoke-auth.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
