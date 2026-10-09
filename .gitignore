@@ -30,3 +30,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local agent tooling, smoke copies, and potentially sensitive browser output
+.tools/
+.smoke-work/
+.playwright-cli/
+.env.local
+.env.*.local
