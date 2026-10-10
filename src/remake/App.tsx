@@ -1,9 +1,8 @@
-import { dateAt, timeAt } from "./format";
+import { timeAt } from "./format";
 import { useEffect, useReducer, useState } from "react";
 import {
   Activity,
   ArrowLeft,
-  ArrowRight,
   BarChart3,
   CalendarDays,
   Check,
@@ -50,22 +49,6 @@ const navigation = [
   { id: "settings", label: "Settings", icon: Settings2 },
 ] as const;
 export type Page = (typeof navigation)[number]["id"];
-const titles: Record<Page, [string, string]> = {
-  overview: ["A clear view of your day.", "Your calling activity, conversations & next steps."],
-  leads: [
-    "Good conversations start here.",
-    "Find the right businesses and keep every detail close.",
-  ],
-  dialer: ["One lead. Your full attention.", "Review, call, capture the outcome — then move on."],
-  sessions: [
-    "A little structure. More momentum.",
-    "Organize your leads into focused calling queues.",
-  ],
-  activity: ["Every conversation, remembered.", "Review your calls, notes, outcomes & recordings."],
-  bookings: ["Make the next step effortless.", "Plan appointments across India and US time zones."],
-  timezones: ["Different clocks. Same moment.", "Keep your time and your leads’ time in view."],
-  settings: ["Make this workspace yours.", "Your calling preferences, recording & appearance."],
-};
 function pageFromHash(): Page {
   const value = location.hash.slice(1);
   return navigation.find((item) => item.id === value)?.id ?? "overview";
@@ -78,6 +61,7 @@ export function App() {
   );
   const [now, setNow] = useState(() => new Date());
   const [menu, setMenu] = useState(false);
+  const [leadsView, setLeadsView] = useState<"all" | "callbacks">("all");
   const [collapsed, setCollapsed] = useState(false);
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState<(() => void) | null>(null);
@@ -87,9 +71,10 @@ export function App() {
     if (dirty) setPending(() => action);
     else action();
   }
-  function navigate(next: Page) {
-    if (next === page) return;
+  function navigate(next: Page, view?: "all" | "callbacks") {
+    if (next === page && !view) return;
     guarded(() => {
+      if (view) setLeadsView(view);
       location.hash = next;
       setPage(next);
       setMenu(false);
@@ -271,7 +256,7 @@ export function App() {
               </button>
               <span>Workspace</span>
               <ChevronRight aria-hidden="true" size={14} />
-              <strong>{navigation.find((n) => n.id === page)?.label}</strong>
+              <h1 className="workspace-title">{navigation.find((n) => n.id === page)?.label}</h1>
             </div>
             <div className="topbar-tools">
               <span className="preview-chip">Preview</span>
@@ -312,28 +297,10 @@ export function App() {
               <span className="avatar small">A</span>
             </div>
           </header>
-          {page !== "dialer" ? (
-            <div className="page-heading">
-              <div>
-                <span className="eyebrow">
-                  {page === "overview" ? dateAt(now) : navigation.find((n) => n.id === page)?.label}
-                </span>
-                <h1>{titles[page][0]}</h1>
-                <p>{titles[page][1]}</p>
-              </div>
-              {page === "overview" && (
-                <button className="button primary" onClick={() => navigate("dialer")}>
-                  <Phone aria-hidden="true" size={16} />
-                  Open dialer
-                  <ArrowRight aria-hidden="true" size={16} />
-                </button>
-              )}
-            </div>
-          ) : (
-            <h1 className="sr-only">Calling workspace</h1>
-          )}
           {page === "overview" && <Overview {...common} navigate={navigate} />}
-          {page === "leads" && <LeadsPage {...common} />}
+          {page === "leads" && (
+            <LeadsPage {...common} view={leadsView} onViewChange={setLeadsView} />
+          )}
           {page === "dialer" && <Dialer {...common} guarded={guarded} now={now} />}
           {page === "sessions" && (
             <SessionsPage

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { dialNumber } from "../src/remake/numbers";
 import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "../src/remake/metrics";
 import { initialState, isDirty, reducer } from "../src/remake/model";
 
@@ -68,14 +69,14 @@ describe("isolated calling workflow", () => {
   });
   test("conference participants, mute and keypad stay available without advancing the lead", () => {
     let state = reducer(initialState(), { type: "dial", id: "conference" });
-    state = reducer(state, { type: "participant", name: "Demo teammate" });
-    state = reducer(state, { type: "participant", name: "Demo teammate" });
+    state = reducer(state, { type: "participant", phone: "+12125550198", name: "Decision maker" });
+    state = reducer(state, { type: "participant", phone: "+12125550198", name: "Decision maker" });
     state = reducer(state, { type: "digit", value: "4" });
     state = reducer(state, { type: "mute" });
-    expect(state.call?.participants).toEqual(["Demo teammate"]);
+    expect(state.call?.participants).toEqual([{ phone: "+12125550198", name: "Decision maker" }]);
     expect(state.call?.digits).toBe("4");
     expect(state.call?.muted).toBe(true);
-    state = reducer(state, { type: "participant", name: "Demo teammate", remove: true });
+    state = reducer(state, { type: "participant", phone: "+12125550198", remove: true });
     expect(state.call?.active).toBe(true);
     expect(state.selectedId).toBe("demo-0");
   });
@@ -236,5 +237,126 @@ describe("call metrics and session timing", () => {
       dials: 1,
       talk: 1,
     });
+  });
+});
+
+describe("manual dialing and business conferences", () => {
+  test("numbers normalize equivalent US formats and accept international country codes", () => {
+    expect(dialNumber("(212) 555-0199")).toBe("+12125550199");
+    expect(dialNumber("1-212-555-0199")).toBe("+12125550199");
+    expect(dialNumber("+91 98765 43210")).toBe("+919876543210");
+    for (const value of [
+      "abc2125550199",
+      "123",
+      "+1212555",
+      "++12125550199",
+      "98765432101234567890",
+      "",
+    ])
+      expect(dialNumber(value)).toBeNull();
+  });
+  test("a new number gets an independent contact, counter and outcome", () => {
+    const original = initialState();
+    let state = reducer(original, {
+      type: "manualDial",
+      id: "manual",
+      leadId: "manual-lead",
+      phone: "(212) 555-0199",
+      name: "Sample business",
+      at: "2026-10-10T08:00:00Z",
+    });
+    expect(state.leads).toHaveLength(original.leads.length + 1);
+    expect(state.selectedId).toBe("manual-lead");
+    expect(state.call?.phone).toBe("+12125550199");
+    expect(state.logs[0]?.phone).toBe("+12125550199");
+    expect(state.draft.calls).toBe(1);
+    expect(state.leads[0]).toEqual(original.leads[0]);
+    state = reducer(state, { type: "end", at: "2026-10-10T08:01:00Z" });
+    state = reducer(state, {
+      type: "edit",
+      patch: { outcome: "connected_dm", notes: "Manual conversation" },
+    });
+    state = reducer(state, { type: "save" });
+    expect(state.logs[0]?.leadId).toBe("manual-lead");
+    expect(state.leads.find((lead) => lead.id === "manual-lead")?.notes).toBe(
+      "Manual conversation",
+    );
+    expect(state.leads[0]).toEqual(original.leads[0]);
+  });
+  test("manual dialing a saved main or direct number reuses the lead without changing its phone", () => {
+    let original = initialState();
+    original = {
+      ...original,
+      leads: original.leads.map((lead, i) =>
+        i === 1 ? { ...lead, direct: "+12125550198" } : lead,
+      ),
+    };
+    const state = reducer(original, {
+      type: "manualDial",
+      id: "direct",
+      leadId: "unused",
+      phone: "212-555-0198",
+      name: "Ignored duplicate label",
+      at: "2026-10-10T08:00:00Z",
+    });
+    expect(state.leads).toHaveLength(original.leads.length);
+    expect(state.selectedId).toBe("demo-1");
+    expect(state.draft.business).toBe("Maple Street Studio");
+    expect(state.draft.phone).toBe(original.leads[1]!.phone);
+    expect(state.call?.phone).toBe("+12125550198");
+    expect(state.logs[0]?.phone).toBe("+12125550198");
+  });
+  test("invalid, blocked, busy and unsaved manual attempts do not alter contacts or calls", () => {
+    const original = initialState();
+    const action = {
+      type: "manualDial" as const,
+      id: "blocked",
+      leadId: "unused",
+      phone: "+12125550199",
+      name: "",
+      at: "2026-10-10T08:00:00Z",
+    };
+    expect(reducer(original, { ...action, phone: "123" })).toBe(original);
+    expect(reducer(original, { ...action, phone: "212-555-0106" })).toBe(original);
+    const dirty = reducer(original, { type: "edit", patch: { notes: "Keep this draft" } });
+    expect(reducer(dirty, action)).toBe(dirty);
+    const active = reducer(original, { type: "dial", id: "existing" });
+    expect(reducer(active, action)).toBe(active);
+    const started = reducer(original, {
+      type: "startSession",
+      id: original.sessions[0]!.id,
+      now: 1000,
+    });
+    const paused = reducer(started, {
+      type: "setSessionStatus",
+      id: original.sessions[0]!.id,
+      status: "paused",
+      now: 2000,
+    });
+    expect(reducer(paused, action)).toBe(paused);
+  });
+  test("multiple decision makers join the same business call; duplicate and blocked numbers are rejected", () => {
+    let state = reducer(initialState(), { type: "dial", id: "group" });
+    const lead = state.selectedId;
+    expect(reducer(state, { type: "participant", phone: "212-555-0100" })).toBe(state);
+    expect(reducer(state, { type: "participant", phone: "212-555-0106" })).toBe(state);
+    state = reducer(state, { type: "participant", phone: "212-555-0198", name: "Owner" });
+    expect(
+      reducer(state, { type: "participant", phone: "+1 (212) 555-0198", name: "Same owner" }),
+    ).toBe(state);
+    state = reducer(state, { type: "participant", phone: "+12125550197", name: "Co-founder" });
+    expect(state.call?.participants).toHaveLength(2);
+    expect(state.logs[0]?.participants).toHaveLength(2);
+    expect(state.selectedId).toBe(lead);
+    expect(state.draft.calls).toBe(1);
+    state = reducer(state, { type: "participant", phone: "+12125550198", remove: true });
+    expect(state.call?.active).toBe(true);
+    expect(state.call?.participants).toHaveLength(1);
+    expect(state.logs[0]?.participants).toHaveLength(2);
+    state = reducer(state, { type: "end", at: "2026-10-10T08:00:00Z" });
+    expect(
+      reducer(state, { type: "participant", phone: "+12125550196", name: "Late caller" }),
+    ).toBe(state);
+    expect(state.logs.filter((log) => log.id === "group")).toHaveLength(1);
   });
 });

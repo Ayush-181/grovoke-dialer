@@ -3778,3 +3778,49 @@ table {
     white-space: normal;
   }
 }
+.workspace-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+.overview-open {
+  margin-left: auto;
+}
+.overview-caption {
+  flex-wrap: wrap;
+}
+.conference-participants {
+  display: flex;
+  gap: 6px;
+  max-height: 44px;
+  overflow-x: auto;
+  margin-top: 6px;
+  overscroll-behavior: contain;
+}
+.conference-participants .participant {
+  margin: 0;
+  flex-shrink: 0;
+  max-width: 300px;
+  min-height: 34px;
+}
+.conference-participants .participant > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.call-detail-participants {
+  margin-block: 14px;
+}
+.call-detail-participants p {
+  margin-top: 6px;
+}
+@media (max-width: 1000px) {
+  .dialer-toolbar > div:first-child > span {
+    display: none;
+  }
+  .dialer-toolbar:has(.session-clock) > div:last-child > label {
+    display: none;
+  }
+}

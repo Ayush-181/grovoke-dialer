@@ -36,7 +36,7 @@ async (page) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${origin}/remake/index.html`);
   try {
-    await page.getByRole("heading", { name: "A clear view of your day." }).waitFor();
+    await page.getByRole("heading", { name: "Overview", exact: true }).waitFor();
   } catch {
     throw new Error(
       "Preview failed to start. Browser errors: " +
@@ -180,7 +180,9 @@ async (page) => {
     "Can advance during active call",
   );
   await page.getByRole("button", { name: "Add participant", exact: true }).click();
-  await page.getByRole("button", { name: "Add to conference" }).click();
+  await page.getByLabel("Participant phone number").fill("+12125550198");
+  await page.getByLabel("Participant name (optional)").fill("Decision maker");
+  await page.getByRole("button", { name: "Dial & add to call · simulated" }).click();
   await page.getByRole("button", { name: "Send digit 4", exact: true }).click();
   await page.getByRole("button", { name: "Mute", exact: true }).click();
   check(
@@ -232,7 +234,7 @@ async (page) => {
     await page.getByText("Recording this call (demo)", { exact: true }).isVisible(),
     "Setting changed recording for active call",
   );
-  await page.getByRole("button", { name: "Remove Demo teammate · Taylor" }).click();
+  await page.getByRole("button", { name: "Remove Decision maker" }).click();
   check(
     await page.getByRole("button", { name: "End call", exact: true }).isVisible(),
     "Removing a participant ended the original call",
@@ -294,7 +296,7 @@ async (page) => {
   );
   await nav("Activity").click();
   await page.getByRole("button", { name: "Save & continue" }).click();
-  await page.getByRole("heading", { name: "Every conversation, remembered." }).waitFor();
+  await page.getByRole("heading", { name: "Activity", exact: true }).waitFor();
   check(
     (await page.locator('[data-metric="Triage held"]').textContent()) === "2",
     "Triage button did not update daily metric",
@@ -324,7 +326,12 @@ async (page) => {
     (await page.getByRole("button", { name: "Harborline Rentals", exact: true }).count()) === 0,
     "Never-called filter includes a saved outcome",
   );
-  await page.getByLabel("Never called", { exact: true }).uncheck();
+  await page.getByRole("button", { name: /^Worth a callback/ }).click();
+  check(
+    !(await page.getByLabel("Never called", { exact: true }).isChecked()),
+    "Callback view retained the never-called filter",
+  );
+  await page.getByRole("button", { name: /^All leads/ }).click();
   const leadRow = page
     .getByRole("row")
     .filter({ has: page.getByRole("button", { name: "Harborline Rentals", exact: true }) });
@@ -332,7 +339,7 @@ async (page) => {
     (await leadRow.getByRole("cell", { name: "1", exact: true }).count()) === 1,
     "Dial count did not increment",
   );
-  await page.getByRole("button", { name: /Callbacks/ }).click();
+  await page.getByRole("button", { name: /^Worth a callback/ }).click();
   check(
     await page.getByRole("button", { name: "Harborline Rentals", exact: true }).isVisible(),
     "Callback list missing flagged lead",
@@ -404,6 +411,108 @@ async (page) => {
     (await sessionCard.locator(".session-totals").textContent()).includes("Calls1"),
     "Session call total missed its call",
   );
+  await nav("Overview").click();
+  await page.locator(".callback-section").getByRole("button", { name: "View all" }).click();
+  check(
+    (await page.getByRole("button", { name: /^Worth a callback/ }).getAttribute("aria-pressed")) ===
+      "true",
+    "Dashboard did not open the dedicated callback view",
+  );
+  check(
+    await page.getByRole("button", { name: "Harborline Rentals", exact: true }).isVisible(),
+    "Dashboard callback list omitted the saved flag",
+  );
+  check(
+    (await page.getByRole("button", { name: "Maple Street Studio", exact: true }).count()) === 0,
+    "Callback view includes an unflagged business",
+  );
+  await nav("Dialer").click();
+  await page.getByRole("button", { name: "Dial a number", exact: true }).click();
+  await page.getByLabel("Manual phone number").fill("123");
+  await page.getByRole("button", { name: "Dial number · simulated" }).click();
+  check(await page.getByRole("alert").isVisible(), "Invalid manual number was accepted");
+  await page.getByLabel("Manual phone number").fill("+12125550106");
+  await page.getByRole("button", { name: "Dial number · simulated" }).click();
+  check(
+    (await page.getByRole("alert").textContent()).includes("do-not-call"),
+    "Manual dialing bypassed do-not-call",
+  );
+  await page.getByLabel("Manual phone number").fill("(212) 555-0199");
+  await page.getByLabel("Contact or business (optional)").fill("Manual sample");
+  await page.getByRole("button", { name: "Dial number · simulated" }).click();
+  await page.getByRole("heading", { name: "Manual sample", exact: true }).waitFor();
+  check(
+    await page.getByRole("button", { name: "End call", exact: true }).isVisible(),
+    "Manual number did not start its own mock call",
+  );
+  await page.getByRole("button", { name: "Add participant", exact: true }).click();
+  await page.getByLabel("Participant phone number").fill("+12125550199");
+  await page.getByRole("button", { name: "Dial & add to call · simulated" }).click();
+  check(
+    (await page.getByRole("alert").textContent()).includes("already in the call"),
+    "Primary number was added to the conference again",
+  );
+  await page.getByLabel("Participant phone number").fill("+12125550198");
+  await page.getByLabel("Participant name (optional)").fill("Decision maker A");
+  await page.getByRole("button", { name: "Dial & add to call · simulated" }).click();
+  await page.getByRole("button", { name: "Add participant", exact: true }).click();
+  await page.getByLabel("Participant phone number").fill("+12125550197");
+  await page.getByLabel("Participant name (optional)").fill("Decision maker B");
+  await page.getByRole("button", { name: "Dial & add to call · simulated" }).click();
+  check(
+    (await page.locator(".conference-participants .participant").count()) === 2,
+    "Could not add two business decision makers",
+  );
+  check(
+    await page.getByRole("heading", { name: "Manual sample", exact: true }).isVisible(),
+    "Conference changed the primary business",
+  );
+  await page.setViewportSize({ width: 1280, height: 800 });
+  layout = await fits();
+  check(
+    layout.page && layout.panels.every((panel) => panel.fits),
+    "Group call overflowed laptop panels: " + JSON.stringify(layout),
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: ".playwright-cli/remake-manual-conference.png", fullPage: true });
+  await page.getByRole("button", { name: "Remove Decision maker A", exact: true }).click();
+  check(
+    await page.getByRole("button", { name: "End conference", exact: true }).isVisible(),
+    "Removing one contact ended the group call",
+  );
+  await page.getByRole("button", { name: "End conference", exact: true }).click();
+  await page.getByRole("button", { name: "Reached DM", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  check(
+    (await page.getByRole("dialog").count()) === 0,
+    "Ending/saving the manual call showed a popup",
+  );
+  await nav("Activity").click();
+  await page
+    .getByRole("row")
+    .filter({ hasText: "Manual sample" })
+    .getByRole("button", { name: "View", exact: true })
+    .click();
+  const details = page.getByRole("dialog");
+  check(
+    (await details.textContent()).includes("+12125550199"),
+    "Activity omitted the dialed number",
+  );
+  check(
+    (await details.textContent()).includes("Decision maker A") &&
+      (await details.textContent()).includes("Decision maker B"),
+    "Activity omitted conference participants",
+  );
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await nav("Leads").click();
+  await page.getByRole("button", { name: /^All leads/ }).click();
+  const manualRow = page
+    .getByRole("row")
+    .filter({ has: page.getByRole("button", { name: "Manual sample", exact: true }) });
+  check(
+    (await manualRow.getByRole("cell", { name: "1", exact: true }).count()) === 1,
+    "Conference counted more than one business attempt",
+  );
   for (const width of [1280, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const navigate = async (name) => {
@@ -422,6 +531,14 @@ async (page) => {
       "Settings",
     ]) {
       await navigate(name);
+      check(
+        (await page.locator(".page-heading").count()) === 0,
+        `${name} still has a hero headline`,
+      );
+      check(
+        await page.getByRole("heading", { name, exact: true, level: 1 }).isVisible(),
+        `${name} lost its compact page label`,
+      );
       check(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
         `${name} overflows at ${width}px: ` +
@@ -463,5 +580,5 @@ async (page) => {
   );
   check(errors.length === 0, "Browser errors: " + errors.join("; "));
   check(forbidden.length === 0, "Forbidden network: " + forbidden.join("; "));
-  return "PASS: isolated remake — 8 screens at 1280/768/390px, theme persistence, ASK FOR, explicit saving, Previous, draft guard, callback filter, call count, recording snapshot, simulated conferencing/mute/keypad, 24 booking slots, record-only deletion, daily/monthly filters, milestone metrics, collapsible navigation/queue/contact details, desktop panel containment and session Start/Pause/Resume/Stop timers; zero provider requests.";
+  return "PASS: isolated remake — 8 screens at 1280/768/390px, theme persistence, ASK FOR, explicit saving, Previous, draft guard, dashboard-linked callback view, manual-number dialing and validation, per-business call counts, recording snapshot, multiple decision-maker conferences and participant history/mute/keypad, no hero headlines, 24 booking slots, record-only deletion, daily/monthly filters, milestone metrics, collapsible navigation/queue/contact details, desktop panel containment and session Start/Pause/Resume/Stop timers; zero provider requests.";
 };

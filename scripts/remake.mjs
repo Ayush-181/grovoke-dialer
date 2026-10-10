@@ -12,6 +12,7 @@ for (const name of [
   "src/lib/booking-time.ts",
   "src/lib/timezones.ts",
   "src/lib/outcomes.ts",
+  "src/lib/phone.ts",
 ]) {
   await mkdir(resolve(scratch, name, ".."), { recursive: true });
   await cp(resolve(root, name), resolve(scratch, name), { recursive: true });

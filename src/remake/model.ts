@@ -1,3 +1,4 @@
+import { dialNumber } from "./numbers";
 import type { Outcome } from "../lib/outcomes";
 
 export type Lead = {
@@ -21,7 +22,9 @@ export type Lead = {
   triage: boolean;
   offered: boolean;
 };
+export type Participant = { phone: string; name: string };
 export type Call = {
+  phone: string;
   at: string;
   id: string;
   leadId: string;
@@ -29,10 +32,12 @@ export type Call = {
   seconds: number;
   muted: boolean;
   recording: boolean;
-  participants: string[];
+  participants: Participant[];
   digits: string;
 };
 export type Log = {
+  phone: string;
+  participants: Participant[];
   triage: boolean;
   offered: boolean;
   booked: boolean;
@@ -145,6 +150,8 @@ export function initialState(): State {
     recordingEnabled: false,
     logs: [1, 4, 6].map((i) => ({
       id: `history-${i}`,
+      phone: leads[i]!.phone,
+      participants: [],
       leadId: leads[i]!.id,
       at: new Date(Date.now() - (i === 4 ? 86_400_000 : 0)).toISOString(),
       seconds: i === 6 ? 45 : 134,
@@ -198,12 +205,13 @@ export type Action =
   | { type: "select"; id: string }
   | { type: "discard" }
   | { type: "save"; next?: boolean }
-  | { type: "dial"; id: string; at?: string }
+  | { type: "dial"; id: string; at?: string; phone?: string }
+  | { type: "manualDial"; id: string; leadId: string; phone: string; name: string; at: string }
   | { type: "end"; at: string }
   | { type: "tick" }
   | { type: "mute" }
   | { type: "digit"; value: string }
-  | { type: "participant"; name: string; remove?: boolean }
+  | { type: "participant"; phone: string; name?: string; remove?: boolean }
   | { type: "recording"; enabled: boolean }
   | { type: "booking"; booking: Booking }
   | { type: "deleteBooking"; id: string }
@@ -262,8 +270,69 @@ export function reducer(state: State, action: Action): State {
         queueComplete: Boolean(action.next && !next),
       };
     }
-    case "dial": {
+    case "manualDial": {
+      const phone = dialNumber(action.phone);
       if (
+        !phone ||
+        state.call?.active ||
+        isDirty(state) ||
+        state.sessions.some(
+          (session) => session.id === state.activeSessionId && session.status === "paused",
+        )
+      )
+        return state;
+      const existing = state.leads.find(
+        (lead) => dialNumber(lead.phone) === phone || dialNumber(lead.direct) === phone,
+      );
+      if (
+        state.leads.some(
+          (lead) =>
+            lead.outcome === "do_not_call" &&
+            (dialNumber(lead.phone) === phone || dialNumber(lead.direct) === phone),
+        )
+      )
+        return state;
+      const lead: Lead = existing ?? {
+        id: action.leadId,
+        business: action.name.trim() || `Manual number ${phone}`,
+        category: "Manual call",
+        city: "Location not set",
+        zone: state.draft.zone,
+        phone,
+        contact: action.name.trim(),
+        role: "",
+        direct: "",
+        email: "",
+        website: "",
+        notes: "",
+        outcome: "",
+        calls: 0,
+        callback: false,
+        callbackAt: "",
+        callbackReason: "",
+        triage: false,
+        offered: false,
+      };
+      const next = {
+        ...state,
+        leads: existing ? state.leads : [...state.leads, lead],
+        selectedId: lead.id,
+        draft: { ...lead },
+        call: null,
+        queueIds: state.queueIds.includes(lead.id) ? state.queueIds : [...state.queueIds, lead.id],
+        queueComplete: false,
+      };
+      return reducer(next, { type: "dial", id: action.id, phone, at: action.at });
+    }
+    case "dial": {
+      const phone = dialNumber(action.phone ?? state.draft.phone);
+      if (
+        !phone ||
+        state.leads.some(
+          (lead) =>
+            lead.outcome === "do_not_call" &&
+            (dialNumber(lead.phone) === phone || dialNumber(lead.direct) === phone),
+        ) ||
         state.call?.active ||
         state.sessions.some(
           (session) => session.id === state.activeSessionId && session.status === "paused",
@@ -281,6 +350,8 @@ export function reducer(state: State, action: Action): State {
         logs: [
           {
             id: action.id,
+            phone,
+            participants: [],
             leadId: state.selectedId,
             at: action.at ?? new Date().toISOString(),
             seconds: 0,
@@ -296,6 +367,7 @@ export function reducer(state: State, action: Action): State {
           ...state.logs,
         ],
         call: {
+          phone,
           at: action.at ?? new Date().toISOString(),
           id: action.id,
           leadId: state.selectedId,
@@ -339,18 +411,39 @@ export function reducer(state: State, action: Action): State {
             call: { ...state.call, digits: `${state.call.digits}${action.value}`.slice(-32) },
           }
         : state;
-    case "participant":
-      return state.call?.active
-        ? {
-            ...state,
-            call: {
-              ...state.call,
-              participants: action.remove
-                ? state.call.participants.filter((p) => p !== action.name)
-                : [...new Set([...state.call.participants, action.name])],
-            },
-          }
-        : state;
+    case "participant": {
+      const phone = dialNumber(action.phone);
+      if (!state.call?.active || !phone) return state;
+      if (
+        !action.remove &&
+        (phone === state.call.phone ||
+          state.call.participants.some((person) => person.phone === phone) ||
+          state.leads.some(
+            (lead) =>
+              lead.outcome === "do_not_call" &&
+              (dialNumber(lead.phone) === phone || dialNumber(lead.direct) === phone),
+          ))
+      )
+        return state;
+      const participants = action.remove
+        ? state.call.participants.filter((person) => person.phone !== phone)
+        : [...state.call.participants, { phone, name: action.name?.trim() || phone }];
+      return {
+        ...state,
+        call: { ...state.call, participants },
+        logs: state.logs.map((log) =>
+          log.id === state.call?.id
+            ? {
+                ...log,
+                participants:
+                  action.remove || log.participants.some((person) => person.phone === phone)
+                    ? log.participants
+                    : [...log.participants, { phone, name: action.name?.trim() || phone }],
+              }
+            : log,
+        ),
+      };
+    }
     case "recording":
       return { ...state, recordingEnabled: action.enabled };
     case "preferences":

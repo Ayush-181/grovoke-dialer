@@ -28,6 +28,7 @@ import { type State, type Action, isDirty } from "./model";
 import { Panel, Field, Modal, Empty } from "./components";
 import { OUTCOMES, outcomeLabel, formatDuration } from "../lib/outcomes";
 import { bookingInstants } from "../lib/booking-time";
+import { dialNumber } from "./numbers";
 import { sessionElapsed, sessionTime } from "./metrics";
 
 type Props = {
@@ -42,7 +43,13 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("notes");
   const [conference, setConference] = useState(false);
-  const [participant, setParticipant] = useState("Demo teammate · Taylor");
+  const [participantPhone, setParticipantPhone] = useState("");
+  const [participantName, setParticipantName] = useState("");
+  const [participantError, setParticipantError] = useState("");
+  const [manual, setManual] = useState(false);
+  const [manualPhone, setManualPhone] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [manualError, setManualError] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [contactOpen, setContactOpen] = useState(false);
@@ -115,6 +122,18 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
           <span>
             {position + 1} / {queue.length} leads
           </span>
+          <button
+            type="button"
+            className="button"
+            disabled={active || session?.status === "paused"}
+            onClick={() => {
+              setManualError("");
+              setManual(true);
+            }}
+          >
+            <Phone aria-hidden="true" size={17} />
+            Dial a number
+          </button>
         </div>
         <div>
           {session && (
@@ -250,7 +269,9 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             </span>
             <h2>{lead.business}</h2>
             <div className="lead-facts">
-              <span className="mono">{lead.phone}</span>
+              <span className="mono">
+                {state.call?.leadId === lead.id ? state.call.phone : lead.phone}
+              </span>
               <span className="badge neutral">{lead.calls} dials</span>
               <span className={`badge ${lead.outcome === "do_not_call" ? "bad" : "good"}`}>
                 {lead.outcome ? outcomeLabel(lead.outcome) : "Never called"}
@@ -442,7 +463,14 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                       <Mic aria-hidden="true" size={18} />
                     )}
                   </button>
-                  <button type="button" className="button" onClick={() => setConference(true)}>
+                  <button
+                    type="button"
+                    className="button"
+                    onClick={() => {
+                      setParticipantError("");
+                      setConference(true);
+                    }}
+                  >
                     <Users aria-hidden="true" size={17} />
                     Add participant
                   </button>
@@ -486,19 +514,27 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <output className="digits mono">{state.call?.digits}</output>
               </div>
             )}
-            {state.call?.participants.map((name) => (
-              <div className="participant" key={name}>
-                <span>{name}</span>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`Remove ${name}`}
-                  onClick={() => dispatch({ type: "participant", name, remove: true })}
-                >
-                  <X aria-hidden="true" size={15} />
-                </button>
+            {active && Boolean(state.call?.participants.length) && (
+              <div className="conference-participants" aria-label="Additional participants">
+                {state.call?.participants.map((person) => (
+                  <div className="participant" key={person.phone}>
+                    <span>
+                      <strong>{person.name}</strong> <span className="mono">{person.phone}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label={`Remove ${person.name}`}
+                      onClick={() =>
+                        dispatch({ type: "participant", phone: person.phone, remove: true })
+                      }
+                    >
+                      <X aria-hidden="true" size={15} />
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
           <div className="lead-save-controls">
             <div className="inline-status" aria-live="polite">
@@ -638,39 +674,179 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
         </Panel>
       </div>
       <Modal
+        open={manual}
+        onClose={() => setManual(false)}
+        title="Dial a number"
+        description="Enter a number directly. Saved numbers use their lead; a new number gets a local contact for its notes and outcome."
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const phone = dialNumber(manualPhone);
+            if (!phone) {
+              setManualError(
+                "Enter a valid phone number, including +country code for international numbers.",
+              );
+              document.getElementById("manual-phone")?.focus();
+              return;
+            }
+            const blocked = state.leads.some(
+              (item) =>
+                item.outcome === "do_not_call" &&
+                (dialNumber(item.phone) === phone || dialNumber(item.direct) === phone),
+            );
+            if (blocked) {
+              setManualError("This number belongs to a do-not-call lead. Choose another number.");
+              return;
+            }
+            setManual(false);
+            guarded(() => {
+              dispatch({
+                type: "manualDial",
+                id: crypto.randomUUID(),
+                leadId: crypto.randomUUID(),
+                phone,
+                name: manualName,
+                at: new Date().toISOString(),
+              });
+              setTab("notes");
+              setError("");
+              setStatus("");
+            });
+          }}
+        >
+          <Field
+            id="manual-phone"
+            label="Manual phone number"
+            type="tel"
+            required
+            value={manualPhone}
+            placeholder="+1 212 555 0199…"
+            onChange={(e) => {
+              setManualPhone(e.target.value);
+              setManualError("");
+            }}
+          />
+          <Field
+            label="Contact or business (optional)"
+            value={manualName}
+            placeholder="Business or contact name…"
+            onChange={(e) => setManualName(e.target.value)}
+          />
+          <p className="hint">
+            10-digit US numbers use +1. Use +country code for other countries. This preview
+            simulates dialing.
+          </p>
+          {manualError && (
+            <p className="error" role="alert">
+              {manualError}
+            </p>
+          )}
+          <div className="modal-actions">
+            <button type="button" className="button" onClick={() => setManual(false)}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="button primary"
+              disabled={active || session?.status === "paused"}
+            >
+              <Phone aria-hidden="true" size={16} />
+              Dial number · simulated
+            </button>
+          </div>
+        </form>
+      </Modal>
+      <Modal
         open={conference}
         onClose={() => setConference(false)}
         title="Add a participant"
-        description="Join a simulated teammate. No number is dialed."
+        description="Dial another decision maker or contact into this business call. The original caller stays connected."
       >
-        <label className="field">
-          <span>Participant</span>
-          <select
-            name="conference-participant"
-            value={participant}
-            onChange={(e) => setParticipant(e.target.value)}
-          >
-            <option>Demo teammate · Taylor</option>
-            <option>Demo teammate · Riley</option>
-          </select>
-        </label>
-        <div className="modal-actions">
-          <button type="button" className="button" onClick={() => setConference(false)}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="button primary"
-            onClick={() => {
-              dispatch({ type: "participant", name: participant });
-              setConference(false);
-              setStatus("Teammate joined the simulated conference.");
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const phone = dialNumber(participantPhone);
+            if (!phone) {
+              setParticipantError(
+                "Enter a valid participant number, including +country code for international numbers.",
+              );
+              document.getElementById("participant-phone")?.focus();
+              return;
+            }
+            if (
+              phone === state.call?.phone ||
+              state.call?.participants.some((person) => person.phone === phone)
+            ) {
+              setParticipantError("This number is already in the call. Enter another number.");
+              document.getElementById("participant-phone")?.focus();
+              return;
+            }
+            const match = state.leads.find(
+              (item) => dialNumber(item.phone) === phone || dialNumber(item.direct) === phone,
+            );
+            if (
+              state.leads.some(
+                (item) =>
+                  item.outcome === "do_not_call" &&
+                  (dialNumber(item.phone) === phone || dialNumber(item.direct) === phone),
+              )
+            ) {
+              setParticipantError(
+                "This number belongs to a do-not-call lead. Choose another number.",
+              );
+              return;
+            }
+            dispatch({
+              type: "participant",
+              phone,
+              name: participantName.trim() || match?.contact || phone,
+            });
+            setConference(false);
+            setParticipantName("");
+            setParticipantPhone("");
+            setStatus("Participant connected to the simulated group call.");
+          }}
+        >
+          <Field
+            id="participant-phone"
+            label="Participant phone number"
+            type="tel"
+            required
+            value={participantPhone}
+            placeholder="+1 212 555 0198…"
+            onChange={(e) => {
+              setParticipantPhone(e.target.value);
+              setParticipantError("");
             }}
-          >
-            <Plus aria-hidden="true" size={16} />
-            Add to conference
-          </button>
-        </div>
+          />
+          <Field
+            label="Participant name (optional)"
+            value={participantName}
+            placeholder="Owner, co-founder, decision maker…"
+            onChange={(e) => setParticipantName(e.target.value)}
+          />
+          <p className="hint">
+            Add multiple contacts by repeating Add participant. Dialing and joining are simulated
+            here.
+          </p>
+          {participantError && (
+            <p className="error" role="alert">
+              {participantError}
+            </p>
+          )}
+          <div className="modal-actions">
+            <button type="button" className="button" onClick={() => setConference(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="button primary" disabled={!active}>
+              <Plus aria-hidden="true" size={16} />
+              Dial & add to call · simulated
+            </button>
+          </div>
+        </form>
       </Modal>
     </form>
   );

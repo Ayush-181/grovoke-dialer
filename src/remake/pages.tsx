@@ -44,7 +44,7 @@ export function Overview({
   state,
   navigate,
   openLead,
-}: Props & { navigate: (page: Page) => void }) {
+}: Props & { navigate: (page: Page, view?: "all" | "callbacks") => void }) {
   const currentMonth = dateKey(new Date()).slice(0, 7);
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentMonth.slice(0, 4));
@@ -97,6 +97,11 @@ export function Overview({
           </select>
         </label>
         <span>Monthly metrics · IST</span>
+        <button className="button primary overview-open" onClick={() => navigate("dialer")}>
+          <Phone aria-hidden="true" size={16} />
+          Open dialer
+          <ArrowRight aria-hidden="true" size={16} />
+        </button>
       </div>
       <div className="stats-grid overview-stats">
         <Stat
@@ -185,7 +190,7 @@ export function Overview({
               title="Worth a callback"
               subtitle={`${callbacks.length} ${callbacks.length === 1 ? "lead" : "leads"} to follow up`}
               action={
-                <button className="text-button" onClick={() => navigate("leads")}>
+                <button className="text-button" onClick={() => navigate("leads", "callbacks")}>
                   View all <ArrowRight aria-hidden="true" size={14} />
                 </button>
               }
@@ -288,10 +293,24 @@ export function Overview({
   );
 }
 
-export function LeadsPage({ state, dispatch, notify, openLead }: Props) {
+export function LeadsPage({
+  state,
+  dispatch,
+  notify,
+  openLead,
+  view,
+  onViewChange,
+}: Props & { view: "all" | "callbacks"; onViewChange: (view: "all" | "callbacks") => void }) {
   const [search, setSearch] = useState("");
   const [never, setNever] = useState(false);
-  const [callbacks, setCallbacks] = useState(false);
+  const callbacks = view === "callbacks";
+  function changeView(next: "all" | "callbacks") {
+    onViewChange(next);
+    setSearch("");
+    setNever(false);
+    setOutcome("");
+    setSelected([]);
+  }
   const [outcome, setOutcome] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [remove, setRemove] = useState(false);
@@ -310,18 +329,20 @@ export function LeadsPage({ state, dispatch, notify, openLead }: Props) {
     <>
       <div className="page-actions">
         <div className="segmented">
-          <span className="active">
-            All leads <b>{state.leads.length}</b>
-          </span>
           <button
+            className={!callbacks ? "active" : ""}
+            aria-pressed={!callbacks}
+            onClick={() => changeView("all")}
+          >
+            All leads <b>{state.leads.length}</b>
+          </button>
+          <button
+            className={callbacks ? "active" : ""}
             aria-pressed={callbacks}
-            onClick={() => {
-              setCallbacks((v) => !v);
-              setSelected([]);
-            }}
+            onClick={() => changeView("callbacks")}
           >
             <RotateCcw aria-hidden="true" size={14} />
-            Callbacks <b>{state.leads.filter((l) => l.callback).length}</b>
+            Worth a callback <b>{state.leads.filter((lead) => lead.callback).length}</b>
           </button>
         </div>
         <button className="button primary" onClick={() => setImporting(true)}>
@@ -375,13 +396,12 @@ export function LeadsPage({ state, dispatch, notify, openLead }: Props) {
             />
             Never called
           </label>
-          {(search || never || callbacks || outcome) && (
+          {(search || never || outcome) && (
             <button
               className="text-button"
               onClick={() => {
                 setSearch("");
                 setNever(false);
-                setCallbacks(false);
                 setOutcome("");
                 setSelected([]);
               }}
@@ -876,7 +896,7 @@ export function ActivityPage({ state, openLead }: Props) {
                     <strong>
                       {state.leads.find((lead) => lead.id === l.leadId)?.business ?? "Deleted lead"}
                     </strong>
-                    <small>Outbound · simulated</small>
+                    <small>{l.phone} · Outbound · simulated</small>
                   </td>
                   <td>
                     {dateAt(l.at)}
@@ -932,6 +952,17 @@ export function ActivityPage({ state, openLead }: Props) {
                 {outcomeLabel(log.outcome)} · {formatDuration(log.seconds)}
               </span>
             </div>
+            <p className="mono">{log.phone}</p>
+            {Boolean(log.participants.length) && (
+              <div className="call-detail-participants">
+                <strong>Group call participants</strong>
+                {log.participants.map((person) => (
+                  <p key={person.phone}>
+                    {person.name} · <span className="mono">{person.phone}</span>
+                  </p>
+                ))}
+              </div>
+            )}
             <p className="notes-copy">{log.notes || "No notes saved for this call."}</p>
             {log.recording && (
               <div className="info-banner">

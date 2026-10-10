@@ -56,6 +56,8 @@ the recording preference are the only saved local settings. No audio is captured
   queue scrolls. On shorter desktop screens, expanded contact/callback editors
   stay anchored over their section so they do not push the call controls below
   the viewport. Narrow phones stack panels with normal page scrolling.
+- Page headlines are removed across all eight screens. The compact breadcrumb
+  identifies the current screen, with the approved cards and charts preserved.
 - Visible focus, labelled controls, reduced motion, dialog focus management,
   scrollable tables, draft navigation warnings and explicit do-not-call protection.
 - Existing React/Radix/lucide stack. The font stack prefers Manrope/Inter with
@@ -65,11 +67,23 @@ the recording preference are the only saved local settings. No audio is captured
 ## Calling flow
 
 1. Pick a lead or open a session queue. Navigation never starts a call.
+   Alternatively, choose **Dial a number** and enter a phone number, with an
+   optional business/contact name. A saved main or direct number reuses that lead;
+   a new number gets its own local contact, notes, outcome and call counter.
+   Unsaved edits are guarded before switching. US numbers default to +1;
+   international numbers require an explicit +country code. Invalid and
+   do-not-call numbers are blocked. Manual dialing is disabled during an active
+   call or paused session.
 2. Edit **ASK FOR** name and role; expand it for direct number and email.
    Override the lead timezone in the header, beside its live clock.
 3. Explicitly start a simulated dial. The counter increments once per attempt.
-4. Mute, send keypad digits, add/remove simulated teammates, or end the conference.
-   Removing a teammate leaves the original call active. Hang-up stays visible.
+4. Mute, send keypad digits, or choose **Add participant**. Enter another business
+   contact/decision maker’s number and optional name, then **Dial & add to call**.
+   Repeat for multiple participants. Invalid, duplicate, primary and do-not-call
+   numbers are blocked. Removing a participant leaves the other contacts and
+   original call active. Hang-up stays visible. A group call keeps one business
+   context and counts as one attempt; Activity records the actual dialed number
+   and everyone who joined, including contacts removed before the call ended.
 5. Choose an outcome and capture notes. Editing never advances. **Triage held**,
    **Appointment offered**, and **Appointment booked** update the current attempt’s
    metrics immediately. They require an actual simulated dial, and a call with
@@ -78,6 +92,9 @@ the recording preference are the only saved local settings. No audio is captured
    unsaved contact edits are discarded.
 6. Toggle **Worth a callback**, optionally adding lead-local date/time and reason.
    This stays separate from the actual call outcome and creates no automatic call.
+   Leads has separate **All leads** and **Worth a callback** views. Switching
+   views clears the other table filters. Dashboard’s callback **View all** opens
+   the callback view directly; individual entries open the same saved lead.
 7. **Save** persists the draft without moving. **Save & next** persists it and opens
    the next lead without dialing. **Previous** revisits earlier leads. Save/advance
    are disabled during an active call. At the final lead, the queue completes.
@@ -146,7 +163,9 @@ all sockets. An attempted local Vite development socket is closed and classified
 as expected; all other sockets fail the check. No microphone permission is granted.
 
 The smoke covers explicit save behavior, Previous, navigation drafts, saved ASK FOR,
-callbacks, call counts, recording snapshots, conference/mute/keypad, 24 hourly
+dashboard-linked callback views, manual dialing validation and do-not-call,
+per-business call counts, recording snapshots, multiple decision-maker
+conferences and participant history/mute/keypad, headline removal, 24 hourly
 slots, bookings, session timers, milestone aggregation, IST period filters,
 collapsible navigation/queue/contact details, desktop scroll containment, keyboard
 focus, and every screen at 1280/768/390px.
