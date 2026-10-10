@@ -51,7 +51,7 @@ const navigation = [
 ] as const;
 export type Page = (typeof navigation)[number]["id"];
 const titles: Record<Page, [string, string]> = {
-  overview: ["A clear view of your month.", "Your calling activity, conversations & next steps."],
+  overview: ["A clear view of your day.", "Your calling activity, conversations & next steps."],
   leads: [
     "Good conversations start here.",
     "Find the right businesses and keep every detail close.",
@@ -247,71 +247,71 @@ export function App() {
         />
       )}
       <div className="workspace-body">
-        <header className="topbar">
-          <div className="breadcrumb">
-            <button
-              className="icon-button mobile-menu"
-              aria-label="Open navigation"
-              onClick={() => setMenu(true)}
-            >
-              <Menu aria-hidden="true" size={20} />
-            </button>
-            <button
-              className="icon-button desktop-menu"
-              aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
-              aria-expanded={!collapsed}
-              onClick={() => setCollapsed((value) => !value)}
-            >
-              {collapsed ? (
-                <PanelLeftOpen aria-hidden="true" size={20} />
-              ) : (
-                <PanelLeftClose aria-hidden="true" size={20} />
-              )}
-            </button>
-            <span>Workspace</span>
-            <ChevronRight aria-hidden="true" size={14} />
-            <strong>{navigation.find((n) => n.id === page)?.label}</strong>
-          </div>
-          <div className="topbar-tools">
-            <span className="preview-chip">Preview</span>
-            <div className="header-clock">
-              <small>YOUR TIME · IST</small>
-              <strong>{timeAt(now, "Asia/Kolkata")}</strong>
-            </div>
-            <div className="header-clock">
-              <label className="header-zone">
-                <span className="sr-only">Lead timezone</span>
-                <select
-                  name="header-lead-zone"
-                  value={state.draft.zone}
-                  onChange={(e) => dispatch({ type: "edit", patch: { zone: e.target.value } })}
-                >
-                  {zones.map((zone) => (
-                    <option key={zone.value} value={zone.value}>
-                      {zone.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <strong>{timeAt(now, state.draft.zone)}</strong>
-            </div>
-            <button
-              className="theme-toggle"
-              aria-label={`Switch to ${theme === "day" ? "night" : "day"} mode`}
-              aria-pressed={theme === "night"}
-              onClick={() => setTheme((t) => (t === "day" ? "night" : "day"))}
-            >
-              <Sun aria-hidden="true" size={16} />
-              <span className="theme-track">
-                <span />
-              </span>
-              <Moon aria-hidden="true" size={16} />
-              <span className="sr-only">Day / Night</span>
-            </button>
-            <span className="avatar small">A</span>
-          </div>
-        </header>
         <main id="main-content" tabIndex={-1} className={`content page-${page}`}>
+          <header className="topbar">
+            <div className="breadcrumb">
+              <button
+                className="icon-button mobile-menu"
+                aria-label="Open navigation"
+                onClick={() => setMenu(true)}
+              >
+                <Menu aria-hidden="true" size={20} />
+              </button>
+              <button
+                className="icon-button desktop-menu"
+                aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+                aria-expanded={!collapsed}
+                onClick={() => setCollapsed((value) => !value)}
+              >
+                {collapsed ? (
+                  <PanelLeftOpen aria-hidden="true" size={20} />
+                ) : (
+                  <PanelLeftClose aria-hidden="true" size={20} />
+                )}
+              </button>
+              <span>Workspace</span>
+              <ChevronRight aria-hidden="true" size={14} />
+              <strong>{navigation.find((n) => n.id === page)?.label}</strong>
+            </div>
+            <div className="topbar-tools">
+              <span className="preview-chip">Preview</span>
+              <div className="header-clock">
+                <small>YOUR TIME · IST</small>
+                <strong>{timeAt(now, "Asia/Kolkata")}</strong>
+              </div>
+              <div className="header-clock">
+                <label className="header-zone">
+                  <span className="sr-only">Lead timezone</span>
+                  <select
+                    name="header-lead-zone"
+                    value={state.draft.zone}
+                    onChange={(e) => dispatch({ type: "edit", patch: { zone: e.target.value } })}
+                  >
+                    {zones.map((zone) => (
+                      <option key={zone.value} value={zone.value}>
+                        {zone.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <strong>{timeAt(now, state.draft.zone)}</strong>
+              </div>
+              <button
+                className="theme-toggle"
+                aria-label={`Switch to ${theme === "day" ? "night" : "day"} mode`}
+                aria-pressed={theme === "night"}
+                onClick={() => setTheme((t) => (t === "day" ? "night" : "day"))}
+              >
+                <Sun aria-hidden="true" size={16} />
+                <span className="theme-track">
+                  <span />
+                </span>
+                <Moon aria-hidden="true" size={16} />
+                <span className="sr-only">Day / Night</span>
+              </button>
+              <span className="avatar small">A</span>
+            </div>
+          </header>
           {page !== "dialer" ? (
             <div className="page-heading">
               <div>

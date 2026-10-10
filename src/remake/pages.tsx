@@ -28,9 +28,9 @@ import {
 } from "lucide-react";
 import type { State, Action } from "./model";
 import { zones } from "./model";
-import { Panel, PanelHead, Empty, Field, Modal } from "./components";
+import { Panel, PanelHead, Stat, Empty, Field, Modal } from "./components";
 import { formatDuration, outcomeLabel, outcomeTone, OUTCOMES } from "../lib/outcomes";
-import { MetricsGrid, Funnel, PeriodChart } from "./Analytics";
+import { MetricsGrid, Funnel, PeriodChart, OverviewActivityChart } from "./Analytics";
 import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "./metrics";
 import type { Page } from "./App";
 
@@ -40,42 +40,217 @@ type Props = {
   notify: (message: string) => void;
   openLead: (id: string) => void;
 };
-export function Overview({ state, navigate }: Props & { navigate: (page: Page) => void }) {
-  const [month, setMonth] = useState(() => dateKey(new Date()).slice(0, 7));
-  const [year, setYear] = useState(() => dateKey(new Date()).slice(0, 4));
+export function Overview({
+  state,
+  navigate,
+  openLead,
+}: Props & { navigate: (page: Page) => void }) {
+  const currentMonth = dateKey(new Date()).slice(0, 7);
+  const [month, setMonth] = useState(currentMonth);
+  const [year, setYear] = useState(currentMonth.slice(0, 4));
   const logs = inPeriod(state.logs, month);
+  const m = metrics(logs);
+  const previousMonth = new Date(
+    Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 2, 1),
+  )
+    .toISOString()
+    .slice(0, 7);
+  const previous = metrics(inPeriod(state.logs, previousMonth));
   const yearly = inPeriod(state.logs, year);
+  const months = [
+    ...new Set([
+      ...Array.from({ length: 36 }, (_, i) =>
+        new Date(
+          Date.UTC(Number(currentMonth.slice(0, 4)), Number(currentMonth.slice(5, 7)) - 1 - i, 1),
+        )
+          .toISOString()
+          .slice(0, 7),
+      ),
+      ...state.logs.map((log) => dateKey(log.at).slice(0, 7)),
+    ]),
+  ]
+    .sort()
+    .reverse();
+  const delta = (value: number, before: number) =>
+    before ? `${Math.round(((value - before) / before) * 100)}%` : "—";
+  const upcoming = state.bookings
+    .filter((booking) => new Date(booking.at).getTime() >= Date.now())
+    .sort((a, b) => a.at.localeCompare(b.at));
+  const callbacks = state.leads.filter((lead) => lead.callback);
+  const hours = Math.floor(m.talk / 3600),
+    minutes = Math.floor(m.talk / 60) % 60;
   return (
     <>
-      <div className="period-picker">
-        <div>
-          <strong>Monthly overview</strong>
-          <p>Totals from your call log · IST dates</p>
-        </div>
-        <label className="field">
-          <span>Month</span>
-          <input
-            aria-label="Overview month"
-            name="overview-month"
-            type="month"
-            value={month}
-            onChange={(e) => {
-              if (e.target.value) setMonth(e.target.value);
-            }}
-          />
+      <div className="overview-caption">
+        <label className="overview-month">
+          <span className="sr-only">Overview month</span>
+          <select name="overview-month" value={month} onChange={(e) => setMonth(e.target.value)}>
+            {months.map((value) => (
+              <option key={value} value={value}>
+                {new Intl.DateTimeFormat("en", {
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "UTC",
+                }).format(new Date(`${value}-01T00:00:00Z`))}
+              </option>
+            ))}
+          </select>
         </label>
+        <span>Monthly metrics · IST</span>
       </div>
-      <MetricsGrid logs={logs} />
-      <div className="monthly-charts">
+      <div className="stats-grid overview-stats">
+        <Stat
+          icon={Phone}
+          label="Dials"
+          value={String(m.dials)}
+          change={delta(m.dials, previous.dials)}
+          comparison="vs. previous month"
+        />
+        <Stat
+          icon={Users}
+          label="Connected"
+          value={String(m.connected)}
+          change={delta(m.connected, previous.connected)}
+          comparison="vs. previous month"
+          tone="blue"
+        />
+        <Stat
+          icon={CalendarDays}
+          label="Bookings"
+          value={String(m.booked)}
+          change={delta(m.booked, previous.booked)}
+          comparison="vs. previous month"
+          tone="amber"
+        />
+        <Stat
+          icon={Clock3}
+          label="Talk time"
+          value={hours ? `${hours}h ${minutes}m` : `${minutes}m ${m.talk % 60}s`}
+          change={delta(m.talk, previous.talk)}
+          comparison="vs. previous month"
+        />
+      </div>
+      <div className="dashboard-grid">
+        <OverviewActivityChart logs={logs} month={month} />
+        <Funnel logs={logs} />
+        <Panel className="appointments-panel overview-followups">
+          <section className="followup-section">
+            <PanelHead
+              title="Upcoming appointments"
+              subtitle="Your next conversations"
+              action={
+                <button className="text-button" onClick={() => navigate("bookings")}>
+                  View all <ArrowRight aria-hidden="true" size={14} />
+                </button>
+              }
+            />
+            <div
+              className="followup-list appointments-list"
+              role="region"
+              aria-label="Upcoming appointments list"
+              tabIndex={0}
+            >
+              {upcoming.map((booking) => (
+                <button
+                  className="appointment"
+                  key={booking.id}
+                  onClick={() => navigate("bookings")}
+                >
+                  <span className="appointment-icon">
+                    <CalendarDays aria-hidden="true" size={19} />
+                  </span>
+                  <span>
+                    <strong>
+                      {state.leads.find((lead) => lead.id === booking.leadId)?.business ??
+                        booking.title}
+                    </strong>
+                    <small>{booking.title}</small>
+                    <span>
+                      {dateAt(booking.at, booking.zone)} · {timeAt(booking.at, booking.zone)}
+                    </span>
+                  </span>
+                  <ChevronRight aria-hidden="true" size={15} />
+                </button>
+              ))}
+              {!upcoming.length && (
+                <Empty
+                  title="No upcoming appointments"
+                  description="Your next appointments will appear here."
+                />
+              )}
+            </div>
+          </section>
+          <section className="followup-section callback-section">
+            <PanelHead
+              title="Worth a callback"
+              subtitle={`${callbacks.length} ${callbacks.length === 1 ? "lead" : "leads"} to follow up`}
+              action={
+                <button className="text-button" onClick={() => navigate("leads")}>
+                  View all <ArrowRight aria-hidden="true" size={14} />
+                </button>
+              }
+            />
+            <div
+              className="followup-list"
+              role="region"
+              aria-label="Worth a callback list"
+              tabIndex={0}
+            >
+              {callbacks.map((lead) => (
+                <button className="appointment" key={lead.id} onClick={() => openLead(lead.id)}>
+                  <span className="appointment-icon">
+                    <RotateCcw aria-hidden="true" size={19} />
+                  </span>
+                  <span>
+                    <strong>{lead.business}</strong>
+                    <small>{lead.contact}</small>
+                    <span>
+                      {lead.callbackReason || lead.notes || "Follow up when you’re ready."}
+                    </span>
+                  </span>
+                  <ChevronRight aria-hidden="true" size={15} />
+                </button>
+              ))}
+              {!callbacks.length && (
+                <Empty
+                  title="No callbacks yet"
+                  description="Flag a lead as worth a callback in the dialer."
+                />
+              )}
+            </div>
+          </section>
+        </Panel>
+      </div>
+      <div className="overview-bottom">
         <Panel>
           <PanelHead
-            title="Calling activity"
-            subtitle="Dials, connections and appointments by day"
+            title="A queue ready for your next session"
+            subtitle={`${state.leads.filter((l) => !l.outcome).length} untouched businesses to get to know`}
           />
-          <PeriodChart logs={logs} period={month} />
+          <div className="session-preview">
+            <span className="stat-icon jade">
+              <ListOrdered aria-hidden="true" size={22} />
+            </span>
+            <div>
+              <strong>Local businesses · First touch</strong>
+              <p>Take one lead at a time. Save before moving on.</p>
+            </div>
+            <button className="button primary" onClick={() => navigate("dialer")}>
+              Start calling
+              <ArrowRight aria-hidden="true" size={15} />
+            </button>
+          </div>
         </Panel>
-        <Funnel logs={logs} />
+        <Panel className="quiet-card">
+          <ShieldCheck aria-hidden="true" size={24} />
+          <h2>Your original workspace stays safe.</h2>
+          <p>
+            This preview uses synthetic leads and simulated services. Your Lovable app stays
+            separate.
+          </p>
+        </Panel>
       </div>
+
       <details className="annual-summary panel">
         <summary>
           Yearly summary <span>Explore a full year</span>
@@ -90,7 +265,7 @@ export function Overview({ state, navigate }: Props & { navigate: (page: Page) =
               onChange={(e) => setYear(e.target.value)}
             >
               {Array.from({ length: 5 }, (_, i) =>
-                String(Number(dateKey(new Date()).slice(0, 4)) - i),
+                String(Number(currentMonth.slice(0, 4)) - i),
               ).map((value) => (
                 <option key={value}>{value}</option>
               ))}
@@ -109,50 +284,6 @@ export function Overview({ state, navigate }: Props & { navigate: (page: Page) =
           <PeriodChart logs={yearly} period={year} annual />
         </div>
       </details>
-      <div className="overview-bottom">
-        <Panel>
-          <PanelHead
-            title="Upcoming appointments"
-            action={
-              <button className="text-button" onClick={() => navigate("bookings")}>
-                View all <ArrowRight aria-hidden="true" size={16} />
-              </button>
-            }
-          />
-          <div className="appointments-list">
-            {state.bookings.slice(0, 3).map((booking) => (
-              <button className="appointment" key={booking.id} onClick={() => navigate("bookings")}>
-                <CalendarDays aria-hidden="true" size={20} />
-                <span>
-                  <strong>{booking.title}</strong>
-                  <small>
-                    {dateAt(booking.at, booking.zone)} · {timeAt(booking.at, booking.zone)}
-                  </small>
-                </span>
-                <ChevronRight aria-hidden="true" size={16} />
-              </button>
-            ))}
-          </div>
-        </Panel>
-        <Panel>
-          <PanelHead
-            title="Your next calling session"
-            subtitle={`${state.leads.filter((lead) => !lead.outcome).length} leads with no outcome`}
-          />
-          <div className="session-preview">
-            <ListOrdered aria-hidden="true" size={24} />
-            <div>
-              <strong>
-                {state.leads.filter((lead) => lead.callback).length} leads worth a callback
-              </strong>
-              <p>Review, call, then Save & next.</p>
-            </div>
-            <button className="button primary" onClick={() => navigate("sessions")}>
-              View sessions <ArrowRight aria-hidden="true" size={16} />
-            </button>
-          </div>
-        </Panel>
-      </div>
     </>
   );
 }

@@ -41,7 +41,14 @@ the recording preference are the only saved local settings. No audio is captured
   remembered manual choice thereafter. Native controls and chart colors adapt.
 - Charts use slate blue, teal, jade, ochre and terracotta. Text, legends, stage
   values and percentages carry meaning alongside color. The funnel keeps its
-  downward taper as one contiguous SVG, with shared edges between stages.
+  original five separate, rounded trapezoids with tighter vertical gaps.
+- Overview retains the original four metric cards and three-panel composition:
+  grouped activity bars, booking funnel, and a right-hand follow-up card. A native
+  month dropdown selects the same charts’ data. Monthly activity is grouped by
+  weekday, with totals derived from the mock call log. The right-hand card has
+  two independently scrollable, bounded lists: upcoming appointments above and
+  leads worth a callback below. Utility controls share the main canvas; there is
+  no separate full-width header strip.
 - Three-column calling workspace: searchable queue left, lead context and
   editable **ASK FOR** and call/save controls center, outcomes and milestones right.
   The global sidebar and lead queue collapse independently. Desktop/tablet keep
@@ -88,7 +95,7 @@ mock state adapter. They do not access a device, microphone, phone number or SDK
 
 | Screen     | Interactive preview                                                                                                                                                                              |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Overview   | Selectable monthly metrics derived from the mock call log, contiguous colored funnel, daily chart, secondary expandable yearly summary, upcoming demo bookings                                   |
+| Overview   | Selectable monthly metrics derived from the mock call log, original styled funnel and grouped activity chart, secondary expandable yearly summary, upcoming demo bookings                        |
 | Leads      | Search, outcomes, never-called (blank outcome), callbacks, selection, confirmed deletion, synthetic CSV mapping/import                                                                           |
 | Dialer     | Compact three-column calling flow, collapsible queue/ASK FOR, inline call/save controls, milestone buttons, callback flag, mock conference/keypad                                                |
 | Sessions   | Create a named queue, Start/Pause/Resume/Stop, elapsed working time (excluding pauses), talk time, calls, progress                                                                               |

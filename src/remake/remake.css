@@ -3632,3 +3632,149 @@ table {
     bottom: calc(100% + 4px);
   }
 }
+
+/* Restore the approved dashboard composition; merge utility controls into main. */
+.content > .topbar {
+  height: 44px;
+  padding: 0;
+  margin-bottom: 22px;
+  background: transparent;
+  border-bottom: 0;
+}
+.page-dialer {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.page-dialer > .topbar {
+  height: 52px;
+  min-height: 52px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+.page-dialer .dialer-form {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+.content > .topbar .header-zone select {
+  background-color: var(--canvas);
+}
+.overview-month select {
+  min-height: 36px;
+  padding: 6px 30px 6px 10px;
+  background: var(--raised);
+  border-color: var(--border);
+  font-size: 14px;
+}
+.overview-stats .stat {
+  align-items: flex-start;
+}
+.overview-stats .stat p {
+  font-size: 14px;
+}
+.overview-stats .stat strong {
+  font-size: 30px;
+}
+.page-overview .dashboard-grid {
+  margin-bottom: 20px;
+}
+.page-overview .funnel-panel {
+  display: flex;
+  flex-direction: column;
+}
+.page-overview .funnel {
+  gap: 3px;
+  margin-block: auto;
+}
+.page-overview .funnel-stage {
+  height: auto;
+  align-items: center;
+}
+.page-overview .funnel-stage svg {
+  height: auto;
+  aspect-ratio: 100 / 44;
+  display: block;
+}
+.page-overview .funnel-note {
+  margin-top: auto;
+}
+.page-overview .overview-followups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  height: 380px;
+  min-width: 0;
+  overflow: hidden;
+}
+.followup-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.followup-section + .followup-section {
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--raised) 35%, var(--card));
+}
+.overview-followups .panel-head {
+  flex-shrink: 0;
+  padding: 16px 18px 10px;
+}
+.overview-followups .panel-head h2 {
+  font-size: 16px;
+}
+.overview-followups .followup-list {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 8px;
+  scrollbar-gutter: stable;
+}
+.overview-followups .appointment {
+  width: calc(100% - 36px);
+}
+.overview-followups .appointment strong {
+  font-size: 14px;
+}
+.overview-followups .appointment > span > span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.overview-followups .empty {
+  padding: 12px 18px;
+  text-align: left;
+}
+.page-overview .overview-bottom {
+  margin-bottom: 18px;
+}
+@media (max-width: 900px) {
+  .overview-stats .stat {
+    flex-direction: row;
+  }
+}
+@media (max-width: 720px) {
+  .content > .topbar {
+    height: auto;
+    margin-bottom: 18px;
+  }
+  .page-dialer {
+    height: auto;
+    display: block;
+  }
+  .page-dialer > .topbar {
+    margin-bottom: 12px;
+  }
+  .page-dialer .dialer-form {
+    height: auto;
+  }
+  .overview-stats .stat {
+    flex-direction: column;
+  }
+  .overview-stats .stat small {
+    white-space: normal;
+  }
+}

@@ -36,7 +36,7 @@ async (page) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${origin}/remake/index.html`);
   try {
-    await page.getByRole("heading", { name: "A clear view of your month." }).waitFor();
+    await page.getByRole("heading", { name: "A clear view of your day." }).waitFor();
   } catch {
     throw new Error(
       "Preview failed to start. Browser errors: " +
@@ -50,12 +50,96 @@ async (page) => {
     "Annual summary should start collapsed",
   );
   const month = await page.getByLabel("Overview month").inputValue();
-  await page.getByLabel("Overview month").fill("2025-01");
+  await page.getByLabel("Overview month").selectOption("2025-01");
   check(
     (await page.locator('[data-metric="Dials"]').textContent()) === "0",
     "Empty month kept stale totals",
   );
-  await page.getByLabel("Overview month").fill(month);
+  await page.getByLabel("Overview month").selectOption(month);
+  check(
+    (await page.locator(".overview-stats .stat").count()) === 4,
+    "Original four-card dashboard was not restored",
+  );
+  check(
+    (await page.locator(".page-overview .chart-day").count()) === 7,
+    "Original grouped activity chart was not restored",
+  );
+  check(
+    (await page.locator(".funnel-stage svg path").count()) === 5,
+    "Original individual funnel shapes were not restored",
+  );
+  check(
+    await page.locator("main > .topbar").isVisible(),
+    "Utility header was not merged into main",
+  );
+  check(
+    (await page.locator(".workspace-body > .topbar").count()) === 0,
+    "Separate utility header remains",
+  );
+  const listLayout = await page.locator(".overview-followups").evaluate((card) => ({
+    height: card.getBoundingClientRect().height,
+    lists: [...card.querySelectorAll(".followup-list")].map((el) => ({
+      scroll: getComputedStyle(el).overflowY,
+      height: el.clientHeight,
+    })),
+  }));
+  check(
+    listLayout.height <= 381 &&
+      listLayout.lists.length === 2 &&
+      listLayout.lists.every((list) => list.scroll === "auto" && list.height > 0),
+    "Appointments/callbacks must scroll independently in a bounded card: " +
+      JSON.stringify(listLayout),
+  );
+  const scrollStress = await page.locator(".overview-followups").evaluate((card) => {
+    const lists = [...card.querySelectorAll(".followup-list")];
+    const before = card.getBoundingClientRect().height;
+    const clones = lists.map((list) =>
+      Array.from({ length: 12 }, () => {
+        const row = list.firstElementChild.cloneNode(true);
+        list.appendChild(row);
+        return row;
+      }),
+    );
+    lists[0].scrollTop = lists[0].scrollHeight;
+    const result = {
+      height: card.getBoundingClientRect().height,
+      before,
+      overflowing: lists.every((list) => list.scrollHeight > list.clientHeight),
+      topMoved: lists[0].scrollTop > 0,
+      bottomStayed: lists[1].scrollTop === 0,
+    };
+    lists[1].scrollTop = lists[1].scrollHeight;
+    result.bottomMoved = lists[1].scrollTop > 0;
+    clones.flat().forEach((row) => row.remove());
+    lists.forEach((list) => {
+      list.scrollTop = 0;
+    });
+    return result;
+  });
+  check(
+    scrollStress.overflowing &&
+      scrollStress.topMoved &&
+      scrollStress.bottomStayed &&
+      scrollStress.bottomMoved &&
+      scrollStress.before === scrollStress.height,
+    "Follow-up lists do not scroll independently without growing the card: " +
+      JSON.stringify(scrollStress),
+  );
+  const funnelGap = await page
+    .locator(".funnel-stage svg")
+    .evaluateAll((shapes) =>
+      shapes
+        .slice(1)
+        .map(
+          (shape, i) =>
+            shape.getBoundingClientRect().top - shapes[i].getBoundingClientRect().bottom,
+        ),
+    );
+  check(
+    funnelGap.every((gap) => gap >= 0 && gap <= 6),
+    "Funnel shapes still have large gaps: " + JSON.stringify(funnelGap),
+  );
+  await page.setViewportSize({ width: 1536, height: 960 });
   await page.screenshot({ path: ".playwright-cli/remake-overview-day.png", fullPage: true });
   await page.getByRole("button", { name: "Switch to night mode" }).click();
   await page.waitForTimeout(200);
@@ -70,6 +154,7 @@ async (page) => {
     page
       .getByRole("navigation", { name: "Main navigation" })
       .getByRole("link", { name, exact: name !== "Leads" });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await nav("Settings").click();
   await page.getByRole("switch", { name: "Automatically record calls" }).click();
   await nav("Dialer").click();

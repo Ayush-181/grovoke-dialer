@@ -61,45 +61,119 @@ export function MetricsGrid({ logs, detailed = false }: { logs: Log[]; detailed?
 
 export function Funnel({ logs }: { logs: Log[] }) {
   const m = metrics(logs);
+  const pickups =
+    m.connected +
+    logs.filter(
+      (log) => log.outcome === "not_interested" && !log.triage && !log.offered && !log.booked,
+    ).length;
   const stages = [
     ["Dials", m.dials],
-    ["Connected", m.connected],
-    ["Triage held", m.triage],
+    ["Pickups", pickups],
+    ["Conversations", m.connected],
     ["Offered", m.offered],
     ["Booked", m.booked],
   ] as const;
   return (
     <Panel className="funnel-panel">
-      <PanelHead title="Booking funnel" subtitle="Each connected call counts once" />
-      <figure
-        className="connected-funnel"
-        aria-label={stages.map(([label, count]) => `${label}: ${count}`).join(". ")}
-      >
-        <svg viewBox="0 0 240 250" aria-hidden="true" preserveAspectRatio="none">
-          {stages.map(([,], i) => {
-            const x = i * 18,
-              next = (i + 1) * 18;
-            return (
-              <polygon
-                key={i}
-                className={`funnel-fill stage-${i}`}
-                points={`${x},${i * 50} ${240 - x},${i * 50} ${240 - next},${(i + 1) * 50} ${next},${(i + 1) * 50}`}
-              />
-            );
-          })}
-        </svg>
-        <div className="funnel-labels">
-          {stages.map(([label, count]) => (
-            <div key={label}>
-              <span>{label}</span>
-              <strong className="mono">{count}</strong>
-              <small>{m.dials ? Math.round((count / m.dials) * 100) : 0}%</small>
+      <PanelHead title="Booking funnel" subtitle="From first dial to next steps" />
+      <div className="funnel">
+        {stages.map(([label, count], i) => (
+          <div className="funnel-row" key={label}>
+            <div className="funnel-stage">
+              <svg
+                viewBox="0 0 100 44"
+                role="img"
+                aria-label={`${label}: ${count}, ${m.dials ? Math.round((count / m.dials) * 100) : 0}% of dials`}
+                style={{ width: `${100 - i * 13}%` }}
+              >
+                <path
+                  className={`funnel-fill stage-${i}`}
+                  d="M5 0 H95 Q100 0 98 6 L86 40 Q85 44 80 44 H20 Q15 44 14 40 L2 6 Q0 0 5 0 Z"
+                />
+              </svg>
             </div>
-          ))}
+            <strong className="mono">{count}</strong>
+            <span>{label}</span>
+            <small>{m.dials ? Math.round((count / m.dials) * 100) : 0}%</small>
+          </div>
+        ))}
+      </div>
+      <p className="funnel-note">
+        <span className="status-dot" />
+        {m.dials ? ((m.booked / m.dials) * 100).toFixed(1) : "0"}% of dials become bookings
+      </p>
+    </Panel>
+  );
+}
+
+export function OverviewActivityChart({ logs, month }: { logs: Log[]; month: string }) {
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const data = weekdays.map((weekday) =>
+    metrics(
+      logs.filter(
+        (log) =>
+          new Intl.DateTimeFormat("en", { weekday: "short", timeZone: "Asia/Kolkata" }).format(
+            new Date(log.at),
+          ) === weekday,
+      ),
+    ),
+  );
+  const max = Math.max(4, Math.ceil(Math.max(...data.map((day) => day.dials)) / 4) * 4);
+  const monthLabel = new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" }).format(
+    new Date(`${month}-01T00:00:00Z`),
+  );
+  return (
+    <Panel className="activity-chart">
+      <PanelHead title="Calling activity" subtitle="Every conversation starts with a dial" />
+      <div className="chart-legend">
+        <span>
+          <i className="series-blue" />
+          Dials
+        </span>
+        <span>
+          <i className="series-jade" />
+          Connected
+        </span>
+        <span>
+          <i className="series-amber" />
+          Bookings
+        </span>
+      </div>
+      <figure
+        className="chart-figure"
+        aria-label={`Monthly totals grouped by weekday for ${month}: ${metrics(logs).dials} dials, ${metrics(logs).connected} connected, ${metrics(logs).booked} bookings`}
+      >
+        <div className="bar-chart">
+          <div className="chart-axis">
+            {[max, max * 0.75, max * 0.5, max * 0.25, 0].map((value) => (
+              <span key={value}>{value}</span>
+            ))}
+          </div>
+          <div className="chart-columns">
+            {data.map((day, i) => (
+              <div className="chart-day" key={weekdays[i]}>
+                <div className="bar-group">
+                  {[day.dials, day.connected, day.booked].map((count, j) => (
+                    <span
+                      key={j}
+                      className={`bar ${["series-blue", "series-jade", "series-amber"][j]}`}
+                      style={{
+                        height: `${(count / max) * 100}%`,
+                        minHeight: count ? undefined : 0,
+                      }}
+                      title={`${weekdays[i]}: ${count} ${["dials", "connected", "bookings"][j]}`}
+                    />
+                  ))}
+                </div>
+                <small>
+                  {weekdays[i]}
+                  <span>{monthLabel}</span>
+                </small>
+              </div>
+            ))}
+          </div>
         </div>
-        <figcaption>
-          Milestone totals can overlap. Colors mark stages; widths show their order.
-        </figcaption>
+        <figcaption>Connections, not just activity. Monthly totals grouped by weekday.</figcaption>
       </figure>
     </Panel>
   );

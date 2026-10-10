@@ -1,5 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, ArrowUpRight, type LucideIcon } from "lucide-react";
+import { X, ArrowUpRight, ArrowDownRight, type LucideIcon } from "lucide-react";
 import type { ReactNode, InputHTMLAttributes } from "react";
 
 export function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -78,12 +78,14 @@ export function Stat({
   label,
   value,
   change,
+  comparison = "vs. previous week",
   tone = "jade",
 }: {
   icon: LucideIcon;
   label: string;
   value: string;
   change: string;
+  comparison?: string;
   tone?: string;
 }) {
   return (
@@ -93,10 +95,15 @@ export function Stat({
       </span>
       <div>
         <p>{label}</p>
-        <strong>{value}</strong>
+        <strong data-metric={label}>{value}</strong>
         <small>
-          <ArrowUpRight aria-hidden="true" size={12} />
-          {change} <span>vs. previous week</span>
+          {change !== "—" &&
+            (change.startsWith("-") ? (
+              <ArrowDownRight aria-hidden="true" size={12} />
+            ) : (
+              <ArrowUpRight aria-hidden="true" size={12} />
+            ))}
+          {change} <span>{comparison}</span>
         </small>
       </div>
     </Panel>

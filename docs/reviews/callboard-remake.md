@@ -9,7 +9,10 @@ controls. Readable type, a compact header, independently collapsible navigation
 and lead list, and integrated call/save controls keep the desktop calling panels
 visible. Triage and booking buttons update their metrics and count Connected
 once per call. Activity shows daily metrics with an IST date picker; Overview
-defaults to a selectable month with a secondary yearly summary. Sessions have
+keeps the approved four-card and three-panel layout, with a month dropdown
+and a secondary yearly summary. Its original separate funnel shapes have
+tighter gaps; the right-hand card contains independently scrollable appointment
+and callback lists. Utility controls are merged into the main canvas. Sessions have
 Start/Pause/Resume/Stop, elapsed working time, attributed calls and talk time.
 Ending or saving a call produces inline feedback without popups.
 
