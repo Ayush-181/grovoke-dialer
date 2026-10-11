@@ -1,16 +1,16 @@
-/* The approved Porcelain & Jade prototype. Tokens never affect the original app. */
+/* Call Board Slate & Blue preview. Tokens never affect the original app. */
 :root {
-  --canvas: #f7f8f5;
+  --canvas: #f5f7fa;
   --card: #fff;
-  --raised: #f2f5f2;
-  --text: #202d28;
-  --muted: #65736b;
-  --border: #e2e8e2;
-  --jade: #24745e;
-  --jade-soft: #e7f3ec;
-  --forest: #19372f;
-  --sidebar-text: #e1eee7;
-  --sidebar-muted: #b5ccc0;
+  --raised: #edf1f6;
+  --text: #202a3b;
+  --muted: #647084;
+  --border: #dce3ed;
+  --jade: #315ed6;
+  --jade-soft: #eaf0ff;
+  --forest: #141d2e;
+  --sidebar-text: #e7edf7;
+  --sidebar-muted: #a8b5cb;
   --blue: #6286aa;
   --teal: #479fa5;
   --green: #55a58a;
@@ -18,9 +18,8 @@
   --coral: #d88370;
   --red: #bc3c40;
   --red-soft: #fff0ef;
-  --shadow: 0 2px 8px #16332704;
+  --shadow: 0 2px 8px #16284b08;
   font-family:
-    "Manrope",
     "Inter",
     ui-sans-serif,
     system-ui,
@@ -32,17 +31,17 @@
   color-scheme: light;
 }
 :root[data-theme="night"] {
-  --canvas: #141c19;
-  --card: #1c2723;
-  --raised: #24322c;
-  --text: #e6ede7;
-  --muted: #a7b6ac;
-  --border: #34453c;
-  --jade: #82ceb0;
-  --jade-soft: #283f35;
-  --forest: #122d25;
-  --sidebar-text: #e1eee7;
-  --sidebar-muted: #a6c1b3;
+  --canvas: #0c111b;
+  --card: #131b29;
+  --raised: #1b2637;
+  --text: #e8edf5;
+  --muted: #a4afc2;
+  --border: #2b374a;
+  --jade: #88aaff;
+  --jade-soft: #1b2d4e;
+  --forest: #0f1726;
+  --sidebar-text: #e7edf7;
+  --sidebar-muted: #9cacbf;
   --blue: #8daecb;
   --teal: #70b9be;
   --green: #87c9ab;
@@ -280,7 +279,7 @@ button {
 }
 .sidebar nav a.active {
   background: #ffffff18;
-  box-shadow: inset 3px 0 #8ac6ac;
+  box-shadow: inset 3px 0 #91afff;
   font-weight: 600;
 }
 .sidebar nav small {
@@ -325,7 +324,7 @@ button {
   display: inline-grid;
   place-items: center;
   border-radius: 50%;
-  background: #3e6957;
+  background: #304a79;
   color: #fff;
   font-size: 14px;
 }
@@ -472,7 +471,7 @@ button {
   filter: brightness(0.92);
 }
 [data-theme="night"] .button.primary {
-  color: #10271b;
+  color: #0c203c;
 }
 .button.danger {
   background: #b8353d;
@@ -1854,8 +1853,8 @@ tr:hover td {
 .theme-mini {
   display: flex;
   gap: 6px;
-  background: #f7f8f5;
-  border: 1px solid #e2e8e2;
+  background: #f5f7fa;
+  border: 1px solid #dce3ed;
   padding: 12px 10px 12px 40px;
   height: 85px;
   border-radius: 4px;
@@ -1868,23 +1867,23 @@ tr:hover td {
   bottom: 0;
   left: 0;
   width: 28px;
-  background: #19372f;
+  background: #141d2e;
 }
 .theme-mini i {
   flex: 1;
   height: 38px;
-  border: 1px solid #e2e8e2;
+  border: 1px solid #dce3ed;
   background: #fff;
   margin-top: 18px;
   border-radius: 3px;
 }
 .theme-mini.night {
-  background: #141c19;
-  border-color: #34453c;
+  background: #0c111b;
+  border-color: #2b374a;
 }
 .theme-mini.night i {
-  background: #24322c;
-  border-color: #34453c;
+  background: #1b2637;
+  border-color: #2b374a;
 }
 .settings-hint {
   padding: 16px 22px 20px;
@@ -2060,7 +2059,7 @@ tr:hover td {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: #071e1660;
+  background: #060e2060;
   backdrop-filter: blur(3px);
 }
 .modal {
@@ -3823,4 +3822,604 @@ table {
   .dialer-toolbar:has(.session-clock) > div:last-child > label {
     display: none;
   }
+}
+
+/* Reference-inspired calling workspace: context center, capture/actions right. */
+kbd {
+  font:
+    11px/1.5 "JetBrains Mono",
+    ui-monospace,
+    monospace;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  background: var(--raised);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+.page-dialer .dialer-toolbar {
+  gap: 12px;
+  min-height: 42px;
+}
+.page-dialer .dialer-toolbar > div {
+  gap: 8px;
+}
+.page-dialer .dialer-toolbar .button,
+.page-dialer .dialer-toolbar select {
+  min-height: 36px;
+  font-size: 13px;
+  padding: 6px 9px;
+}
+.page-dialer .dialer-toolbar > div:first-child > span {
+  display: none;
+}
+.page-dialer .dialer-toolbar > div:last-child > label {
+  display: none;
+}
+.dialer-live-metrics {
+  margin-left: auto;
+}
+.page-dialer .dialer-live-metrics > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+  border-right: 1px solid var(--border);
+  padding-right: 10px;
+}
+.dialer-live-metrics strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.page-dialer .session-clock {
+  font-size: 17px;
+}
+.page-dialer .session-state {
+  display: none;
+}
+.page-dialer .dialer-grid {
+  grid-template-columns: 210px minmax(0, 1fr) 350px;
+  gap: 10px;
+}
+.page-dialer .queue-collapsed .dialer-grid {
+  grid-template-columns: minmax(0, 1fr) 350px;
+}
+.queue-views {
+  display: flex;
+  margin: 0 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.queue-views button {
+  border: 0;
+  background: transparent;
+  padding: 7px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  flex: 1;
+  border-bottom: 2px solid transparent;
+}
+.queue-views button.active {
+  border-color: var(--jade);
+  color: var(--jade);
+}
+.queue-views button:hover {
+  background: var(--raised);
+}
+.page-dialer .lead-identity {
+  padding: 18px 20px 12px;
+}
+.page-dialer .lead-identity h2 {
+  font-size: 26px;
+}
+.lead-quick-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.lead-quick-actions .text-button {
+  font-size: 12px;
+  padding: 0;
+  gap: 5px;
+}
+.number-picker select {
+  min-height: 30px;
+  padding: 3px 7px;
+  font-size: 12px;
+  background: var(--raised);
+}
+.call-guide {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+}
+.guide-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.guide-head .text-button {
+  font-size: 12px;
+}
+.guide-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+}
+.guide-sections > div {
+  display: flex;
+  gap: 12px;
+}
+.guide-step {
+  color: var(--jade);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+.guide-sections strong {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.guide-sections p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  margin-top: 5px;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.guide-hint {
+  margin-top: auto;
+  padding-top: 14px;
+  font-size: 12px;
+}
+.guide-editor {
+  flex: 1;
+  min-height: 0;
+}
+.guide-editor textarea {
+  flex: 1;
+  resize: none;
+  min-height: 60px;
+  height: 100%;
+}
+.guide-rest {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--muted);
+  margin: auto;
+  text-align: center;
+  align-items: center;
+}
+.guide-rest strong {
+  font-weight: 500;
+}
+.page-dialer .lead-panel .lead-history {
+  flex: 1;
+  min-height: 0;
+}
+.page-dialer .call-controls {
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--raised) 40%, var(--card));
+}
+.page-dialer .call-actions {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+.page-dialer .call-actions > .button {
+  flex: 1;
+  min-height: 40px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.page-dialer .call-actions > .icon-button {
+  flex-shrink: 0;
+  width: 34px;
+  min-height: 38px;
+}
+.page-dialer .dial-button kbd {
+  background: transparent;
+  border-color: currentColor;
+  color: inherit;
+  opacity: 0.7;
+  margin-left: auto;
+}
+.page-dialer .keypad .digits:empty {
+  display: none;
+}
+.page-dialer .outcome-panel {
+  overflow: visible;
+}
+.page-dialer .outcomes {
+  padding: 14px 14px 8px;
+  flex-shrink: 0;
+}
+.page-dialer .outcomes h2 {
+  font-size: 18px;
+}
+.page-dialer .outcomes > p {
+  margin: 3px 0 10px;
+  font-size: 12px;
+}
+.outcome-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.outcome-group h3 {
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.page-dialer .outcome-grid {
+  gap: 5px;
+}
+.page-dialer .outcome-option {
+  min-height: 37px;
+  font-size: 13px;
+  padding: 5px 7px;
+  gap: 6px;
+}
+.outcome-option > span:nth-child(2) {
+  flex: 1;
+  text-align: left;
+}
+.outcome-option kbd {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 11px;
+}
+.page-dialer .milestones {
+  padding: 4px 14px 10px;
+  flex-shrink: 0;
+}
+.page-dialer .milestones h3 {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.page-dialer .milestones .button {
+  min-height: 32px;
+  padding: 4px 7px;
+  font-size: 12px;
+}
+.page-dialer .milestones p {
+  display: none;
+}
+.page-dialer .milestones > div {
+  gap: 4px;
+}
+.conversation-notes {
+  flex: 1;
+  min-height: 76px;
+  padding: 0 14px 10px;
+}
+.conversation-notes .field {
+  height: 100%;
+  gap: 5px;
+}
+.conversation-notes .field > span {
+  font-size: 12px;
+}
+.conversation-notes textarea {
+  flex: 1;
+  min-height: 44px;
+  height: 100%;
+  resize: none;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+.page-dialer .callback-card {
+  position: relative;
+  margin: 0 14px 10px;
+  flex-shrink: 0;
+}
+.page-dialer .callback-toggle {
+  min-height: 38px;
+  padding: 7px 10px;
+}
+.page-dialer .callback-toggle strong {
+  font-size: 13px;
+}
+.page-dialer .callback-fields {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px #0002;
+}
+.page-dialer .outcome-panel .lead-save-controls {
+  padding: 8px 12px 12px;
+}
+.page-dialer .lead-save-actions {
+  gap: 5px;
+}
+.page-dialer .lead-save-actions .button {
+  font-size: 12px;
+  min-height: 36px;
+  padding: 5px 7px;
+  gap: 4px;
+}
+.page-dialer .lead-save-actions #dialer-previous {
+  flex: 0.9;
+  font-size: 12px;
+}
+.page-dialer .lead-save-actions #dialer-previous svg {
+  width: 17px;
+}
+.page-dialer .lead-save-actions #dialer-save-next {
+  flex: 1.4;
+}
+.page-dialer .inline-status {
+  font-size: 12px;
+  min-height: 18px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.booking-in-dialer {
+  width: 100%;
+  margin-top: 7px;
+  min-height: 36px;
+  color: var(--jade);
+  border-color: var(--jade);
+  background: var(--jade-soft);
+  font-size: 13px;
+}
+.booking-in-dialer span {
+  flex: 1;
+  text-align: left;
+}
+.booking-in-dialer kbd {
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+.shortcut-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.page-dialer .conference-participants {
+  max-height: 44px;
+}
+.page-dialer .participant {
+  font-size: 12px;
+}
+
+@media (min-width: 721px) and (max-width: 1350px) {
+  .page-dialer .dialer-grid,
+  .page-dialer .queue-collapsed .dialer-grid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+  .page-dialer .queue-panel {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 245px;
+    z-index: 15;
+    box-shadow: 8px 0 24px #0002;
+  }
+  .page-dialer .lead-panel {
+    grid-column: 1;
+  }
+  .page-dialer .outcome-panel {
+    grid-column: 2;
+  }
+  .dialer-live-metrics {
+    display: none !important;
+  }
+  .page-dialer .lead-identity {
+    padding-inline: 16px;
+  }
+  .page-dialer .guide-sections {
+    gap: 12px;
+  }
+}
+@media (min-width: 721px) and (max-height: 850px) {
+  .page-dialer .outcomes {
+    padding-top: 10px;
+  }
+  .page-dialer .outcomes > p {
+    display: none;
+  }
+  .page-dialer .outcome-option {
+    min-height: 33px;
+  }
+  .outcome-groups {
+    gap: 6px;
+  }
+  .page-dialer .lead-identity {
+    padding-block: 10px;
+  }
+  .page-dialer .call-controls {
+    padding-block: 8px;
+  }
+  .page-dialer .guide-head {
+    margin-bottom: 8px;
+  }
+  .page-dialer .guide-sections {
+    gap: 10px;
+  }
+  .page-dialer .guide-sections p {
+    -webkit-line-clamp: 2;
+  }
+  .guide-hint {
+    display: none;
+  }
+  .page-dialer .conversation-notes {
+    min-height: 65px;
+  }
+}
+@media (max-width: 1000px) and (min-width: 721px) {
+  .page-dialer .dialer-toolbar .button {
+    font-size: 12px;
+  }
+  .page-dialer .dialer-toolbar > div {
+    gap: 5px;
+  }
+  .page-dialer .lead-quick-actions {
+    gap: 8px;
+  }
+  .page-dialer .call-actions > .button {
+    padding-inline: 6px;
+    font-size: 12px;
+  }
+  .page-dialer .call-actions > .button > svg {
+    display: none;
+  }
+  .page-dialer .caller-row .mic-select {
+    width: auto;
+  }
+  .page-dialer .call-timer {
+    font-size: 23px;
+  }
+}
+@media (max-width: 720px) {
+  .page-dialer .dialer-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .page-dialer .dialer-toolbar > div {
+    width: auto;
+  }
+  .page-dialer .dialer-live-metrics {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    margin: 0;
+  }
+  .page-dialer .dialer-grid,
+  .page-dialer .queue-collapsed .dialer-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-dialer .queue-panel {
+    position: static;
+    width: auto;
+  }
+  .page-dialer .call-guide {
+    min-height: 220px;
+  }
+  .page-dialer .call-actions {
+    flex-wrap: wrap;
+  }
+  .page-dialer .call-actions > .button {
+    min-width: 100px;
+  }
+  .page-dialer .conversation-notes {
+    min-height: 140px;
+  }
+  .page-dialer .callback-fields {
+    position: static;
+    box-shadow: none;
+    border: 0;
+  }
+  .page-dialer .outcome-panel {
+    min-height: 700px;
+  }
+}
+.page-dialer .guide-hint {
+  display: none;
+}
+.page-dialer .guide-sections {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.page-dialer .guide-sections > div {
+  min-height: 0;
+}
+.page-dialer .guide-sections p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 3px;
+  -webkit-line-clamp: 2;
+}
+@media (max-width: 720px) {
+  .page-dialer .guide-sections {
+    flex: auto;
+  }
+}
+/* Keep all three prompts visible while the call dock is expanded. */
+.page-dialer .guide-sections > div > div {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.page-dialer .guide-sections strong {
+  display: inline;
+}
+.page-dialer .guide-sections strong::after {
+  content: " · ";
+}
+.page-dialer .guide-sections p {
+  display: inline;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+.page-dialer .outcome-option,
+.conversation-notes textarea {
+  font-size: 14px;
+}
+.page-dialer .milestones .button,
+.page-dialer .lead-save-actions .button {
+  font-size: 13px;
+}
+.page-dialer .lead-save-actions #dialer-save-next {
+  font-size: 14px;
+}
+.page-dialer .queue-heading {
+  gap: 5px;
+  flex-wrap: nowrap;
+  padding-inline: 12px;
+}
+.page-dialer .queue-heading h2 {
+  font-size: 14px;
+}
+.queue-heading .queue-select {
+  margin-left: auto;
+}
+.queue-heading .queue-select select {
+  min-height: 28px;
+  width: 62px;
+  padding: 3px;
+  font-size: 11px;
+}
+.page-dialer .inline-status:has([role="alert"]) {
+  white-space: normal;
+  overflow: visible;
 }

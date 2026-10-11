@@ -97,7 +97,7 @@ export function App() {
     document.documentElement.style.colorScheme = theme === "night" ? "dark" : "light";
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", theme === "night" ? "#141c19" : "#f7f8f5");
+      ?.setAttribute("content", theme === "night" ? "#0c111b" : "#f5f7fa");
     try {
       localStorage.setItem("callboard-remake-theme", theme);
     } catch {

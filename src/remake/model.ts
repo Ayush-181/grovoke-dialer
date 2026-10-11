@@ -14,6 +14,7 @@ export type Lead = {
   email: string;
   website: string;
   notes: string;
+  talkingPoints?: string;
   outcome: Outcome | "";
   calls: number;
   callback: boolean;
@@ -31,11 +32,14 @@ export type Call = {
   active: boolean;
   seconds: number;
   muted: boolean;
+  held: boolean;
+  heldSeconds: number;
   recording: boolean;
   participants: Participant[];
   digits: string;
 };
 export type Log = {
+  heldSeconds?: number;
   phone: string;
   participants: Participant[];
   triage: boolean;
@@ -210,6 +214,7 @@ export type Action =
   | { type: "end"; at: string }
   | { type: "tick" }
   | { type: "mute" }
+  | { type: "hold" }
   | { type: "digit"; value: string }
   | { type: "participant"; phone: string; name?: string; remove?: boolean }
   | { type: "recording"; enabled: boolean }
@@ -374,6 +379,8 @@ export function reducer(state: State, action: Action): State {
           active: true,
           seconds: 0,
           muted: false,
+          held: false,
+          heldSeconds: 0,
           recording: state.recordingEnabled,
           participants: [],
           digits: "",
@@ -394,9 +401,19 @@ export function reducer(state: State, action: Action): State {
       return state.call?.active
         ? {
             ...state,
-            call: { ...state.call, seconds: state.call.seconds + 1 },
+            call: {
+              ...state.call,
+              seconds: state.call.seconds + 1,
+              heldSeconds: state.call.heldSeconds + (state.call.held ? 1 : 0),
+            },
             logs: state.logs.map((log) =>
-              log.id === state.call?.id ? { ...log, seconds: state.call!.seconds + 1 } : log,
+              log.id === state.call?.id
+                ? {
+                    ...log,
+                    seconds: state.call!.seconds + 1,
+                    heldSeconds: state.call!.heldSeconds + (state.call!.held ? 1 : 0),
+                  }
+                : log,
             ),
           }
         : state;
@@ -404,8 +421,12 @@ export function reducer(state: State, action: Action): State {
       return state.call?.active
         ? { ...state, call: { ...state.call, muted: !state.call.muted } }
         : state;
-    case "digit":
+    case "hold":
       return state.call?.active
+        ? { ...state, call: { ...state.call, held: !state.call.held } }
+        : state;
+    case "digit":
+      return state.call?.active && !state.call.held
         ? {
             ...state,
             call: { ...state.call, digits: `${state.call.digits}${action.value}`.slice(-32) },
@@ -413,7 +434,7 @@ export function reducer(state: State, action: Action): State {
         : state;
     case "participant": {
       const phone = dialNumber(action.phone);
-      if (!state.call?.active || !phone) return state;
+      if (!state.call?.active || !phone || (state.call.held && !action.remove)) return state;
       if (
         !action.remove &&
         (phone === state.call.phone ||
@@ -451,10 +472,14 @@ export function reducer(state: State, action: Action): State {
     case "booking":
       return {
         ...state,
+        ...(state.call?.leadId === action.booking.leadId &&
+        state.selectedId === action.booking.leadId
+          ? { draft: { ...state.draft, outcome: "appointment_set" as const } }
+          : {}),
         bookings: [...state.bookings, action.booking],
         logs: state.logs.map((log) =>
           log.id === state.call?.id && log.leadId === action.booking.leadId
-            ? { ...log, booked: true }
+            ? { ...log, booked: true, outcome: "appointment_set" }
             : log,
         ),
       };

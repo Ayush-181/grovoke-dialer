@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { shortcutCommand } from "../src/remake/shortcuts";
 import { dialNumber } from "../src/remake/numbers";
 import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "../src/remake/metrics";
 import { initialState, isDirty, reducer } from "../src/remake/model";
@@ -358,5 +359,122 @@ describe("manual dialing and business conferences", () => {
       reducer(state, { type: "participant", phone: "+12125550196", name: "Late caller" }),
     ).toBe(state);
     expect(state.logs.filter((log) => log.id === "group")).toHaveLength(1);
+  });
+});
+
+describe("calling workspace safeguards", () => {
+  test("hold and resume retain the active business, participants and one attempt", () => {
+    const idle = initialState();
+    expect(reducer(idle, { type: "hold" })).toBe(idle);
+    let state = reducer(idle, { type: "dial", id: "held-call" });
+    state = reducer(state, { type: "participant", phone: "+12125550198", name: "Owner" });
+    const count = state.logs.length;
+    state = reducer(state, { type: "hold" });
+    state = reducer(state, { type: "tick" });
+    expect(state.call?.held).toBe(true);
+    expect(state.call?.active).toBe(true);
+    expect(state.call?.seconds).toBe(1);
+    expect(state.call?.heldSeconds).toBe(1);
+    expect(metrics(state.logs.filter((log) => log.id === "held-call")).talk).toBe(0);
+    expect(reducer(state, { type: "participant", phone: "+12125550197", name: "Other" })).toBe(
+      state,
+    );
+    expect(reducer(state, { type: "digit", value: "1" })).toBe(state);
+    expect(state.call?.participants).toHaveLength(1);
+    state = reducer(state, { type: "hold" });
+    expect(state.call?.held).toBe(false);
+    state = reducer(state, { type: "tick" });
+    expect(metrics(state.logs.filter((log) => log.id === "held-call")).talk).toBe(1);
+    expect(state.logs).toHaveLength(count);
+    expect(state.draft.calls).toBe(1);
+    state = reducer(state, { type: "end", at: "2026-10-11T12:00:00Z" });
+    expect(reducer(state, { type: "hold" })).toBe(state);
+  });
+  test("booking during a call preserves its draft and records one connected booking", () => {
+    let state = reducer(initialState(), { type: "dial", id: "book-from-call" });
+    state = reducer(state, {
+      type: "edit",
+      patch: { contact: "Decision maker", notes: "Important draft", callback: true },
+    });
+    const selected = state.selectedId;
+    state = reducer(state, {
+      type: "booking",
+      booking: {
+        id: "inline-booking",
+        leadId: selected,
+        title: "Ash x Harborline Rentals",
+        at: "2026-10-20T15:00:00Z",
+        zone: "America/New_York",
+        duration: 30,
+        guests: "contact@example.invalid",
+        notes: "",
+        meet: true,
+      },
+    });
+    expect(state.selectedId).toBe(selected);
+    expect(state.call?.active).toBe(true);
+    expect(state.draft.contact).toBe("Decision maker");
+    expect(state.draft.notes).toBe("Important draft");
+    expect(state.draft.callback).toBe(true);
+    expect(state.draft.outcome).toBe("appointment_set");
+    expect(metrics(state.logs.filter((log) => log.id === "book-from-call"))).toMatchObject({
+      dials: 1,
+      connected: 1,
+      booked: 1,
+    });
+    state = reducer(state, { type: "end", at: "2026-10-11T12:00:00Z" });
+    state = reducer(state, { type: "save" });
+    expect(state.logs[0]?.outcome).toBe("appointment_set");
+    expect(state.logs[0]?.notes).toBe("Important draft");
+  });
+  test("booking a different business cannot mark the active business call", () => {
+    const state = reducer(initialState(), { type: "dial", id: "original" });
+    const next = reducer(state, {
+      type: "booking",
+      booking: { ...state.bookings[0]!, id: "other-business" },
+    });
+    expect(next.draft).toBe(state.draft);
+    expect(next.logs[0]).toBe(state.logs[0]);
+    expect(next.bookings).toHaveLength(state.bookings.length + 1);
+  });
+  test("call guide edits require explicit save and remain specific to the lead", () => {
+    let state = reducer(initialState(), {
+      type: "edit",
+      patch: { talkingPoints: "Ask about missed enquiries" },
+    });
+    expect(isDirty(state)).toBe(true);
+    expect(reducer(state, { type: "select", id: "demo-1" })).toBe(state);
+    state = reducer(state, { type: "save" });
+    state = reducer(state, { type: "select", id: "demo-1" });
+    expect(state.draft.talkingPoints).toBeUndefined();
+    state = reducer(state, { type: "select", id: "demo-0" });
+    expect(state.draft.talkingPoints).toBe("Ask about missed enquiries");
+  });
+  test("keyboard shortcuts never activate during typing, dialogs, repeats or composition", () => {
+    const event = {
+      key: "d",
+      altKey: true,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
+      repeat: false,
+      isComposing: false,
+      defaultPrevented: false,
+    };
+    expect(shortcutCommand(event, false, false)).toBe("dial");
+    expect(shortcutCommand(event, true, false)).toBeNull();
+    expect(shortcutCommand(event, false, true)).toBeNull();
+    for (const flag of [
+      "repeat",
+      "isComposing",
+      "defaultPrevented",
+      "ctrlKey",
+      "metaKey",
+      "shiftKey",
+    ])
+      expect(shortcutCommand({ ...event, [flag]: true }, false, false)).toBeNull();
+    expect(shortcutCommand({ ...event, key: "1", altKey: false }, false, false)).toBe("outcome-1");
+    expect(shortcutCommand({ ...event, key: "Enter", altKey: false }, false, false)).toBeNull();
+    expect(shortcutCommand({ ...event, key: "Enter" }, false, false)).toBe("save-next");
   });
 });

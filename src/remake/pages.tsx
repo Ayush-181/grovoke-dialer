@@ -953,6 +953,12 @@ export function ActivityPage({ state, openLead }: Props) {
               </span>
             </div>
             <p className="mono">{log.phone}</p>
+            {Boolean(log.heldSeconds) && (
+              <p>
+                On hold: {formatDuration(log.heldSeconds ?? 0)} · Talk time:{" "}
+                {formatDuration(Math.max(0, log.seconds - (log.heldSeconds ?? 0)))}
+              </p>
+            )}
             {Boolean(log.participants.length) && (
               <div className="call-detail-participants">
                 <strong>Group call participants</strong>
@@ -1168,7 +1174,7 @@ export function SettingsPage({
               </div>
               <span>
                 <Sun aria-hidden="true" size={16} />
-                Day · Porcelain & Jade{theme === "day" && <Check aria-hidden="true" size={16} />}
+                Day · Slate & Blue{theme === "day" && <Check aria-hidden="true" size={16} />}
               </span>
             </button>
             <button
@@ -1184,7 +1190,7 @@ export function SettingsPage({
               </div>
               <span>
                 <Moon aria-hidden="true" size={16} />
-                Night · Charcoal & Jade{theme === "night" && <Check aria-hidden="true" size={16} />}
+                Night · Midnight & Blue{theme === "night" && <Check aria-hidden="true" size={16} />}
               </span>
             </button>
           </div>

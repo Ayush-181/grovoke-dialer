@@ -164,6 +164,25 @@ async (page) => {
   await page.getByRole("button", { name: "Hide lead list", exact: true }).click();
   check((await page.locator(".queue-panel").count()) === 0, "Lead list did not collapse");
   await page.getByRole("button", { name: "Show lead list", exact: true }).click();
+  await page.getByLabel("Choose calling queue").selectOption("callbacks");
+  check(
+    (await page.locator(".queue-item").count()) === 1,
+    "Callback queue did not load only callbacks",
+  );
+  await page.getByLabel("Choose calling queue").selectOption("all");
+  await page
+    .locator(".queue-views")
+    .getByRole("button", { name: "Callbacks", exact: true })
+    .click();
+  check(
+    (await page.locator(".queue-item").count()) === 1,
+    "Local callback view did not filter the queue",
+  );
+  await page.locator(".queue-views").getByRole("button", { name: "All", exact: true }).click();
+  check(
+    (await page.locator(".queue-item").count()) === 8,
+    "Queue filter did not restore all leads",
+  );
   check(
     (await page.getByLabel("Email", { exact: true }).count()) === 0,
     "Contact details should start collapsed",
@@ -173,8 +192,69 @@ async (page) => {
     await page.getByLabel("Email", { exact: true }).isVisible(),
     "Contact expansion lost editable fields",
   );
+  const originalEmail = await page.getByLabel("Email", { exact: true }).inputValue();
+  await page.getByLabel("Email", { exact: true }).fill("invalid-email");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  check(
+    (await page.getByRole("alert").textContent()).includes("valid contact email"),
+    "Invalid contact email did not show an inline error",
+  );
+  check((await page.getByRole("dialog").count()) === 0, "Contact validation showed a popup");
+  await page.getByLabel("Email", { exact: true }).fill(originalEmail);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.getByRole("button", { name: /ASK FOR/ }).click();
-  await page.getByRole("button", { name: "Dial · simulated" }).click();
+  check(
+    await page
+      .getByLabel("Context & conversation notes")
+      .evaluate((el) => Boolean(el.closest(".outcome-panel"))),
+    "Conversation notes are not next to outcomes",
+  );
+  await page.getByRole("button", { name: "Hide call guide", exact: true }).click();
+  check(await page.locator(".guide-rest").isVisible(), "Call guide did not collapse");
+  await page.getByRole("button", { name: "Show call guide", exact: true }).click();
+  await page.getByRole("button", { name: "Edit guide", exact: true }).click();
+  await page
+    .getByLabel("Talking points", { exact: true })
+    .fill(
+      "OPEN\nAsk for the manager\n\nDISCOVER\nAsk about missed enquiries\n\nNEXT STEP\nAgree a callback or meeting",
+    );
+  await page.getByRole("button", { name: "Done editing", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  const originalNotes = await page.getByLabel("Context & conversation notes").inputValue();
+  await page.getByLabel("Context & conversation notes").focus();
+  await page.keyboard.press("1");
+  await page.keyboard.press("Alt+d");
+  check(
+    (await page.getByRole("button", { name: "End call", exact: true }).count()) === 0,
+    "Typing triggered a dial",
+  );
+  check(
+    (await page
+      .getByRole("button", { name: "Reached DM", exact: true })
+      .getAttribute("aria-pressed")) === "false",
+    "Typing selected an outcome",
+  );
+  await page.getByLabel("Context & conversation notes").fill(originalNotes);
+  await page.getByRole("heading", { name: "Harborline Rentals", exact: true }).click();
+  await page.keyboard.press("Alt+d");
+  check(
+    await page.getByRole("button", { name: "End call", exact: true }).isVisible(),
+    "Dial shortcut did not start the mock call",
+  );
+  await page.keyboard.press("Alt+h");
+  check(
+    await page.getByRole("button", { name: "Resume call", exact: true }).isVisible(),
+    "Hold shortcut failed",
+  );
+  check(
+    await page.getByRole("button", { name: "Add participant", exact: true }).isDisabled(),
+    "Held call can add a participant",
+  );
+  await page.keyboard.press("Alt+h");
+  check(
+    await page.getByRole("button", { name: "Hold", exact: true }).isVisible(),
+    "Resume did not retain the original call",
+  );
   check(
     await page.getByRole("button", { name: "Save & next", exact: true }).isDisabled(),
     "Can advance during active call",
@@ -194,7 +274,7 @@ async (page) => {
       page: document.documentElement.scrollHeight <= innerHeight + 1,
       panels: [...document.querySelectorAll(".lead-panel,.outcome-panel")].map((el) => ({
         name: el.className,
-        fits: el.scrollHeight <= el.clientHeight + 1,
+        fits: el.scrollHeight <= el.clientHeight + 1 && el.scrollWidth <= el.clientWidth + 1,
         bottom: el.getBoundingClientRect().bottom,
       })),
     }));
@@ -474,7 +554,55 @@ async (page) => {
     "Group call overflowed laptop panels: " + JSON.stringify(layout),
   );
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page
+    .getByLabel("Context & conversation notes")
+    .fill("Both decision makers joined. Keep this draft.");
+  const bookedBefore = Number(
+    await page.locator(".dialer-live-metrics > span:last-child strong").textContent(),
+  );
+  await page.getByRole("button", { name: "Book meeting", exact: true }).click();
+  check(
+    (await page.getByLabel("Invite title").inputValue()) === "Ash x Manual sample",
+    "Inline booking lost the current business",
+  );
+  check(
+    await page.getByLabel("Business lead").isDisabled(),
+    "Inline booking can switch away from the current business",
+  );
+  await page.getByLabel("Invitees & CC").fill("decisionmakers@example.invalid");
+  await page
+    .getByLabel("Day", { exact: true })
+    .fill(new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10));
+  await page.getByLabel("Another time").fill("13:00");
+  await page.getByRole("button", { name: "Save demo booking", exact: true }).click();
+  check(
+    await page.getByRole("button", { name: "End conference", exact: true }).isVisible(),
+    "Booking ended the group call or changed pages",
+  );
+  check(
+    (await page.getByLabel("Context & conversation notes").inputValue()) ===
+      "Both decision makers joined. Keep this draft.",
+    "Booking discarded unsaved notes",
+  );
+  check(
+    (await page
+      .getByRole("button", { name: "Appointment booked", exact: true })
+      .getAttribute("aria-pressed")) === "true",
+    "Inline booking did not update its milestone",
+  );
+  check(
+    Number(await page.locator(".dialer-live-metrics > span:last-child strong").textContent()) ===
+      bookedBefore + 1,
+    "Inline booking did not update the call metrics",
+  );
   await page.screenshot({ path: ".playwright-cli/remake-manual-conference.png", fullPage: true });
+  await page.getByRole("button", { name: "Switch to night mode" }).click();
+  await page.waitForTimeout(200);
+  await page.screenshot({
+    path: ".playwright-cli/remake-reference-dialer-night.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Switch to day mode" }).click();
   await page.getByRole("button", { name: "Remove Decision maker A", exact: true }).click();
   check(
     await page.getByRole("button", { name: "End conference", exact: true }).isVisible(),
@@ -512,6 +640,56 @@ async (page) => {
   check(
     (await manualRow.getByRole("cell", { name: "1", exact: true }).count()) === 1,
     "Conference counted more than one business attempt",
+  );
+  await nav("Dialer").click();
+  await page.getByRole("button", { name: "Start session", exact: true }).click();
+  check(
+    await page.getByLabel("Session elapsed time").isVisible(),
+    "Quick session did not start its timer",
+  );
+  check(
+    (await page.getByRole("button", { name: "End call", exact: true }).count()) === 0,
+    "Quick session started dialing automatically",
+  );
+  await page.getByRole("button", { name: "Redial", exact: true }).click();
+  check(
+    (await page.locator(".lead-facts .mono").textContent()) === "+12125550199",
+    "Redial used a different number",
+  );
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.getByRole("button", { name: "Hide lead list", exact: true }).click();
+  layout = await fits();
+  check(
+    layout.page && layout.panels.every((panel) => panel.fits),
+    "Active call overflows the tablet: " + JSON.stringify(layout),
+  );
+  check(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
+    "Active call overflows tablet width",
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole("button", { name: "Show lead list", exact: true }).click();
+  await page.getByRole("button", { name: "Keyboard shortcuts", exact: true }).click();
+  await page.keyboard.press("Alt+Enter");
+  check(
+    await page.getByRole("dialog", { name: "Keyboard shortcuts", exact: true }).isVisible(),
+    "Shortcut escaped its dialog",
+  );
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await page.getByRole("button", { name: "Stop session", exact: true }).click();
+  await page.getByRole("heading", { name: "Manual sample", exact: true }).click();
+  await page.keyboard.press("1");
+  check(
+    (await page
+      .getByRole("button", { name: "Reached DM", exact: true })
+      .getAttribute("aria-pressed")) === "true",
+    "Outcome shortcut failed",
+  );
+  await page.keyboard.press("Alt+Enter");
+  check((await page.getByRole("dialog").count()) === 0, "Save-and-next shortcut showed a popup");
+  check(
+    (await page.getByRole("button", { name: "End call", exact: true }).count()) === 0,
+    "Save-and-next shortcut dialed automatically",
   );
   for (const width of [1280, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });
@@ -580,5 +758,5 @@ async (page) => {
   );
   check(errors.length === 0, "Browser errors: " + errors.join("; "));
   check(forbidden.length === 0, "Forbidden network: " + forbidden.join("; "));
-  return "PASS: isolated remake — 8 screens at 1280/768/390px, theme persistence, ASK FOR, explicit saving, Previous, draft guard, dashboard-linked callback view, manual-number dialing and validation, per-business call counts, recording snapshot, multiple decision-maker conferences and participant history/mute/keypad, no hero headlines, 24 booking slots, record-only deletion, daily/monthly filters, milestone metrics, collapsible navigation/queue/contact details, desktop panel containment and session Start/Pause/Resume/Stop timers; zero provider requests.";
+  return "PASS: isolated remake — 8 screens at 1280/768/390px, theme persistence, ASK FOR, explicit saving, Previous, draft guard, dashboard-linked callback view, manual-number dialing and validation, per-business call counts, recording snapshot, multiple decision-maker conferences and participant history/mute/keypad, no hero headlines, 24 booking slots, record-only deletion, daily/monthly filters, milestone metrics, collapsible navigation/queue/contact details, desktop panel containment, in-call booking preserving drafts, editable call guide, safe keyboard shortcuts, hold/resume/redial, quick session startup and session Start/Pause/Resume/Stop timers; zero provider requests.";
 };

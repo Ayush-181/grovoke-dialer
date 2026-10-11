@@ -1,7 +1,8 @@
 # Call Board design preview
 
-This is the user-approved **Porcelain & Jade** direction with the information
-layout from the Ivory & Plum mockup. It lives outside the original TanStack
+This is the **Slate & Blue** palette requested after the user’s dialer video
+reference. The other screens retain their approved composition and infographics.
+The calling tab adopts the reference’s compact queue/context/outcome workflow. It lives outside the original TanStack
 application. The original routes, auth gates, provider hooks, database schema,
 and connected Lovable main branch are unchanged by this prototype.
 
@@ -34,9 +35,10 @@ the recording preference are the only saved local settings. No audio is captured
 
 ## Approved design
 
-- Warm porcelain canvas, white cards, forest navigation and restrained jade
-  actions. Night mode uses charcoal/green surfaces, soft white text and lower
-  saturation accents. Both modes use the same components and layout.
+- Day mode uses white/light-gray surfaces, slate navigation and blue actions.
+  Night mode uses midnight/charcoal surfaces, soft white text and restrained blue
+  accents. The palette applies across all eight tabs. Both modes share layouts.
+  Inter and system fallbacks keep operational text readable.
 - Day/Night switch in the header and Settings; system preference on first visit,
   remembered manual choice thereafter. Native controls and chart colors adapt.
 - Charts use slate blue, teal, jade, ochre and terracotta. Text, legends, stage
@@ -50,7 +52,10 @@ the recording preference are the only saved local settings. No audio is captured
   leads worth a callback below. Utility controls share the main canvas; there is
   no separate full-width header strip.
 - Three-column calling workspace: searchable queue left, lead context and
-  editable **ASK FOR** and call/save controls center, outcomes and milestones right.
+  editable **ASK FOR**, call guide/history and call controls center; grouped
+  outcomes, milestones, conversation notes, callbacks, save controls and booking
+  right. Integrated Previous, Save and Save & next remain explicit. The call guide
+  can be hidden or edited; its changes save with the selected lead.
   The global sidebar and lead queue collapse independently. Desktop/tablet keep
   the center and outcome panels visible without internal scrolling; only the lead
   queue scrolls. On shorter desktop screens, expanded contact/callback editors
@@ -60,7 +65,7 @@ the recording preference are the only saved local settings. No audio is captured
   identifies the current screen, with the approved cards and charts preserved.
 - Visible focus, labelled controls, reduced motion, dialog focus management,
   scrollable tables, draft navigation warnings and explicit do-not-call protection.
-- Existing React/Radix/lucide stack. The font stack prefers Manrope/Inter with
+- Existing React/Radix/lucide stack. The font stack uses Inter with
   system fallbacks; the offline preview uses installed fonts and loads no external
   font. Mono readouts use JetBrains Mono/system monospace.
 
@@ -70,6 +75,8 @@ the recording preference are the only saved local settings. No audio is captured
    Alternatively, choose **Dial a number** and enter a phone number, with an
    optional business/contact name. A saved main or direct number reuses that lead;
    a new number gets its own local contact, notes, outcome and call counter.
+   Main/direct-number selection and Redial use the actual chosen or previous
+   number. Copy number provides inline clipboard feedback.
    Unsaved edits are guarded before switching. US numbers default to +1;
    international numbers require an explicit +country code. Invalid and
    do-not-call numbers are blocked. Manual dialing is disabled during an active
@@ -102,6 +109,22 @@ the recording preference are the only saved local settings. No audio is captured
    and Save use inline feedback and show no popup/toast.
 8. Leaving an edited lead prompts Keep editing / Discard & continue / Save & continue.
    The browser also warns before reloading a dirty draft or active simulated call.
+
+**Book meeting** opens the same timezone-aware booking dialog directly inside
+the dialer, with the current business locked and its title/email/zone prefilled
+from the draft. It stays available during a call, preserves unsaved notes and
+participants, and never navigates or advances the queue. A successfully saved
+booking updates the current attempt’s Booked/Connected totals once; closing or
+cancelling the dialog records nothing. The standard Bookings tab still supports
+choosing a business and record-only deletion. All bookings remain local mocks.
+
+The dialer’s compact metrics show the active session, or today’s IST totals when
+no session is running. Quick Start session keeps the current lead and queue and
+starts only the timer. Queue tabs filter All/New/Callbacks without starting calls.
+Keyboard hints and a shortcut guide accompany outcome keys 1–0, Alt+D for dial,
+Alt+H for hold, Alt+M for mute, Alt+N for notes, Alt+B for booking, Alt+Enter for
+Save & next and Alt+Left for Previous. Shortcuts ignore fields, dialogs, IME
+composition, repeats, browser control/meta combinations and disabled actions.
 
 The global recording toggle applies to new dials. Each simulated call snapshots
 the preference when starting; changing Settings does not change an active call.
@@ -162,7 +185,9 @@ permit only local frontend GETs, block all provider traffic/mutations, and close
 all sockets. An attempted local Vite development socket is closed and classified
 as expected; all other sockets fail the check. No microphone permission is granted.
 
-The smoke covers explicit save behavior, Previous, navigation drafts, saved ASK FOR,
+The smoke covers integrated booking during an active conference with unsaved
+notes, hold/resume, redial, quick session startup, editable call guide, shortcut
+guards, active-call tablet containment and explicit save behavior, Previous, navigation drafts, saved ASK FOR,
 dashboard-linked callback views, manual dialing validation and do-not-call,
 per-business call counts, recording snapshots, multiple decision-maker
 conferences and participant history/mute/keypad, headline removal, 24 hourly
@@ -173,3 +198,23 @@ Screenshots are synthetic and remain ignored under `.playwright-cli`.
 
 Do not read dotenv, attach to an authenticated browser, enable live integrations,
 call real numbers, run migrations, deploy, merge, or rewrite published history.
+
+## Workflow references and research limits
+
+The user’s supplied video is the primary visual reference: compact stats, a
+searchable queue, collapsible call context, grouped outcomes, keyboard hints,
+anchored call controls, explicit Save & next and booking beside the outcome.
+The implemented additions use established dialer patterns rather than claiming
+feature parity, a verified vendor ranking, or production readiness.
+
+On 2026-10-11 the environment returned `403 Forbidden` for the public product
+and help sites for Close, Aircall, JustCall and PhoneBurner. These are follow-up
+research references, not sources verified during this change:
+
+- https://www.close.com/features/power-dialer
+- https://aircall.io/call-center-software-features/power-dialer/
+- https://justcall.io/product/sales-dialer/
+- https://www.phoneburner.com/power-dialer
+
+No auto-dialing, predictive/parallel dialing, voicemail drops, AI transcription,
+recording audio, integrations or invitation delivery were added to this mock.

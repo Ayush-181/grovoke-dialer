@@ -1,5 +1,5 @@
-import { dateAt } from "./format";
-import { useState, type Dispatch, type FormEvent } from "react";
+import { dateAt, timeAt } from "./format";
+import { useEffect, useState, type Dispatch, type FormEvent } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,13 +23,21 @@ import {
   Square,
   Pause,
   Play,
+  CalendarDays,
+  Keyboard,
+  Copy,
+  BookOpen,
+  Pencil,
 } from "lucide-react";
 import { type State, type Action, isDirty } from "./model";
 import { Panel, Field, Modal, Empty } from "./components";
 import { OUTCOMES, outcomeLabel, formatDuration } from "../lib/outcomes";
 import { bookingInstants } from "../lib/booking-time";
 import { dialNumber } from "./numbers";
-import { sessionElapsed, sessionTime } from "./metrics";
+import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "./metrics";
+
+import { BookingDialog } from "./Bookings";
+import { shortcutCommand } from "./shortcuts";
 
 type Props = {
   state: State;
@@ -41,6 +49,15 @@ type Props = {
 };
 export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
   const [search, setSearch] = useState("");
+  const [queueView, setQueueView] = useState("all");
+  const [booking, setBooking] = useState(false);
+  const [shortcuts, setShortcuts] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(true);
+  const [guideEditing, setGuideEditing] = useState(false);
+  const [numberChoice, setNumberChoice] = useState<{ leadId: string; direct: boolean }>({
+    leadId: "",
+    direct: false,
+  });
   const [tab, setTab] = useState("notes");
   const [conference, setConference] = useState(false);
   const [participantPhone, setParticipantPhone] = useState("");
@@ -60,11 +77,75 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
   const attempt = state.logs.find((log) => log.id === state.call?.id && log.leadId === lead.id);
   const queue = state.queueIds.map((id) => state.leads.find((l) => l.id === id)!).filter(Boolean);
   const position = state.queueIds.indexOf(state.selectedId);
-  const visible = queue.filter((l) =>
-    `${l.business} ${l.contact}`.toLowerCase().includes(search.toLowerCase()),
+  const visible = queue.filter(
+    (l) =>
+      (queueView === "callbacks" ? l.callback : queueView === "new" ? !l.outcome : true) &&
+      `${l.business} ${l.contact} ${l.phone}`.toLowerCase().includes(search.toLowerCase()),
   );
   const history = state.logs.filter((l) => l.leadId === lead.id);
   const dirty = isDirty(state);
+  const totals = metrics(
+    session
+      ? state.logs.filter((log) => log.sessionId === session.id)
+      : inPeriod(state.logs, dateKey(now)),
+  );
+  const chosenPhone =
+    numberChoice.leadId === lead.id && numberChoice.direct ? lead.direct : lead.phone;
+  const guide =
+    lead.talkingPoints ??
+    `OPEN\nHi, is ${lead.contact || "the person who handles enquiries"} available? I’m Ash, calling about ${lead.business}.\n\nDISCOVER\nHow do you manage enquiries? Where does follow-up get missed?\n\nNEXT STEP\nAgree the next step: book together, or flag a callback with a reason.`;
+  const paused = session?.status === "paused";
+  const blocked =
+    lead.outcome === "do_not_call" ||
+    state.leads.find((item) => item.id === lead.id)?.outcome === "do_not_call";
+  function startDial(phone = chosenPhone) {
+    if (!dialNumber(phone)) {
+      setError("Enter a valid number with +country code, or choose the main number.");
+      return;
+    }
+    if (active || paused || blocked) return;
+    setError("");
+    setStatus("");
+    dispatch({ type: "dial", id: crypto.randomUUID(), phone, at: new Date().toISOString() });
+  }
+  function startSession() {
+    guarded(() => {
+      const id = crypto.randomUUID();
+      dispatch({
+        type: "session",
+        session: {
+          id,
+          name: `Calling session · ${timeAt(now, "Asia/Kolkata")}`,
+          leadIds: [lead.id, ...state.queueIds.filter((item) => item !== lead.id)],
+          paused: false,
+          status: "ready",
+          elapsedMs: 0,
+          startedAt: null,
+        },
+      });
+      dispatch({ type: "startSession", id, now: Date.now() });
+    });
+  }
+  useEffect(() => {
+    const handle = (event: KeyboardEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const editing = Boolean(target?.closest("input, textarea, select, [contenteditable='true']"));
+      const command = shortcutCommand(
+        event,
+        editing,
+        Boolean(document.querySelector('[role="dialog"]')),
+      );
+      if (!command) return;
+      event.preventDefault();
+      if (command === "notes") document.getElementById("call-notes")?.focus();
+      else {
+        const button = document.getElementById(`dialer-${command}`) as HTMLButtonElement | null;
+        if (button && !button.disabled) button.click();
+      }
+    };
+    document.addEventListener("keydown", handle);
+    return () => document.removeEventListener("keydown", handle);
+  }, []);
   function endCall() {
     dispatch({ type: "end", at: now.toISOString() });
     setStatus("Call ended. Choose your outcome, then save.");
@@ -102,6 +183,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
     <form
       className={`dialer-form ${queueOpen ? "queue-expanded" : "queue-collapsed"}`}
       onSubmit={save}
+      noValidate
     >
       <div className="dialer-toolbar">
         <div>
@@ -135,7 +217,26 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             Dial a number
           </button>
         </div>
+        <div
+          className="dialer-live-metrics"
+          aria-label={session ? "Session call metrics" : "Today’s call metrics"}
+        >
+          <span>
+            <strong>{totals.dials}</strong> Dials
+          </span>
+          <span>
+            <strong>{totals.connected}</strong> Connected
+          </span>
+          <span>
+            <strong>{totals.booked}</strong> Booked
+          </span>
+        </div>
         <div>
+          {!session && (
+            <button type="button" className="button" disabled={active} onClick={startSession}>
+              <Play aria-hidden="true" size={15} /> Start session
+            </button>
+          )}
           {session && (
             <>
               <strong className="session-clock mono" aria-label="Session elapsed time">
@@ -184,31 +285,6 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               </button>
             </>
           )}
-          <label>
-            <span className="sr-only">Choose calling queue</span>
-            <select
-              disabled={active || Boolean(session)}
-              value=""
-              onChange={(e) => {
-                const mode = e.target.value;
-                const ids = state.leads
-                  .filter((l) =>
-                    mode === "callbacks" ? l.callback : mode === "new" ? !l.outcome : true,
-                  )
-                  .map((l) => l.id);
-                if (!ids.length) {
-                  setStatus("No leads match this queue yet.");
-                  return;
-                }
-                guarded(() => dispatch({ type: "queue", ids }));
-              }}
-            >
-              <option value="">Change queue…</option>
-              <option value="all">All leads</option>
-              <option value="new">Never called</option>
-              <option value="callbacks">Worth a callback</option>
-            </select>
-          </label>
         </div>
       </div>
       <div className="dialer-grid">
@@ -216,7 +292,36 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
           <Panel className="queue-panel">
             <div className="queue-heading">
               <h2>Calling queue</h2>
-              <span>{queue.length} leads</span>
+              <span>{queue.length}</span>
+              <label className="queue-select">
+                <span className="sr-only">Choose calling queue</span>
+                <select
+                  disabled={active || Boolean(session)}
+                  value=""
+                  onChange={(e) => {
+                    const mode = e.target.value;
+                    const ids = state.leads
+                      .filter((l) =>
+                        mode === "callbacks" ? l.callback : mode === "new" ? !l.outcome : true,
+                      )
+                      .map((l) => l.id);
+                    if (!ids.length) {
+                      setStatus("No leads match this queue yet.");
+                      return;
+                    }
+                    guarded(() => {
+                      dispatch({ type: "queue", ids });
+                      setQueueView("all");
+                      setSearch("");
+                    });
+                  }}
+                >
+                  <option value="">Queue…</option>
+                  <option value="all">All leads</option>
+                  <option value="new">Never called</option>
+                  <option value="callbacks">Worth a callback</option>
+                </select>
+              </label>
             </div>
             <label className="search">
               <Search aria-hidden="true" size={17} />
@@ -229,6 +334,23 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </label>
+            <div className="queue-views" aria-label="Queue views">
+              {[
+                ["all", "All"],
+                ["new", "New"],
+                ["callbacks", "Callbacks"],
+              ].map(([value, label]) => (
+                <button
+                  type="button"
+                  key={value}
+                  className={queueView === value ? "active" : ""}
+                  aria-pressed={queueView === value}
+                  onClick={() => setQueueView(value!)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="queue-list" id="calling-queue">
               {visible.map((l) => (
                 <button
@@ -269,13 +391,53 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             </span>
             <h2>{lead.business}</h2>
             <div className="lead-facts">
-              <span className="mono">
-                {state.call?.leadId === lead.id ? state.call.phone : lead.phone}
-              </span>
+              <span className="mono">{active ? state.call!.phone : chosenPhone}</span>
               <span className="badge neutral">{lead.calls} dials</span>
               <span className={`badge ${lead.outcome === "do_not_call" ? "bad" : "good"}`}>
                 {lead.outcome ? outcomeLabel(lead.outcome) : "Never called"}
               </span>
+            </div>
+            <div className="lead-quick-actions">
+              <label className="number-picker">
+                <span className="sr-only">Number to dial</span>
+                <select
+                  name="number-to-dial"
+                  aria-label="Number to dial"
+                  value={numberChoice.leadId === lead.id && numberChoice.direct ? "direct" : "main"}
+                  disabled={active}
+                  onChange={(event) =>
+                    setNumberChoice({ leadId: lead.id, direct: event.target.value === "direct" })
+                  }
+                >
+                  <option value="main">Main number</option>
+                  <option value="direct" disabled={!lead.direct}>
+                    Direct number
+                  </option>
+                </select>
+              </label>
+              <button
+                type="button"
+                className="text-button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(active ? state.call!.phone : chosenPhone);
+                    setStatus("Phone number copied.");
+                  } catch {
+                    setStatus("Clipboard unavailable. Select the displayed number to copy it.");
+                  }
+                }}
+              >
+                <Copy aria-hidden="true" size={14} /> Copy number
+              </button>
+              <button
+                type="button"
+                className="text-button"
+                aria-pressed={guideVisible}
+                onClick={() => setGuideVisible((value) => !value)}
+              >
+                <BookOpen aria-hidden="true" size={14} />
+                {guideVisible ? "Hide call guide" : "Show call guide"}
+              </button>
             </div>
           </div>
           <div className="ask-for">
@@ -330,7 +492,13 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             role="tablist"
             aria-label="Lead context"
             onKeyDown={(event) => {
-              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+              if (
+                event.altKey ||
+                event.ctrlKey ||
+                event.metaKey ||
+                !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
+              )
+                return;
               event.preventDefault();
               const next =
                 event.key === "Home"
@@ -360,26 +528,73 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 ) : (
                   <History aria-hidden="true" size={16} />
                 )}
-                {value === "notes" ? "Notes" : `Past calls (${history.length})`}
+                {value === "notes" ? "Call guide" : `Past calls (${history.length})`}
               </button>
             ))}
           </div>
           {tab === "notes" ? (
             <div
-              className="lead-notes"
+              className={`call-guide ${guideVisible ? "" : "guide-hidden"}`}
               role="tabpanel"
               id="notes-panel"
               aria-labelledby="notes-tab"
             >
-              <label className="field">
-                <span>Context & conversation notes</span>
-                <textarea
-                  name="lead-notes"
-                  placeholder="What did they say? Who should you ask for?…"
-                  value={lead.notes}
-                  onChange={(e) => dispatch({ type: "edit", patch: { notes: e.target.value } })}
-                />
-              </label>
+              {guideVisible ? (
+                <>
+                  <div className="guide-head">
+                    <span className="section-label">YOUR CALL GUIDE</span>
+                    <button
+                      type="button"
+                      className="text-button"
+                      aria-pressed={guideEditing}
+                      onClick={() => setGuideEditing((value) => !value)}
+                    >
+                      <Pencil aria-hidden="true" size={14} />
+                      {guideEditing ? "Done editing" : "Edit guide"}
+                    </button>
+                  </div>
+                  {guideEditing ? (
+                    <label className="field guide-editor">
+                      <span>Talking points · saved with this lead</span>
+                      <textarea
+                        name="talking-points"
+                        aria-label="Talking points"
+                        value={guide}
+                        onChange={(event) =>
+                          dispatch({ type: "edit", patch: { talkingPoints: event.target.value } })
+                        }
+                      />
+                    </label>
+                  ) : (
+                    <div className="guide-sections">
+                      {guide
+                        .split(/\n\n/)
+                        .slice(0, 3)
+                        .map((part, index) => {
+                          const [heading, ...lines] = part.split("\n");
+                          return (
+                            <div key={index}>
+                              <span className="guide-step">
+                                {String(index + 1).padStart(2, "0")}
+                              </span>
+                              <div>
+                                <strong>{lines.length ? heading : "Talking point"}</strong>
+                                <p>{lines.length ? lines.join("\n") : heading}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                  <p className="guide-hint">Listen first. Capture the next step in your notes.</p>
+                </>
+              ) : (
+                <div className="guide-rest">
+                  <BookOpen aria-hidden="true" size={24} />
+                  <strong>Space to focus on the conversation.</strong>
+                  <p>Your call guide is a click away.</p>
+                </div>
+              )}
             </div>
           ) : (
             <div
@@ -418,7 +633,9 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <div className="call-indicators">
                   <span className="call-status">
                     {active
-                      ? "Simulated call connected"
+                      ? state.call?.held
+                        ? "On hold · simulated"
+                        : "Simulated call connected"
                       : state.call
                         ? "Call ended"
                         : "Ready to dial"}
@@ -452,6 +669,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <>
                   <button
                     type="button"
+                    id="dialer-mute"
                     className="icon-button"
                     aria-label={state.call?.muted ? "Unmute" : "Mute"}
                     aria-pressed={state.call?.muted}
@@ -464,8 +682,19 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                     )}
                   </button>
                   <button
+                    id="dialer-hold"
+                    type="button"
+                    className={`button ${state.call?.held ? "selected" : ""}`}
+                    aria-pressed={state.call?.held}
+                    onClick={() => dispatch({ type: "hold" })}
+                  >
+                    <Pause aria-hidden="true" size={16} />
+                    {state.call?.held ? "Resume call" : "Hold"}
+                  </button>
+                  <button
                     type="button"
                     className="button"
+                    disabled={state.call?.held}
                     onClick={() => {
                       setParticipantError("");
                       setConference(true);
@@ -480,24 +709,38 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                   </button>
                 </>
               ) : (
-                <button
-                  type="button"
-                  className="button primary dial-button"
-                  disabled={
-                    lead.outcome === "do_not_call" ||
-                    state.leads.find((l) => l.id === lead.id)?.outcome === "do_not_call" ||
-                    session?.status === "paused"
-                  }
-                  onClick={() => {
-                    setError("");
-                    setStatus("");
-                    dispatch({ type: "dial", id: crypto.randomUUID(), at: now.toISOString() });
-                  }}
-                >
-                  <Phone aria-hidden="true" size={17} />
-                  {lead.outcome === "do_not_call" ? "Do not call" : "Dial · simulated"}
-                </button>
+                <>
+                  <button
+                    id="dialer-dial"
+                    aria-label={blocked ? "Do not call" : "Dial · simulated"}
+                    type="button"
+                    className="button primary dial-button"
+                    disabled={blocked || paused}
+                    onClick={() => startDial()}
+                  >
+                    <Phone aria-hidden="true" size={17} />
+                    {blocked ? "Do not call" : "Dial · simulated"}
+                    <kbd>Alt D</kbd>
+                  </button>
+                  <button
+                    type="button"
+                    className="button"
+                    disabled={blocked || paused || !history.length}
+                    onClick={() => startDial(history[0]!.phone)}
+                  >
+                    <RotateCcw aria-hidden="true" size={16} /> Redial
+                  </button>
+                </>
               )}
+              <button
+                id="dialer-help"
+                type="button"
+                className="icon-button shortcut-button"
+                aria-label="Keyboard shortcuts"
+                onClick={() => setShortcuts(true)}
+              >
+                <Keyboard aria-hidden="true" size={18} />
+              </button>
             </div>
             {active && (
               <div className="keypad" aria-label="Call keypad">
@@ -506,6 +749,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                     type="button"
                     key={digit}
                     aria-label={`Send digit ${digit}`}
+                    disabled={state.call?.held}
                     onClick={() => dispatch({ type: "digit", value: digit })}
                   >
                     {digit}
@@ -519,7 +763,9 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 {state.call?.participants.map((person) => (
                   <div className="participant" key={person.phone}>
                     <span>
-                      <strong>{person.name}</strong> <span className="mono">{person.phone}</span>
+                      <strong>{person.name}</strong>
+                      {" · "}
+                      <span className="mono">{person.phone}</span>
                     </span>
                     <button
                       type="button"
@@ -536,40 +782,6 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               </div>
             )}
           </div>
-          <div className="lead-save-controls">
-            <div className="inline-status" aria-live="polite">
-              {error ? (
-                <span className="error" role="alert">
-                  {error}
-                </span>
-              ) : state.queueComplete ? (
-                "Queue complete. Your final lead is saved."
-              ) : dirty ? (
-                "Unsaved changes"
-              ) : (
-                status || "Changes saved"
-              )}
-            </div>
-            <div className="lead-save-actions">
-              <button
-                type="button"
-                className="button"
-                disabled={position <= 0 || active}
-                onClick={() => openLead(state.queueIds[position - 1]!)}
-              >
-                <ArrowLeft aria-hidden="true" size={17} />
-                Previous
-              </button>
-              <button type="submit" className="button" disabled={active}>
-                <Save aria-hidden="true" size={17} />
-                Save
-              </button>
-              <button type="submit" data-next="true" className="button primary" disabled={active}>
-                Save & next
-                <ArrowRight aria-hidden="true" size={17} />
-              </button>
-            </div>
-          </div>
         </Panel>
         <Panel className="outcome-panel">
           <div className="outcomes">
@@ -577,22 +789,57 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               Call outcome
             </h2>
             <p>Select, then Save or Save & next.</p>
-            <div className="outcome-grid">
-              {OUTCOMES.filter((o) => o.value !== "dialed" && o.value !== "appointment_set").map(
-                (o) => (
-                  <button
-                    type="button"
-                    key={o.value}
-                    className={`outcome-option ${lead.outcome === o.value ? "selected" : ""}`}
-                    aria-pressed={lead.outcome === o.value}
-                    onClick={() => dispatch({ type: "edit", patch: { outcome: o.value } })}
-                  >
-                    <span className={`outcome-dot tone-${o.tone}`} />
-                    {o.label.replace("Connected - ", "Reached ")}
-                    {lead.outcome === o.value && <Check aria-hidden="true" size={15} />}
-                  </button>
-                ),
-              )}
+            <div className="outcome-groups">
+              {[
+                [
+                  "Reached",
+                  ["connected_dm", "connected_gk", "connected_other", "callback_requested"],
+                ],
+                ["Didn’t reach", ["voicemail", "no_answer", "busy", "bad_number"]],
+                ["Close out", ["not_interested", "do_not_call"]],
+              ].map(([label, values]) => (
+                <div className="outcome-group" key={label as string}>
+                  <h3>{label}</h3>
+                  <div className="outcome-grid">
+                    {(values as string[]).map((value) => {
+                      const o = OUTCOMES.find((item) => item.value === value)!;
+                      const key =
+                        [
+                          "connected_dm",
+                          "connected_gk",
+                          "connected_other",
+                          "callback_requested",
+                          "voicemail",
+                          "no_answer",
+                          "busy",
+                          "bad_number",
+                          "not_interested",
+                          "do_not_call",
+                        ].indexOf(value) + 1;
+                      return (
+                        <button
+                          id={`dialer-outcome-${key % 10}`}
+                          aria-label={o.label.replace("Connected - ", "Reached ")}
+                          aria-keyshortcuts={String(key % 10)}
+                          type="button"
+                          key={o.value}
+                          className={`outcome-option ${lead.outcome === o.value ? "selected" : ""}`}
+                          aria-pressed={lead.outcome === o.value}
+                          onClick={() => dispatch({ type: "edit", patch: { outcome: o.value } })}
+                        >
+                          <span className={`outcome-dot tone-${o.tone}`} />
+                          <span>
+                            {o.value === "callback_requested"
+                              ? "Callback"
+                              : o.label.replace("Connected - ", "Reached ")}
+                          </span>
+                          <kbd>{key % 10}</kbd>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
           <div className="milestones">
@@ -633,6 +880,20 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             </div>
             <p>Updates metrics immediately. Each call counts once in Connected.</p>
           </div>
+          <div className="conversation-notes">
+            <label className="field">
+              <span>Context & conversation notes</span>
+              <textarea
+                id="call-notes"
+                name="lead-notes"
+                placeholder="What did they say? Who should you ask for?…"
+                value={lead.notes}
+                onChange={(event) =>
+                  dispatch({ type: "edit", patch: { notes: event.target.value } })
+                }
+              />
+            </label>
+          </div>
           <div className={`callback-card ${lead.callback ? "enabled" : ""}`}>
             <button
               type="button"
@@ -671,8 +932,101 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               </div>
             )}
           </div>
+          <div className="lead-save-controls">
+            <div className="inline-status" aria-live="polite">
+              {error ? (
+                <span className="error" role="alert">
+                  {error}
+                </span>
+              ) : state.queueComplete ? (
+                "Queue complete. Your final lead is saved."
+              ) : dirty ? (
+                status ? (
+                  `${status} · Unsaved changes`
+                ) : (
+                  "Unsaved changes"
+                )
+              ) : (
+                status || "Changes saved"
+              )}
+            </div>
+            <div className="lead-save-actions">
+              <button
+                type="button"
+                className="button"
+                id="dialer-previous"
+                aria-label="Previous"
+                title="Previous lead · Alt + Left arrow"
+                disabled={position <= 0 || active}
+                onClick={() => openLead(state.queueIds[position - 1]!)}
+              >
+                <ArrowLeft aria-hidden="true" size={17} />
+                Previous
+              </button>
+              <button type="submit" className="button" disabled={active}>
+                <Save aria-hidden="true" size={17} />
+                Save
+              </button>
+              <button
+                id="dialer-save-next"
+                type="submit"
+                data-next="true"
+                className="button primary"
+                disabled={active}
+              >
+                Save & next
+                <ArrowRight aria-hidden="true" size={17} />
+              </button>
+            </div>
+            <button
+              id="dialer-book"
+              aria-label="Book meeting"
+              type="button"
+              className="button booking-in-dialer"
+              onClick={() => setBooking(true)}
+            >
+              <CalendarDays aria-hidden="true" size={17} />
+              <span>Book meeting</span>
+              <kbd>Alt B</kbd>
+            </button>
+          </div>
         </Panel>
       </div>
+      {booking && (
+        <BookingDialog
+          state={state}
+          dispatch={dispatch}
+          open
+          lockedLead
+          onClose={() => setBooking(false)}
+          onSaved={() => setStatus("Meeting saved for this lead. No invitation was sent.")}
+        />
+      )}
+      <Modal
+        open={shortcuts}
+        onClose={() => setShortcuts(false)}
+        title="Keyboard shortcuts"
+        description="Shortcuts work in the calling tab, outside fields and dialogs. They never save or advance automatically."
+      >
+        <div className="shortcut-list">
+          {[
+            ["1–0", "Select a call outcome"],
+            ["Alt D", "Dial the chosen number"],
+            ["Alt H", "Hold / resume the call"],
+            ["Alt M", "Mute / unmute"],
+            ["Alt N", "Focus conversation notes"],
+            ["Alt B", "Book a meeting"],
+            ["Alt Enter", "Save & next"],
+            ["Alt ←", "Previous lead"],
+            ["?", "Open this guide"],
+          ].map(([key, action]) => (
+            <div key={key}>
+              <span>{action}</span>
+              <kbd>{key}</kbd>
+            </div>
+          ))}
+        </div>
+      </Modal>
       <Modal
         open={manual}
         onClose={() => setManual(false)}

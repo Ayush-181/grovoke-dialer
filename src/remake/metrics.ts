@@ -22,7 +22,10 @@ export function metrics(logs: Log[]) {
       log.booked,
   ).length;
   const count = (outcome: string) => logs.filter((log) => log.outcome === outcome).length;
-  const talk = logs.reduce((total, log) => total + log.seconds, 0);
+  const talk = logs.reduce(
+    (total, log) => total + Math.max(0, log.seconds - (log.heldSeconds ?? 0)),
+    0,
+  );
   return {
     dials: logs.length,
     connected,
