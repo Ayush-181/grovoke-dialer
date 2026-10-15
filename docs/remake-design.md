@@ -218,3 +218,30 @@ research references, not sources verified during this change:
 
 No auto-dialing, predictive/parallel dialing, voicemail drops, AI transcription,
 recording audio, integrations or invitation delivery were added to this mock.
+
+## Vertical phone card and direct number entry (2026-10-15)
+
+The center column now pairs existing lead context with a vertical phone card.
+The left queue and right outcomes/booking/save column retain their structure.
+Lead number / Any number lets users type or paste a number without a lead form;
+the idle three-column, four-row keypad also builds a number. Existing normalized
+main/direct numbers reuse their saved lead; unknown numbers receive an isolated
+local record when dialed so notes/outcomes never overwrite the previous business.
+This remains the disconnected synthetic preview, with no actual calling service.
+
+The card exposes mute, hold/resume, add-call conferencing, a standard keypad,
+hang-up, redial, microphone choice and recording status. In-call keys send mock
+DTMF rather than editing the destination. Physical digits send tones when focus
+is inside the active phone card; outcome shortcuts remain available elsewhere.
+Held calls cannot send tones or add participants. The existing dirty-draft,
+paused-session, normalization and do-not-call guards remain in effect.
+
+At narrow center widths a labeled ASK FOR & call guide / Back to phone control
+switches center views; desktop keeps context and phone alongside each other.
+The existing narrow-screen lead queue is still an overlay and must be closed to
+interact with controls behind it. No left/right column redesign is included.
+
+The guarded standalone browser smoke covers idle keypad entry/backspace, invalid
+and suppressed numbers, direct entry via Enter without a dialog, US normalization,
+read-only active destination, mouse/keyboard DTMF, hold and active tablet fit,
+in addition to the prior conference, booking, save and responsive scenarios.

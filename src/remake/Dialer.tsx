@@ -28,6 +28,7 @@ import {
   Copy,
   BookOpen,
   Pencil,
+  Delete,
 } from "lucide-react";
 import { type State, type Action, isDirty } from "./model";
 import { Panel, Field, Modal, Empty } from "./components";
@@ -64,12 +65,14 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
   const [participantName, setParticipantName] = useState("");
   const [participantError, setParticipantError] = useState("");
   const [manual, setManual] = useState(false);
+  const [inlineManual, setInlineManual] = useState(false);
   const [manualPhone, setManualPhone] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualError, setManualError] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [contactOpen, setContactOpen] = useState(false);
+  const [contextExpanded, setContextExpanded] = useState(false);
   const [queueOpen, setQueueOpen] = useState(() => innerWidth >= 1100);
   const lead = state.draft;
   const active = Boolean(state.call?.active);
@@ -107,6 +110,40 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
     setError("");
     setStatus("");
     dispatch({ type: "dial", id: crypto.randomUUID(), phone, at: new Date().toISOString() });
+  }
+  function dialManualNumber(phoneValue: string, name = "") {
+    const phone = dialNumber(phoneValue);
+    if (!phone) {
+      setManualError("Enter a valid number, with +country code.");
+      return;
+    }
+    if (active || paused) return;
+    if (
+      state.leads.some(
+        (item) =>
+          item.outcome === "do_not_call" &&
+          (dialNumber(item.phone) === phone || dialNumber(item.direct) === phone),
+      )
+    ) {
+      setManualError("That is a do-not-call number.");
+      return;
+    }
+    setManual(false);
+    guarded(() => {
+      dispatch({
+        type: "manualDial",
+        id: crypto.randomUUID(),
+        leadId: crypto.randomUUID(),
+        phone,
+        name,
+        at: new Date().toISOString(),
+      });
+      setInlineManual(false);
+      setTab("notes");
+      setManualError("");
+      setError("");
+      setStatus("");
+    });
   }
   function startSession() {
     guarded(() => {
@@ -440,347 +477,503 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               </button>
             </div>
           </div>
-          <div className="ask-for">
+          <div className={`lead-workspace ${contextExpanded ? "context-expanded" : ""}`}>
             <button
               type="button"
-              className="ask-toggle"
-              aria-expanded={contactOpen}
-              aria-controls="contact-details"
-              onClick={() => setContactOpen((value) => !value)}
+              className="button context-toggle"
+              aria-expanded={contextExpanded}
+              aria-controls="dialer-lead-context"
+              onClick={() => setContextExpanded((value) => !value)}
             >
-              <Users aria-hidden="true" size={17} />
-              <strong>ASK FOR</strong>
-              <span>{contactOpen ? "Less" : "Contact details"}</span>
-              <ChevronDown aria-hidden="true" size={16} />
+              <BookOpen aria-hidden="true" size={16} />
+              {contextExpanded ? "Back to phone" : "ASK FOR & call guide"}
             </button>
-            <div className="field-grid">
-              <Field
-                label="Name"
-                value={lead.contact}
-                placeholder="Contact name…"
-                onChange={(e) => dispatch({ type: "edit", patch: { contact: e.target.value } })}
-              />
-              <Field
-                label="Role"
-                value={lead.role}
-                placeholder="Owner, front desk…"
-                onChange={(e) => dispatch({ type: "edit", patch: { role: e.target.value } })}
-              />
-            </div>
-            {contactOpen && (
-              <div className="field-grid contact-details" id="contact-details">
-                <Field
-                  label="Direct number"
-                  type="tel"
-                  value={lead.direct}
-                  placeholder="+1 212 555 0100…"
-                  onChange={(e) => dispatch({ type: "edit", patch: { direct: e.target.value } })}
-                />
-                <Field
-                  label="Email"
-                  type="email"
-                  spellCheck={false}
-                  value={lead.email}
-                  placeholder="name@example.invalid…"
-                  onChange={(e) => dispatch({ type: "edit", patch: { email: e.target.value } })}
-                />
-              </div>
-            )}
-          </div>
-          <div
-            className="tab-list"
-            role="tablist"
-            aria-label="Lead context"
-            onKeyDown={(event) => {
-              if (
-                event.altKey ||
-                event.ctrlKey ||
-                event.metaKey ||
-                !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
-              )
-                return;
-              event.preventDefault();
-              const next =
-                event.key === "Home"
-                  ? "notes"
-                  : event.key === "End"
-                    ? "history"
-                    : tab === "notes"
-                      ? "history"
-                      : "notes";
-              setTab(next);
-              document.getElementById(`${next}-tab`)?.focus();
-            }}
-          >
-            {["notes", "history"].map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                id={`${value}-tab`}
-                tabIndex={tab === value ? 0 : -1}
-                aria-selected={tab === value}
-                aria-controls={`${value}-panel`}
-                onClick={() => setTab(value)}
-              >
-                {value === "notes" ? (
-                  <FileText aria-hidden="true" size={16} />
-                ) : (
-                  <History aria-hidden="true" size={16} />
-                )}
-                {value === "notes" ? "Call guide" : `Past calls (${history.length})`}
-              </button>
-            ))}
-          </div>
-          {tab === "notes" ? (
-            <div
-              className={`call-guide ${guideVisible ? "" : "guide-hidden"}`}
-              role="tabpanel"
-              id="notes-panel"
-              aria-labelledby="notes-tab"
-            >
-              {guideVisible ? (
-                <>
-                  <div className="guide-head">
-                    <span className="section-label">YOUR CALL GUIDE</span>
-                    <button
-                      type="button"
-                      className="text-button"
-                      aria-pressed={guideEditing}
-                      onClick={() => setGuideEditing((value) => !value)}
-                    >
-                      <Pencil aria-hidden="true" size={14} />
-                      {guideEditing ? "Done editing" : "Edit guide"}
-                    </button>
+            <div className="lead-context" id="dialer-lead-context">
+              <div className="ask-for">
+                <button
+                  type="button"
+                  className="ask-toggle"
+                  aria-expanded={contactOpen}
+                  aria-controls="contact-details"
+                  onClick={() => setContactOpen((value) => !value)}
+                >
+                  <Users aria-hidden="true" size={17} />
+                  <strong>ASK FOR</strong>
+                  <span>{contactOpen ? "Less" : "Contact details"}</span>
+                  <ChevronDown aria-hidden="true" size={16} />
+                </button>
+                <div className="field-grid">
+                  <Field
+                    label="Name"
+                    value={lead.contact}
+                    placeholder="Contact name…"
+                    onChange={(e) => dispatch({ type: "edit", patch: { contact: e.target.value } })}
+                  />
+                  <Field
+                    label="Role"
+                    value={lead.role}
+                    placeholder="Owner, front desk…"
+                    onChange={(e) => dispatch({ type: "edit", patch: { role: e.target.value } })}
+                  />
+                </div>
+                {contactOpen && (
+                  <div className="field-grid contact-details" id="contact-details">
+                    <Field
+                      label="Direct number"
+                      type="tel"
+                      value={lead.direct}
+                      placeholder="+1 212 555 0100…"
+                      onChange={(e) =>
+                        dispatch({ type: "edit", patch: { direct: e.target.value } })
+                      }
+                    />
+                    <Field
+                      label="Email"
+                      type="email"
+                      spellCheck={false}
+                      value={lead.email}
+                      placeholder="name@example.invalid…"
+                      onChange={(e) => dispatch({ type: "edit", patch: { email: e.target.value } })}
+                    />
                   </div>
-                  {guideEditing ? (
-                    <label className="field guide-editor">
-                      <span>Talking points · saved with this lead</span>
-                      <textarea
-                        name="talking-points"
-                        aria-label="Talking points"
-                        value={guide}
-                        onChange={(event) =>
-                          dispatch({ type: "edit", patch: { talkingPoints: event.target.value } })
-                        }
-                      />
-                    </label>
+                )}
+              </div>
+              <div
+                className="tab-list"
+                role="tablist"
+                aria-label="Lead context"
+                onKeyDown={(event) => {
+                  if (
+                    event.altKey ||
+                    event.ctrlKey ||
+                    event.metaKey ||
+                    !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
+                  )
+                    return;
+                  event.preventDefault();
+                  const next =
+                    event.key === "Home"
+                      ? "notes"
+                      : event.key === "End"
+                        ? "history"
+                        : tab === "notes"
+                          ? "history"
+                          : "notes";
+                  setTab(next);
+                  document.getElementById(`${next}-tab`)?.focus();
+                }}
+              >
+                {["notes", "history"].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    id={`${value}-tab`}
+                    tabIndex={tab === value ? 0 : -1}
+                    aria-selected={tab === value}
+                    aria-controls={`${value}-panel`}
+                    onClick={() => setTab(value)}
+                  >
+                    {value === "notes" ? (
+                      <FileText aria-hidden="true" size={16} />
+                    ) : (
+                      <History aria-hidden="true" size={16} />
+                    )}
+                    {value === "notes" ? "Call guide" : `Past calls (${history.length})`}
+                  </button>
+                ))}
+              </div>
+              {tab === "notes" ? (
+                <div
+                  className={`call-guide ${guideVisible ? "" : "guide-hidden"}`}
+                  role="tabpanel"
+                  id="notes-panel"
+                  aria-labelledby="notes-tab"
+                >
+                  {guideVisible ? (
+                    <>
+                      <div className="guide-head">
+                        <span className="section-label">YOUR CALL GUIDE</span>
+                        <button
+                          type="button"
+                          className="text-button"
+                          aria-pressed={guideEditing}
+                          onClick={() => setGuideEditing((value) => !value)}
+                        >
+                          <Pencil aria-hidden="true" size={14} />
+                          {guideEditing ? "Done editing" : "Edit guide"}
+                        </button>
+                      </div>
+                      {guideEditing ? (
+                        <label className="field guide-editor">
+                          <span>Talking points · saved with this lead</span>
+                          <textarea
+                            name="talking-points"
+                            aria-label="Talking points"
+                            value={guide}
+                            onChange={(event) =>
+                              dispatch({
+                                type: "edit",
+                                patch: { talkingPoints: event.target.value },
+                              })
+                            }
+                          />
+                        </label>
+                      ) : (
+                        <div className="guide-sections">
+                          {guide
+                            .split(/\n\n/)
+                            .slice(0, 3)
+                            .map((part, index) => {
+                              const [heading, ...lines] = part.split("\n");
+                              return (
+                                <div key={index}>
+                                  <span className="guide-step">
+                                    {String(index + 1).padStart(2, "0")}
+                                  </span>
+                                  <div>
+                                    <strong>{lines.length ? heading : "Talking point"}</strong>
+                                    <p>{lines.length ? lines.join("\n") : heading}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      )}
+                      <p className="guide-hint">
+                        Listen first. Capture the next step in your notes.
+                      </p>
+                    </>
                   ) : (
-                    <div className="guide-sections">
-                      {guide
-                        .split(/\n\n/)
-                        .slice(0, 3)
-                        .map((part, index) => {
-                          const [heading, ...lines] = part.split("\n");
-                          return (
-                            <div key={index}>
-                              <span className="guide-step">
-                                {String(index + 1).padStart(2, "0")}
-                              </span>
-                              <div>
-                                <strong>{lines.length ? heading : "Talking point"}</strong>
-                                <p>{lines.length ? lines.join("\n") : heading}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
+                    <div className="guide-rest">
+                      <BookOpen aria-hidden="true" size={24} />
+                      <strong>Space to focus on the conversation.</strong>
+                      <p>Your call guide is a click away.</p>
                     </div>
                   )}
-                  <p className="guide-hint">Listen first. Capture the next step in your notes.</p>
-                </>
-              ) : (
-                <div className="guide-rest">
-                  <BookOpen aria-hidden="true" size={24} />
-                  <strong>Space to focus on the conversation.</strong>
-                  <p>Your call guide is a click away.</p>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div
-              className="lead-history"
-              role="tabpanel"
-              id="history-panel"
-              aria-labelledby="history-tab"
-            >
-              {history.length ? (
-                <>
-                  <div className="history-item">
-                    <div>
-                      <strong>{outcomeLabel(history[0]!.outcome)}</strong>
-                      <small>
-                        {dateAt(history[0]!.at)} · {formatDuration(history[0]!.seconds)}
-                      </small>
-                      <p>{history[0]!.notes || "No notes recorded."}</p>
-                    </div>
-                  </div>
-                  <p className="hint">Full history is available in Activity / Call log.</p>
-                </>
               ) : (
-                <Empty
-                  title="No previous calls"
-                  description="This lead has no recorded calls yet."
-                />
-              )}
-            </div>
-          )}
-          <div className="call-controls">
-            <div className="caller-row">
-              <div>
-                <strong className="call-timer mono">
-                  {formatDuration(state.call?.seconds ?? 0)}
-                </strong>
-                <div className="call-indicators">
-                  <span className="call-status">
-                    {active
-                      ? state.call?.held
-                        ? "On hold · simulated"
-                        : "Simulated call connected"
-                      : state.call
-                        ? "Call ended"
-                        : "Ready to dial"}
-                  </span>
-                  <span className="recording-status">
-                    {active
-                      ? state.call?.recording
-                        ? "Recording this call (demo)"
-                        : "Recording off"
-                      : `Auto recording ${state.recordingEnabled ? "on" : "off"}`}
-                  </span>
-                </div>
-              </div>{" "}
-              <label className="mic-select">
-                <Mic aria-hidden="true" size={16} />
-                <span className="sr-only">Microphone</span>
-                <select
-                  name="microphone"
-                  value={state.preferences.microphone}
-                  onChange={(e) =>
-                    dispatch({ type: "preferences", patch: { microphone: e.target.value } })
-                  }
+                <div
+                  className="lead-history"
+                  role="tabpanel"
+                  id="history-panel"
+                  aria-labelledby="history-tab"
                 >
-                  <option value="default">Default mic · demo</option>
-                  <option value="headset">USB headset · demo</option>
-                </select>
-              </label>
+                  {history.length ? (
+                    <>
+                      <div className="history-item">
+                        <div>
+                          <strong>{outcomeLabel(history[0]!.outcome)}</strong>
+                          <small>
+                            {dateAt(history[0]!.at)} · {formatDuration(history[0]!.seconds)}
+                          </small>
+                          <p>{history[0]!.notes || "No notes recorded."}</p>
+                        </div>
+                      </div>
+                      <p className="hint">Full history is available in Activity / Call log.</p>
+                    </>
+                  ) : (
+                    <Empty
+                      title="No previous calls"
+                      description="This lead has no recorded calls yet."
+                    />
+                  )}
+                </div>
+              )}
             </div>
-            <div className="call-actions">
-              {active ? (
-                <>
+            <section
+              className="call-controls call-card"
+              aria-label="Phone dialer"
+              onKeyDown={(event) => {
+                if (
+                  !active ||
+                  event.altKey ||
+                  event.ctrlKey ||
+                  event.metaKey ||
+                  !/^[0-9*#]$/.test(event.key)
+                )
+                  return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (!state.call?.held) dispatch({ type: "digit", value: event.key });
+              }}
+            >
+              <div className="phone-source" aria-label="Dialing source" hidden={active}>
+                <button
+                  type="button"
+                  aria-pressed={!inlineManual}
+                  disabled={active}
+                  onClick={() => {
+                    setInlineManual(false);
+                    setManualError("");
+                  }}
+                >
+                  Lead number
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={inlineManual}
+                  disabled={active}
+                  onClick={() => {
+                    setInlineManual(true);
+                    setManualPhone("");
+                    setManualError("");
+                    document.getElementById("quick-dial-number")?.focus();
+                  }}
+                >
+                  Any number
+                </button>
+              </div>
+              <div className="phone-number-entry">
+                <label className="sr-only" htmlFor="quick-dial-number">
+                  Phone number
+                </label>
+                <input
+                  id="quick-dial-number"
+                  name="quick-dial-number"
+                  type="tel"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="Enter a number"
+                  value={active ? state.call!.phone : inlineManual ? manualPhone : chosenPhone}
+                  readOnly={active}
+                  onChange={(event) => {
+                    setInlineManual(true);
+                    setManualPhone(event.target.value);
+                    setManualError("");
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    if (!active) {
+                      if (inlineManual) dialManualNumber(manualPhone);
+                      else startDial();
+                    }
+                  }}
+                />
+                {!active && (
                   <button
                     type="button"
-                    id="dialer-mute"
                     className="icon-button"
-                    aria-label={state.call?.muted ? "Unmute" : "Mute"}
-                    aria-pressed={state.call?.muted}
-                    onClick={() => dispatch({ type: "mute" })}
-                  >
-                    {state.call?.muted ? (
-                      <MicOff aria-hidden="true" size={18} />
-                    ) : (
-                      <Mic aria-hidden="true" size={18} />
-                    )}
-                  </button>
-                  <button
-                    id="dialer-hold"
-                    type="button"
-                    className={`button ${state.call?.held ? "selected" : ""}`}
-                    aria-pressed={state.call?.held}
-                    onClick={() => dispatch({ type: "hold" })}
-                  >
-                    <Pause aria-hidden="true" size={16} />
-                    {state.call?.held ? "Resume call" : "Hold"}
-                  </button>
-                  <button
-                    type="button"
-                    className="button"
-                    disabled={state.call?.held}
+                    aria-label="Delete last digit"
+                    disabled={inlineManual && !manualPhone}
                     onClick={() => {
-                      setParticipantError("");
-                      setConference(true);
+                      setInlineManual(true);
+                      setManualPhone((inlineManual ? manualPhone : chosenPhone).slice(0, -1));
+                      setManualError("");
                     }}
                   >
-                    <Users aria-hidden="true" size={17} />
-                    Add participant
+                    <Delete aria-hidden="true" size={19} />
                   </button>
-                  <button type="button" className="button danger" onClick={endCall}>
-                    <PhoneOff aria-hidden="true" size={17} />
-                    {state.call?.participants.length ? "End conference" : "End call"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    id="dialer-dial"
-                    aria-label={blocked ? "Do not call" : "Dial · simulated"}
-                    type="button"
-                    className="button primary dial-button"
-                    disabled={blocked || paused}
-                    onClick={() => startDial()}
-                  >
-                    <Phone aria-hidden="true" size={17} />
-                    {blocked ? "Do not call" : "Dial · simulated"}
-                    <kbd>Alt D</kbd>
-                  </button>
-                  <button
-                    type="button"
-                    className="button"
-                    disabled={blocked || paused || !history.length}
-                    onClick={() => startDial(history[0]!.phone)}
-                  >
-                    <RotateCcw aria-hidden="true" size={16} /> Redial
-                  </button>
-                </>
-              )}
-              <button
-                id="dialer-help"
-                type="button"
-                className="icon-button shortcut-button"
-                aria-label="Keyboard shortcuts"
-                onClick={() => setShortcuts(true)}
-              >
-                <Keyboard aria-hidden="true" size={18} />
-              </button>
-            </div>
-            {active && (
-              <div className="keypad" aria-label="Call keypad">
-                {"123456789*0#".split("").map((digit) => (
-                  <button
-                    type="button"
-                    key={digit}
-                    aria-label={`Send digit ${digit}`}
-                    disabled={state.call?.held}
-                    onClick={() => dispatch({ type: "digit", value: digit })}
-                  >
-                    {digit}
-                  </button>
-                ))}
-                <output className="digits mono">{state.call?.digits}</output>
+                )}
               </div>
-            )}
-            {active && Boolean(state.call?.participants.length) && (
-              <div className="conference-participants" aria-label="Additional participants">
-                {state.call?.participants.map((person) => (
-                  <div className="participant" key={person.phone}>
-                    <span>
-                      <strong>{person.name}</strong>
-                      {" · "}
-                      <span className="mono">{person.phone}</span>
+              <div className="phone-call-state" aria-live="polite">
+                {manualError && !manual ? (
+                  <p className="error phone-error" role="alert">
+                    {manualError}
+                  </p>
+                ) : (
+                  <>
+                    <span className="call-status">
+                      {active
+                        ? state.call?.held
+                          ? "On hold · simulated"
+                          : "Simulated call connected"
+                        : state.call
+                          ? "Call ended"
+                          : inlineManual
+                            ? "Dial without adding a lead"
+                            : "Ready to dial"}
                     </span>
+                    <strong className="call-timer mono">
+                      {formatDuration(state.call?.seconds ?? 0)}
+                    </strong>
+                  </>
+                )}
+              </div>
+              <div className="phone-tools">
+                <button
+                  type="button"
+                  id="dialer-mute"
+                  disabled={!active}
+                  aria-label={state.call?.muted ? "Unmute" : "Mute"}
+                  aria-pressed={Boolean(state.call?.muted)}
+                  onClick={() => dispatch({ type: "mute" })}
+                >
+                  {state.call?.muted ? (
+                    <MicOff aria-hidden="true" size={21} />
+                  ) : (
+                    <Mic aria-hidden="true" size={21} />
+                  )}
+                  <span>{state.call?.muted ? "Unmute" : "Mute"}</span>
+                </button>
+                <button
+                  type="button"
+                  id="dialer-hold"
+                  aria-label={state.call?.held ? "Resume call" : "Hold"}
+                  disabled={!active}
+                  aria-pressed={Boolean(state.call?.held)}
+                  onClick={() => dispatch({ type: "hold" })}
+                >
+                  {state.call?.held ? (
+                    <Play aria-hidden="true" size={21} />
+                  ) : (
+                    <Pause aria-hidden="true" size={21} />
+                  )}
+                  <span>{state.call?.held ? "Resume" : "Hold"}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Add participant"
+                  disabled={!active || state.call?.held}
+                  onClick={() => {
+                    setParticipantError("");
+                    setConference(true);
+                  }}
+                >
+                  <Users aria-hidden="true" size={21} />
+                  <span>Add call</span>
+                </button>
+              </div>
+              <div
+                className="keypad"
+                role="group"
+                aria-label={active ? "Call keypad" : "Dialing keypad"}
+              >
+                {["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map(
+                  (digit, index) => (
                     <button
                       type="button"
-                      className="icon-button"
-                      aria-label={`Remove ${person.name}`}
-                      onClick={() =>
-                        dispatch({ type: "participant", phone: person.phone, remove: true })
-                      }
+                      key={digit}
+                      aria-label={active ? `Send digit ${digit}` : `Enter digit ${digit}`}
+                      disabled={active && state.call?.held}
+                      onClick={() => {
+                        if (active) dispatch({ type: "digit", value: digit });
+                        else {
+                          setInlineManual(true);
+                          setManualPhone((value) => (inlineManual ? value : "") + digit);
+                          setManualError("");
+                        }
+                      }}
                     >
-                      <X aria-hidden="true" size={15} />
+                      <span>{digit}</span>
+                      <small aria-hidden="true">
+                        {
+                          [
+                            "",
+                            "ABC",
+                            "DEF",
+                            "GHI",
+                            "JKL",
+                            "MNO",
+                            "PQRS",
+                            "TUV",
+                            "WXYZ",
+                            "",
+                            "+",
+                            "",
+                          ][index]
+                        }
+                      </small>
                     </button>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
-            )}
+              {active && (
+                <output className="phone-dtmf mono" aria-label="Sent keypad digits">
+                  {state.call?.digits || "Keypad ready"}
+                </output>
+              )}
+              {active ? (
+                <button type="button" className="button danger phone-call-button" onClick={endCall}>
+                  <PhoneOff aria-hidden="true" size={21} />
+                  {state.call?.participants.length ? "End conference" : "End call"}
+                </button>
+              ) : (
+                <button
+                  id="dialer-dial"
+                  type="button"
+                  className="button primary phone-call-button"
+                  aria-label={!inlineManual && blocked ? "Do not call" : "Dial · simulated"}
+                  disabled={paused || (!inlineManual && blocked)}
+                  onClick={() => {
+                    if (inlineManual) dialManualNumber(manualPhone);
+                    else startDial();
+                  }}
+                >
+                  <Phone aria-hidden="true" size={21} />
+                  {!inlineManual && blocked ? "Do not call" : "Call · simulated"}
+                </button>
+              )}
+              <div className={`phone-card-footer ${active ? "is-active" : ""}`}>
+                <button
+                  type="button"
+                  className="text-button"
+                  disabled={active || blocked || paused || !history.length}
+                  onClick={() => {
+                    setInlineManual(false);
+                    startDial(history[0]!.phone);
+                  }}
+                >
+                  <RotateCcw aria-hidden="true" size={15} />
+                  Redial
+                </button>
+                <span className="recording-status">
+                  {active
+                    ? state.call?.recording
+                      ? "Recording this call (demo)"
+                      : "Recording off"
+                    : `Auto recording ${state.recordingEnabled ? "on" : "off"}`}
+                </span>
+              </div>
+              <div className="phone-device-row">
+                <label className="mic-select">
+                  <Mic aria-hidden="true" size={15} />
+                  <span className="sr-only">Microphone</span>
+                  <select
+                    name="microphone"
+                    value={state.preferences.microphone}
+                    onChange={(event) =>
+                      dispatch({ type: "preferences", patch: { microphone: event.target.value } })
+                    }
+                  >
+                    <option value="default">Default mic · demo</option>
+                    <option value="headset">USB headset · demo</option>
+                  </select>
+                </label>
+                <button
+                  id="dialer-help"
+                  type="button"
+                  className="icon-button"
+                  aria-label="Keyboard shortcuts"
+                  onClick={() => setShortcuts(true)}
+                >
+                  <Keyboard aria-hidden="true" size={16} />
+                </button>
+              </div>
+              {active && Boolean(state.call?.participants.length) && (
+                <div className="conference-participants" aria-label="Additional participants">
+                  {state.call?.participants.map((person) => (
+                    <div className="participant" key={person.phone}>
+                      <span>
+                        <strong>{person.name}</strong>
+                        <span className="mono">{person.phone}</span>
+                      </span>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        aria-label={`Remove ${person.name}`}
+                        onClick={() =>
+                          dispatch({ type: "participant", phone: person.phone, remove: true })
+                        }
+                      >
+                        <X aria-hidden="true" size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
         </Panel>
         <Panel className="outcome-panel">
@@ -1037,37 +1230,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
           onSubmit={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            const phone = dialNumber(manualPhone);
-            if (!phone) {
-              setManualError(
-                "Enter a valid phone number, including +country code for international numbers.",
-              );
-              document.getElementById("manual-phone")?.focus();
-              return;
-            }
-            const blocked = state.leads.some(
-              (item) =>
-                item.outcome === "do_not_call" &&
-                (dialNumber(item.phone) === phone || dialNumber(item.direct) === phone),
-            );
-            if (blocked) {
-              setManualError("This number belongs to a do-not-call lead. Choose another number.");
-              return;
-            }
-            setManual(false);
-            guarded(() => {
-              dispatch({
-                type: "manualDial",
-                id: crypto.randomUUID(),
-                leadId: crypto.randomUUID(),
-                phone,
-                name: manualName,
-                at: new Date().toISOString(),
-              });
-              setTab("notes");
-              setError("");
-              setStatus("");
-            });
+            dialManualNumber(manualPhone, manualName);
           }}
         >
           <Field

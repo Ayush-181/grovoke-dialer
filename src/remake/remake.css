@@ -4423,3 +4423,290 @@ kbd {
   white-space: normal;
   overflow: visible;
 }
+
+/* A familiar vertical phone, scoped to the middle dialer panel. */
+.page-dialer .lead-panel {
+  container-type: inline-size;
+}
+.lead-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 270px);
+  flex: 1;
+  min-height: 0;
+}
+.lead-context {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.context-toggle {
+  display: none;
+}
+.page-dialer .call-card {
+  border-top: 0;
+  border-left: 1px solid var(--border);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  min-height: 0;
+}
+.phone-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.phone-source {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.phone-source button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 7px;
+  min-height: 32px;
+  font-size: 12px;
+}
+.phone-source button[aria-pressed="true"] {
+  border-color: var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+.phone-number-entry {
+  position: relative;
+}
+.phone-number-entry input {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 20px;
+  text-align: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  line-height: 1.2;
+  padding: 8px 30px 8px 4px;
+  letter-spacing: -0.06em;
+}
+.phone-number-entry .icon-button {
+  position: absolute;
+  right: 2px;
+  top: 5px;
+  width: 28px;
+}
+.phone-call-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px;
+  gap: 6px;
+}
+.phone-call-state .call-status {
+  max-width: none;
+  font-size: 12px;
+}
+.page-dialer .call-card .call-timer {
+  font-size: 22px;
+  line-height: 1.2;
+}
+.phone-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.phone-tools button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 52px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  padding: 6px 2px;
+}
+.phone-tools button span {
+  font-size: 11px;
+  line-height: 1.2;
+}
+.phone-tools button[aria-pressed="true"] {
+  color: var(--jade);
+  border-color: var(--jade);
+}
+.phone-tools button:disabled {
+  opacity: 0.4;
+}
+.page-dialer .call-card .keypad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  width: 100%;
+}
+.page-dialer .call-card .keypad button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 3px;
+}
+.call-card .keypad button > span {
+  font-size: 23px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.call-card .keypad button > small {
+  font-size: 9px;
+  line-height: 1;
+  min-height: 11px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.page-dialer .call-card .keypad button:hover:not(:disabled),
+.phone-tools button:hover:not(:disabled) {
+  background: var(--raised);
+  border-color: var(--jade);
+}
+.phone-dtmf {
+  text-align: center;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.phone-call-button {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 14px;
+}
+.phone-card-footer .text-button {
+  font-size: 12px;
+}
+.call-card .recording-status {
+  font-size: 11px;
+  max-width: none;
+}
+.call-card .mic-select {
+  width: 100%;
+  min-height: 30px;
+}
+.call-card .mic-select select {
+  width: 100%;
+  min-width: 0;
+}
+.page-dialer .call-card .conference-participants {
+  max-height: 44px;
+  flex-shrink: 0;
+}
+.call-card .participant > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.call-card .participant > span > span {
+  display: block;
+  font-size: 11px;
+}
+.phone-error {
+  font-size: 12px;
+  margin: 0;
+}
+@container (max-width: 530px) {
+  .lead-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    position: relative;
+  }
+  .context-toggle {
+    display: flex;
+    margin: 6px 12px;
+    min-height: 34px;
+    justify-content: center;
+  }
+  .lead-context {
+    display: none;
+  }
+  .lead-workspace.context-expanded .lead-context {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+  .lead-workspace.context-expanded .call-card {
+    display: none;
+  }
+  .lead-workspace {
+    display: flex;
+    flex-direction: column;
+  }
+  .page-dialer .call-card {
+    border: 0;
+    width: 100%;
+    max-width: 310px;
+    margin-inline: auto;
+    padding-top: 8px;
+    gap: 3px;
+  }
+  .page-dialer .lead-workspace.context-expanded .lead-context .call-guide {
+    min-height: 120px;
+  }
+}
+@media (max-width: 720px) {
+  .page-dialer .lead-workspace {
+    flex: initial;
+  }
+  .page-dialer .call-card {
+    padding-bottom: 8px;
+  }
+  .page-dialer .lead-panel {
+    min-height: 0;
+  }
+}
+
+.page-dialer .lead-identity {
+  padding: 10px 16px;
+}
+
+.page-dialer .lead-identity h2 {
+  margin: 4px 0;
+  line-height: 1.2;
+}
+
+.page-dialer .lead-quick-actions {
+  margin-top: 6px;
+}
+
+.phone-source[hidden] {
+  display: none;
+}
+
+.phone-card-footer.is-active {
+  justify-content: center;
+  min-height: 16px;
+}
+
+.phone-card-footer.is-active > button {
+  display: none;
+}
+
+.phone-device-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.phone-device-row .mic-select {
+  flex: 1;
+}
+
+.phone-device-row > .icon-button {
+  min-height: 30px;
+  width: 30px;
+}

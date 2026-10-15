@@ -274,6 +274,15 @@ async (page) => {
       page: document.documentElement.scrollHeight <= innerHeight + 1,
       panels: [...document.querySelectorAll(".lead-panel,.outcome-panel")].map((el) => ({
         name: el.className,
+        height: el.clientHeight,
+        scrollHeight: el.scrollHeight,
+        children: [
+          ...el.querySelectorAll(".lead-workspace,.call-card,.call-card > *, .lead-identity"),
+        ].map((child) => ({
+          name: child.className,
+          height: child.getBoundingClientRect().height,
+          bottom: child.getBoundingClientRect().bottom,
+        })),
         fits: el.scrollHeight <= el.clientHeight + 1 && el.scrollWidth <= el.clientWidth + 1,
         bottom: el.getBoundingClientRect().bottom,
       })),
@@ -291,6 +300,8 @@ async (page) => {
   );
   await page.getByRole("button", { name: /ASK FOR/ }).click();
   await page.setViewportSize({ width: 1280, height: 800 });
+  // The existing tablet queue is an overlay; close it to access the middle column.
+  await page.getByRole("button", { name: "Hide lead list", exact: true }).click();
   layout = await fits();
   check(
     layout.page && layout.panels.every((panel) => panel.fits),
@@ -304,6 +315,7 @@ async (page) => {
   );
   await page.getByRole("button", { name: /ASK FOR/ }).click();
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole("button", { name: "Show lead list", exact: true }).click();
   await page.waitForTimeout(4500);
   await page.screenshot({ path: ".playwright-cli/remake-dialer-day.png", fullPage: true });
   // Change the default while a call is active: the current call must keep its snapshot.
@@ -756,7 +768,104 @@ async (page) => {
     await page.locator("main").evaluate((element) => element === document.activeElement),
     "Skip link did not focus main",
   );
+  // The phone card accepts arbitrary numbers without a lead-creation form.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.reload();
+  await nav("Dialer").click();
+  const phoneCard = page.getByRole("region", { name: "Phone dialer", exact: true });
+  check((await phoneCard.locator(".keypad button").count()) === 12, "Idle phone lost its keypad");
+  check(
+    await phoneCard
+      .locator(".keypad")
+      .evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length === 3),
+    "Phone keypad is not three columns",
+  );
+  await phoneCard.getByRole("button", { name: "Any number", exact: true }).click();
+  await phoneCard.getByRole("button", { name: "Enter digit 2", exact: true }).click();
+  await phoneCard.getByRole("button", { name: "Enter digit 4", exact: true }).click();
+  await phoneCard.getByRole("button", { name: "Delete last digit", exact: true }).click();
+  check(
+    (await page.getByLabel("Phone number", { exact: true }).inputValue()) === "2",
+    "Idle keypad/backspace did not edit the number",
+  );
+  await page.getByLabel("Phone number", { exact: true }).fill("bad-number");
+  await phoneCard.getByRole("button", { name: "Dial · simulated", exact: true }).click();
+  check(await phoneCard.getByRole("alert").isVisible(), "Inline invalid number was accepted");
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.getByRole("button", { name: "Hide lead list", exact: true }).click();
+  const errorLayout = await fits();
+  check(
+    errorLayout.page && errorLayout.panels.every((panel) => panel.fits),
+    "Phone validation overflows laptop: " + JSON.stringify(errorLayout),
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole("button", { name: "Show lead list", exact: true }).click();
+  await page.getByLabel("Phone number", { exact: true }).fill("+12125550106");
+  await phoneCard.getByRole("button", { name: "Dial · simulated", exact: true }).click();
+  check(
+    (await phoneCard.getByRole("alert").textContent()).includes("do-not-call"),
+    "Inline dial bypassed suppression",
+  );
+  await page.getByLabel("Phone number", { exact: true }).fill("2125550188");
+  await page.getByLabel("Phone number", { exact: true }).press("Enter");
+  check(
+    (await page.getByRole("dialog").count()) === 0,
+    "Direct dialing required a modal or lead form",
+  );
+  check(
+    (await page.getByLabel("Phone number", { exact: true }).inputValue()) === "+12125550188",
+    "Inline manual number was not normalized",
+  );
+  check(
+    await page.getByLabel("Phone number", { exact: true }).evaluate((el) => el.readOnly),
+    "Active number is editable",
+  );
+  await phoneCard.getByRole("button", { name: "Send digit #", exact: true }).click();
+  check(
+    (await page.getByLabel("Sent keypad digits").textContent()) === "#",
+    "In-call keypad edited the destination instead of DTMF",
+  );
+  await page.getByLabel("Phone number", { exact: true }).press("5");
+  check(
+    (await page.getByLabel("Sent keypad digits").textContent()) === "#5",
+    "Focused phone keyboard did not send a tone",
+  );
+  check(
+    (await page
+      .getByRole("button", { name: "Voicemail", exact: true })
+      .getAttribute("aria-pressed")) !== "true",
+    "Phone typing triggered an outcome shortcut",
+  );
+  await phoneCard.getByRole("button", { name: "Hold", exact: true }).click();
+  check(
+    await phoneCard.getByRole("button", { name: "Send digit 2", exact: true }).isDisabled(),
+    "Held keypad sends tones",
+  );
+  await phoneCard.getByRole("button", { name: "Resume call", exact: true }).click();
+  await page.setViewportSize({ width: 768, height: 900 });
+  const phoneLayout = await fits();
+  check(
+    phoneLayout.page && phoneLayout.panels.every((panel) => panel.fits),
+    "Vertical active phone overflows tablet: " + JSON.stringify(phoneLayout),
+  );
+  await page.getByRole("button", { name: "Hide lead list", exact: true }).click();
+  await page.getByRole("button", { name: "ASK FOR & call guide", exact: true }).click();
+  check(
+    await page.getByLabel("Name", { exact: true }).isVisible(),
+    "Narrow phone hides ASK FOR without an accessible view",
+  );
+  await page.getByRole("button", { name: "Back to phone", exact: true }).click();
+  check(
+    (await page.getByLabel("Sent keypad digits").textContent()) === "#5",
+    "Opening context lost the active call",
+  );
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole("button", { name: "Show lead list", exact: true }).click();
+  await phoneCard.getByRole("button", { name: "End call", exact: true }).click();
+  await page.screenshot({ path: ".playwright-cli/remake-phone-card-day.png", fullPage: true });
+  await page.getByRole("button", { name: "Switch to night mode" }).click();
+  await page.screenshot({ path: ".playwright-cli/remake-phone-card-night.png", fullPage: true });
   check(errors.length === 0, "Browser errors: " + errors.join("; "));
   check(forbidden.length === 0, "Forbidden network: " + forbidden.join("; "));
-  return "PASS: isolated remake — 8 screens at 1280/768/390px, theme persistence, ASK FOR, explicit saving, Previous, draft guard, dashboard-linked callback view, manual-number dialing and validation, per-business call counts, recording snapshot, multiple decision-maker conferences and participant history/mute/keypad, no hero headlines, 24 booking slots, record-only deletion, daily/monthly filters, milestone metrics, collapsible navigation/queue/contact details, desktop panel containment, in-call booking preserving drafts, editable call guide, safe keyboard shortcuts, hold/resume/redial, quick session startup and session Start/Pause/Resume/Stop timers; zero provider requests.";
+  return "PASS: isolated remake — 8 screens at 1280/768/390px, theme persistence, ASK FOR, explicit saving, Previous, draft guard, dashboard-linked callback view, manual-number dialing and validation, per-business call counts, recording snapshot, multiple decision-maker conferences and participant history/mute/keypad, no hero headlines, 24 booking slots, record-only deletion, daily/monthly filters, milestone metrics, collapsible navigation/queue/contact details, desktop panel containment, in-call booking preserving drafts, editable call guide, safe keyboard shortcuts, hold/resume/redial, quick session startup and session Start/Pause/Resume/Stop timers; vertical phone card, inline number entry/backspace/validation/DTMF and tablet fit; zero provider requests.";
 };
