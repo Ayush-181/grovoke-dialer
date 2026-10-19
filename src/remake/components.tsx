@@ -80,6 +80,7 @@ export function Stat({
   change,
   comparison = "vs. previous week",
   tone = "jade",
+  detail,
 }: {
   icon: LucideIcon;
   label: string;
@@ -87,25 +88,34 @@ export function Stat({
   change: string;
   comparison?: string;
   tone?: string;
+  detail?: { label: string; value: string };
 }) {
+  const directional = change !== "—" && change !== "0%";
   return (
     <Panel className="stat">
-      <span className={`stat-icon ${tone}`}>
-        <Icon aria-hidden="true" size={20} />
-      </span>
-      <div>
+      <div className="stat-heading">
         <p>{label}</p>
-        <strong data-metric={label}>{value}</strong>
-        <small>
-          {change !== "—" &&
-            (change.startsWith("-") ? (
-              <ArrowDownRight aria-hidden="true" size={12} />
-            ) : (
-              <ArrowUpRight aria-hidden="true" size={12} />
-            ))}
-          {change} <span>{comparison}</span>
-        </small>
+        <span className={`stat-icon ${tone}`}>
+          <Icon aria-hidden="true" size={18} />
+        </span>
       </div>
+      <strong data-metric={label}>{value}</strong>
+      {detail && (
+        <dl className="stat-support">
+          <dt>{detail.label}</dt>
+          <dd>{detail.value}</dd>
+        </dl>
+      )}
+      <small className="stat-comparison">
+        {directional &&
+          (change.startsWith("-") ? (
+            <ArrowDownRight aria-hidden="true" size={14} />
+          ) : (
+            <ArrowUpRight aria-hidden="true" size={14} />
+          ))}
+        {change !== "—" && <b>{change === "0%" ? "No change" : change}</b>}
+        <span>{comparison}</span>
+      </small>
     </Panel>
   );
 }

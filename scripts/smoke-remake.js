@@ -55,6 +55,23 @@ async (page) => {
     (await page.locator('[data-metric="Dials"]').textContent()) === "0",
     "Empty month kept stale totals",
   );
+  for (const metric of ["Connected", "Bookings", "Talk time"]) {
+    const card = page.locator(`[data-metric="${metric}"]`).locator("..");
+    check(
+      (await card.locator(".stat-support dd").textContent()) === "—",
+      `${metric} showed a rate/duration without any calls`,
+    );
+  }
+  check(
+    (await page.locator(".overview-stats .stat-comparison svg").count()) === 0,
+    "Missing baseline showed growth arrows",
+  );
+  check(
+    (await page.locator(".activity-chart figcaption").textContent()).includes(
+      "No calls recorded for this month",
+    ),
+    "Empty month lacks an explanation",
+  );
   await page.getByLabel("Overview month").selectOption(month);
   check(
     (await page.locator(".overview-stats .stat").count()) === 4,

@@ -173,7 +173,11 @@ export function OverviewActivityChart({ logs, month }: { logs: Log[]; month: str
             ))}
           </div>
         </div>
-        <figcaption>Connections, not just activity. Monthly totals grouped by weekday.</figcaption>
+        <figcaption>
+          {logs.length
+            ? "Monthly totals grouped by weekday · IST."
+            : "No calls recorded for this month. Monthly totals grouped by weekday · IST."}
+        </figcaption>
       </figure>
     </Panel>
   );

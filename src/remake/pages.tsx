@@ -108,31 +108,38 @@ export function Overview({
           icon={Phone}
           label="Dials"
           value={String(m.dials)}
+          detail={{ label: "Awaiting outcome", value: String(m.pending) }}
           change={delta(m.dials, previous.dials)}
-          comparison="vs. previous month"
+          comparison={previous.dials ? "vs. previous month" : "No previous-month baseline"}
         />
         <Stat
           icon={Users}
           label="Connected"
           value={String(m.connected)}
+          detail={{ label: "Connection rate", value: m.dials ? `${m.connectionRate}%` : "—" }}
           change={delta(m.connected, previous.connected)}
-          comparison="vs. previous month"
+          comparison={previous.connected ? "vs. previous month" : "No previous-month baseline"}
           tone="blue"
         />
         <Stat
           icon={CalendarDays}
           label="Bookings"
           value={String(m.booked)}
+          detail={{
+            label: "Dial-to-booking rate",
+            value: m.dials ? `${Math.round((m.booked / m.dials) * 100)}%` : "—",
+          }}
           change={delta(m.booked, previous.booked)}
-          comparison="vs. previous month"
+          comparison={previous.booked ? "vs. previous month" : "No previous-month baseline"}
           tone="amber"
         />
         <Stat
           icon={Clock3}
           label="Talk time"
           value={hours ? `${hours}h ${minutes}m` : `${minutes}m ${m.talk % 60}s`}
+          detail={{ label: "Average per dial", value: m.dials ? formatDuration(m.average) : "—" }}
           change={delta(m.talk, previous.talk)}
-          comparison="vs. previous month"
+          comparison={previous.talk ? "vs. previous month" : "No previous-month baseline"}
         />
       </div>
       <div className="dashboard-grid">
@@ -142,7 +149,7 @@ export function Overview({
           <section className="followup-section">
             <PanelHead
               title="Upcoming appointments"
-              subtitle="Your next conversations"
+              subtitle="Current follow-ups · next conversations"
               action={
                 <button className="text-button" onClick={() => navigate("bookings")}>
                   View all <ArrowRight aria-hidden="true" size={14} />
@@ -188,7 +195,7 @@ export function Overview({
           <section className="followup-section callback-section">
             <PanelHead
               title="Worth a callback"
-              subtitle={`${callbacks.length} ${callbacks.length === 1 ? "lead" : "leads"} to follow up`}
+              subtitle={`Current · ${callbacks.length} ${callbacks.length === 1 ? "lead" : "leads"} to follow up`}
               action={
                 <button className="text-button" onClick={() => navigate("leads", "callbacks")}>
                   View all <ArrowRight aria-hidden="true" size={14} />
