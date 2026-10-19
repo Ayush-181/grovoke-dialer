@@ -158,8 +158,30 @@ async (page) => {
   await nav("Settings").click();
   await page.getByRole("switch", { name: "Automatically record calls" }).click();
   await nav("Dialer").click();
+  check(
+    await page.getByRole("button", { name: "Expand navigation", exact: true }).isVisible(),
+    "Navigation should default to the compact rail",
+  );
+  check((await page.locator(".sidebar").boundingBox()).width === 64, "Compact rail must be 64px");
+  check(await nav("Activity").isVisible(), "Compact navigation lost destinations");
+  await nav("Sessions").focus();
+  await page.keyboard.press("Tab");
+  check(
+    await nav("Activity").locator(".nav-tooltip").isVisible(),
+    "Keyboard navigation lacks a tooltip",
+  );
+  await page.getByRole("button", { name: "Expand navigation", exact: true }).click();
+  await page.reload();
+  check(
+    await page.getByRole("button", { name: "Collapse navigation", exact: true }).isVisible(),
+    "Expanded preference was not retained",
+  );
   await page.getByRole("button", { name: "Collapse navigation", exact: true }).click();
-  check(await nav("Activity").isVisible(), "Collapsed navigation lost destinations");
+  await page.reload();
+  check(
+    await page.getByRole("button", { name: "Expand navigation", exact: true }).isVisible(),
+    "Compact preference was not retained",
+  );
   await page.getByRole("button", { name: "Expand navigation", exact: true }).click();
   await page.getByRole("button", { name: "Hide lead list", exact: true }).click();
   check((await page.locator(".queue-panel").count()) === 0, "Lead list did not collapse");

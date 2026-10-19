@@ -62,7 +62,20 @@ export function App() {
   const [now, setNow] = useState(() => new Date());
   const [menu, setMenu] = useState(false);
   const [leadsView, setLeadsView] = useState<"all" | "callbacks">("all");
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("callboard-remake-navigation") !== "expanded";
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("callboard-remake-navigation", collapsed ? "compact" : "expanded");
+    } catch {
+      /* Navigation remains usable without storage. */
+    }
+  }, [collapsed]);
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState<(() => void) | null>(null);
   const [navigationError, setNavigationError] = useState("");
@@ -167,6 +180,8 @@ export function App() {
       <aside className={`sidebar ${menu ? "is-open" : ""}`}>
         <a
           className="brand"
+          aria-label="Call Board overview"
+          title={collapsed ? "Call Board" : undefined}
           href="#overview"
           onClick={(event) => {
             if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
@@ -201,6 +216,9 @@ export function App() {
             >
               <Icon aria-hidden="true" size={18} />
               <span>{label}</span>
+              <span className="nav-tooltip" aria-hidden="true">
+                {label}
+              </span>
               {id === "leads" && <small>{state.leads.length}</small>}
             </a>
           ))}

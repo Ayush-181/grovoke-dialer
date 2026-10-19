@@ -2678,15 +2678,16 @@ table {
   font-size: 11px;
 }
 .nav-collapsed .sidebar {
-  width: 72px;
+  width: 64px;
   padding-inline: 10px;
 }
 .nav-collapsed .workspace-body {
-  margin-left: 72px;
-  width: calc(100% - 72px);
+  margin-left: 64px;
+  width: calc(100% - 64px);
 }
 .nav-collapsed .brand {
-  padding-inline: 8px;
+  padding-inline: 0;
+  justify-content: center;
 }
 .nav-collapsed .brand > span:last-child,
 .nav-collapsed .sidebar-label,
@@ -2702,7 +2703,7 @@ table {
   padding: 13px 0;
 }
 .nav-collapsed .sidebar-bottom {
-  padding-inline: 8px;
+  padding-inline: 0;
 }
 .topbar {
   height: 64px;
@@ -4709,4 +4710,46 @@ kbd {
 .phone-device-row > .icon-button {
   min-height: 30px;
   width: 30px;
+}
+
+/* Compact navigation: 44px targets in a 64px rail. */
+.sidebar nav a {
+  position: relative;
+  min-height: 44px;
+}
+.sidebar nav a .nav-tooltip {
+  display: none;
+}
+@media (min-width: 901px) {
+  .nav-collapsed .sidebar nav a {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .nav-collapsed .profile {
+    justify-content: center;
+  }
+  .nav-collapsed .sidebar nav a .nav-tooltip {
+    display: block;
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+    padding: 7px 10px;
+    border-radius: 7px;
+    background: var(--forest);
+    color: var(--sidebar-text);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 50;
+  }
+  .nav-collapsed .sidebar nav a:hover .nav-tooltip,
+  .nav-collapsed .sidebar nav a:focus-visible .nav-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
 }
