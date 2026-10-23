@@ -160,6 +160,7 @@ async (page) => {
   await page.screenshot({ path: ".playwright-cli/remake-overview-day.png", fullPage: true });
   await page.getByRole("button", { name: "Switch to night mode" }).click();
   await page.waitForTimeout(200);
+  await page.waitForTimeout(200);
   await page.screenshot({ path: ".playwright-cli/remake-overview-night.png", fullPage: true });
   await page.reload();
   check(
@@ -649,6 +650,7 @@ async (page) => {
   await page.screenshot({ path: ".playwright-cli/remake-manual-conference.png", fullPage: true });
   await page.getByRole("button", { name: "Switch to night mode" }).click();
   await page.waitForTimeout(200);
+  await page.waitForTimeout(200);
   await page.screenshot({
     path: ".playwright-cli/remake-reference-dialer-night.png",
     fullPage: true,
@@ -795,6 +797,7 @@ async (page) => {
     }
     await page.getByRole("button", { name: "Switch to night mode" }).click();
     await page.waitForTimeout(200);
+    await page.waitForTimeout(200);
     await page.screenshot({
       path: `.playwright-cli/remake-dialer-night-${width}.png`,
       fullPage: true,
@@ -903,6 +906,7 @@ async (page) => {
   await phoneCard.getByRole("button", { name: "End call", exact: true }).click();
   await page.screenshot({ path: ".playwright-cli/remake-phone-card-day.png", fullPage: true });
   await page.getByRole("button", { name: "Switch to night mode" }).click();
+  await page.waitForTimeout(200);
   await page.screenshot({ path: ".playwright-cli/remake-phone-card-night.png", fullPage: true });
   check(errors.length === 0, "Browser errors: " + errors.join("; "));
   check(forbidden.length === 0, "Forbidden network: " + forbidden.join("; "));

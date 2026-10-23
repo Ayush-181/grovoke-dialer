@@ -102,7 +102,7 @@ describe("isolated calling workflow", () => {
   });
   test("imports deduplicate both existing and in-batch phones without ghost queue entries", () => {
     const state = initialState();
-    const sample = { ...state.leads[0]!, id: "new", phone: "+12125550199" };
+    const sample = { ...state.leads[0]!, id: "new", phone: "+12125550199", contacts: [] };
     const imported = reducer(state, {
       type: "import",
       leads: [state.leads[0]!, sample, { ...sample, id: "duplicate" }],

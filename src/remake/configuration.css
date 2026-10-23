@@ -1,0 +1,255 @@
+.configuration-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.configuration-page .configuration-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.configuration-page .configuration-tabs .button {
+  min-height: 44px;
+}
+.configuration-page .panel-head {
+  align-items: center;
+}
+.configuration-page .panel-head > div {
+  min-width: 0;
+}
+.configuration-page .panel-head .button {
+  flex-shrink: 0;
+}
+.configuration-page .configuration-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--jade);
+  margin: 0;
+}
+.configuration-page .configuration-script-grid {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  min-height: 360px;
+  border-top: 1px solid var(--border);
+}
+.configuration-page .configuration-script-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-right: 1px solid var(--border);
+}
+.configuration-page .configuration-script-list > button {
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  padding: 12px;
+  min-height: 64px;
+}
+.configuration-page .configuration-script-list > button[aria-pressed="true"] {
+  background: var(--jade-soft);
+  border-color: var(--jade);
+}
+.configuration-page .configuration-script-list > button:hover {
+  background: var(--raised);
+}
+.configuration-page .configuration-script-list strong,
+.configuration-page .configuration-script-list small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.configuration-page .configuration-script-list small {
+  color: var(--muted);
+  margin-top: 3px;
+}
+.configuration-page .configuration-script-preview {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  min-width: 0;
+}
+.configuration-page .configuration-title-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.configuration-page .configuration-title-actions h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.configuration-page .configuration-title-actions > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.configuration-page .configuration-title-actions > div:first-child {
+  min-width: 0;
+}
+.configuration-page .configuration-rendered,
+.configuration-editor .configuration-rendered {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-height: 100px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.configuration-page .configuration-missing,
+.configuration-editor .configuration-missing {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  background: var(--raised);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  margin: 0;
+}
+.configuration-page .configuration-rows {
+  padding: 0 20px 16px;
+}
+.configuration-page .configuration-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+.configuration-page .configuration-row-copy {
+  min-width: 0;
+}
+.configuration-page .configuration-row-copy h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.configuration-page .configuration-row-copy p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.configuration-page .configuration-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.configuration-page .configuration-row-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.configuration-page .configuration-row-actions .icon-button {
+  min-height: 44px;
+  width: 44px;
+}
+.configuration-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+.configuration-editor .field {
+  min-width: 0;
+}
+.configuration-editor textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+}
+.configuration-editor .configuration-token-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.configuration-editor .configuration-token-buttons .button {
+  min-height: 34px;
+  font-size: 12px;
+  padding: 5px 8px;
+}
+.configuration-editor .configuration-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 36px;
+  color: var(--text);
+  font-size: 14px;
+}
+.configuration-editor .configuration-check input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 2px 0;
+  accent-color: var(--jade);
+}
+.configuration-editor .configuration-check small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.configuration-editor fieldset {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 0;
+}
+.configuration-editor legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+.configuration-editor .configuration-outcome-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+@media (max-width: 720px) {
+  .configuration-page .panel-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .configuration-page .configuration-script-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .configuration-page .configuration-script-list {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .configuration-page .configuration-title-actions {
+    flex-direction: column;
+  }
+  .configuration-page .configuration-row {
+    flex-direction: column;
+  }
+  .configuration-page .configuration-row-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .configuration-page .configuration-script-preview {
+    padding: 16px;
+  }
+  .configuration-editor .configuration-outcome-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.configuration-editor > .configuration-form-fields {
+  display: contents;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}

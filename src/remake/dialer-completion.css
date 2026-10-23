@@ -1,0 +1,51 @@
+.script-picker {
+  margin-bottom: 8px;
+}
+.script-picker select {
+  min-height: 32px;
+  padding-block: 3px;
+  font-size: 12px;
+}
+.script-warning {
+  font-size: 12px;
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+.callback-presets,
+.calendar-week-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.callback-presets .text-button {
+  min-height: 30px;
+}
+.booking-editor-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.booking-editor-fields > .field {
+  margin-block: 12px;
+}
+.booking-editor-fields:disabled {
+  opacity: 0.8;
+}
+.booking-availability {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 12px;
+  margin: 10px 0;
+}
+.calendar-connect-prompt {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-block: 12px;
+}
+.calendar-connect-prompt p {
+  margin-bottom: 8px;
+}

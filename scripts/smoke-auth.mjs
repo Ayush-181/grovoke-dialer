@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const scenario = process.argv[2] ?? "auth";
-if (!["auth", "leads", "remake", "remake-export"].includes(scenario))
+if (!["auth", "leads", "remake", "remake-export", "remake-workflows"].includes(scenario))
   throw new Error("Unknown smoke scenario");
 const session = `grovoke-smoke-${scenario}`;
 const cli = resolve(".tools/playwright/node_modules/@playwright/cli/playwright-cli.js");

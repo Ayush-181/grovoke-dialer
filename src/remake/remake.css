@@ -4899,3 +4899,33 @@ kbd {
     min-height: 49px;
   }
 }
+
+.workspace-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--jade-soft);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.workspace-status > span {
+  flex: 1;
+}
+.workspace-status.has-error {
+  background: var(--red-soft);
+  border-color: var(--red);
+}
+.workspace-status .text-button {
+  white-space: nowrap;
+}
+@media (max-height: 800px) {
+  .sidebar nav {
+    overflow-y: auto;
+    min-height: 0;
+    scrollbar-width: thin;
+  }
+}

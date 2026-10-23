@@ -16,11 +16,13 @@
     "smoke:leads": "node scripts/smoke-auth.mjs leads",
     "remake:dev": "node scripts/remake.mjs",
     "remake:build": "node scripts/remake.mjs --build",
-    "test:remake": "bun test tests/remake.test.ts",
+    "test:remake": "bun test tests/remake.test.ts tests/core-workflows.test.ts tests/data-tools.test.ts tests/template-values.test.ts tests/state-store.test.ts tests/live-workspace.test.ts tests/callboard-voice.test.ts",
     "smoke:remake": "node scripts/smoke-auth.mjs remake",
     "remake:export": "node scripts/remake.mjs --export",
     "remake:preview": "node scripts/remake-preview.mjs",
-    "smoke:remake-export": "node scripts/smoke-auth.mjs remake-export"
+    "smoke:remake-export": "node scripts/smoke-auth.mjs remake-export",
+    "smoke:remake-workflows": "node scripts/smoke-auth.mjs remake-workflows",
+    "build:check": "node scripts/check-callboard-build.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

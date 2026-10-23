@@ -39,6 +39,10 @@ import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "./metri
 
 import { BookingDialog } from "./Bookings";
 import { shortcutCommand } from "./shortcuts";
+import { isSuppressed, leadPhones, validateDraft, validateCustomValues } from "./domain";
+import { useRuntime } from "./runtime";
+import { renderScript } from "./template-values";
+import { ContactsPanel, CustomFieldsEditor } from "./Contacts";
 
 type Props = {
   state: State;
@@ -49,13 +53,22 @@ type Props = {
   now: Date;
 };
 export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
+  const runtime = useRuntime();
+  const live = runtime.mode === "live";
+  const [working, setWorking] = useState(false);
+  const [contactsModal, setContactsModal] = useState(false);
+  const [templateId, setTemplateId] = useState("");
   const [search, setSearch] = useState("");
   const [queueView, setQueueView] = useState("all");
   const [booking, setBooking] = useState(false);
   const [shortcuts, setShortcuts] = useState(false);
   const [guideVisible, setGuideVisible] = useState(true);
   const [guideEditing, setGuideEditing] = useState(false);
-  const [numberChoice, setNumberChoice] = useState<{ leadId: string; direct: boolean }>({
+  const [numberChoice, setNumberChoice] = useState<{
+    leadId: string;
+    direct: boolean;
+    contactId?: string | undefined;
+  }>({
     leadId: "",
     direct: false,
   });
@@ -92,75 +105,156 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
       ? state.logs.filter((log) => log.sessionId === session.id)
       : inPeriod(state.logs, dateKey(now)),
   );
+  const contactChoice =
+    numberChoice.leadId === lead.id
+      ? lead.contacts?.find((contact) => contact.id === numberChoice.contactId)
+      : undefined;
   const chosenPhone =
-    numberChoice.leadId === lead.id && numberChoice.direct ? lead.direct : lead.phone;
+    contactChoice?.phone ||
+    (numberChoice.leadId === lead.id && numberChoice.direct ? lead.direct : lead.phone);
+  const selectedTemplate = state.templates?.find((template) => template.id === templateId);
+  const script = selectedTemplate
+    ? renderScript(selectedTemplate.body, lead, state.preferences, state.customFields)
+    : null;
   const guide =
+    script?.text ??
     lead.talkingPoints ??
     `OPEN\nHi, is ${lead.contact || "the person who handles enquiries"} available? I’m Ash, calling about ${lead.business}.\n\nDISCOVER\nHow do you manage enquiries? Where does follow-up get missed?\n\nNEXT STEP\nAgree the next step: book together, or flag a callback with a reason.`;
   const paused = session?.status === "paused";
+  const connected = active && state.call?.phase !== "connecting";
+  const callbackCandidates = lead.callbackAt ? bookingInstants(lead.callbackAt, lead.zone) : [];
   const blocked =
-    lead.outcome === "do_not_call" ||
-    state.leads.find((item) => item.id === lead.id)?.outcome === "do_not_call";
-  function startDial(phone = chosenPhone) {
+    isSuppressed(lead) || state.leads.some((item) => item.id === lead.id && isSuppressed(item));
+  const needsConnection = live && !runtime.voice?.ready;
+  const suppressedNumber = (value: string) => {
+    const phone = dialNumber(value);
+    return Boolean(
+      phone &&
+      (state.suppressedNumbers?.includes(phone) ||
+        state.leads.some((item) => isSuppressed(item) && leadPhones(item).includes(phone))),
+    );
+  };
+  async function commit(action: Action) {
+    const result = await (dispatch as (action: Action) => unknown)(action);
+    return result !== false;
+  }
+  async function perform(action: Action, success?: string) {
+    if (action.type === "digit" && live && !runtime.capabilities.dtmf) {
+      setError("In-call keypad tones are unavailable with this conference connection.");
+      return false;
+    }
+    setWorking(true);
+    try {
+      if (!(await commit(action))) {
+        setError("That action could not be completed. Review the connection status and try again.");
+        return false;
+      }
+      setError("");
+      if (success) setStatus(success);
+      return true;
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "That action could not be completed. Try again.",
+      );
+      return false;
+    } finally {
+      setWorking(false);
+    }
+  }
+  async function connectCalling() {
+    if (!runtime.voice) {
+      setError("Calling is not configured. Open Settings to connect your calling account.");
+      return;
+    }
+    setWorking(true);
+    try {
+      await runtime.voice.connect();
+      setError("");
+      setStatus("Calling connected. Choose your number and press Call.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not connect calling. Try again.");
+    } finally {
+      setWorking(false);
+    }
+  }
+  async function startDial(phone = chosenPhone) {
     if (!dialNumber(phone)) {
       setError("Enter a valid number with +country code, or choose the main number.");
       return;
     }
-    if (active || paused || blocked) return;
-    setError("");
+    if (suppressedNumber(phone) || blocked) {
+      setError("This number is blocked by do-not-call protection.");
+      return;
+    }
+    if (active || paused || working) return;
+    if (needsConnection) {
+      await connectCalling();
+      return;
+    }
     setStatus("");
-    dispatch({ type: "dial", id: crypto.randomUUID(), phone, at: new Date().toISOString() });
+    await perform({
+      type: "dial",
+      id: crypto.randomUUID(),
+      phone,
+      at: new Date().toISOString(),
+      ...(live ? { phase: "connecting" as const } : {}),
+    });
   }
-  function dialManualNumber(phoneValue: string, name = "") {
+  async function dialManualNumber(phoneValue: string, name = "") {
     const phone = dialNumber(phoneValue);
     if (!phone) {
       setManualError("Enter a valid number, with +country code.");
       return;
     }
-    if (active || paused) return;
-    if (
-      state.leads.some(
-        (item) =>
-          item.outcome === "do_not_call" &&
-          (dialNumber(item.phone) === phone || dialNumber(item.direct) === phone),
-      )
-    ) {
+    if (active || paused || working) return;
+    if (suppressedNumber(phone)) {
       setManualError("That is a do-not-call number.");
+      return;
+    }
+    if (needsConnection) {
+      await connectCalling();
       return;
     }
     setManual(false);
     guarded(() => {
-      dispatch({
-        type: "manualDial",
-        id: crypto.randomUUID(),
-        leadId: crypto.randomUUID(),
-        phone,
-        name,
-        at: new Date().toISOString(),
-      });
-      setInlineManual(false);
-      setTab("notes");
-      setManualError("");
-      setError("");
-      setStatus("");
+      void (async () => {
+        if (
+          !(await perform({
+            type: "manualDial",
+            id: crypto.randomUUID(),
+            leadId: crypto.randomUUID(),
+            phone,
+            name,
+            at: new Date().toISOString(),
+            ...(live ? { phase: "connecting" as const } : {}),
+          }))
+        )
+          return;
+        setInlineManual(false);
+        setTab("notes");
+        setManualError("");
+        setStatus("");
+      })();
     });
   }
   function startSession() {
     guarded(() => {
-      const id = crypto.randomUUID();
-      dispatch({
-        type: "session",
-        session: {
-          id,
-          name: `Calling session · ${timeAt(now, "Asia/Kolkata")}`,
-          leadIds: [lead.id, ...state.queueIds.filter((item) => item !== lead.id)],
-          paused: false,
-          status: "ready",
-          elapsedMs: 0,
-          startedAt: null,
-        },
-      });
-      dispatch({ type: "startSession", id, now: Date.now() });
+      void (async () => {
+        const id = crypto.randomUUID();
+        const saved = await commit({
+          type: "session",
+          session: {
+            id,
+            name: `Calling session · ${timeAt(now, "Asia/Kolkata")}`,
+            leadIds: [lead.id, ...state.queueIds.filter((item) => item !== lead.id)],
+            paused: false,
+            status: "ready",
+            elapsedMs: 0,
+            startedAt: null,
+          },
+        });
+        if (saved) await commit({ type: "startSession", id, now: Date.now() });
+      })();
     });
   }
   useEffect(() => {
@@ -183,11 +277,13 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
     document.addEventListener("keydown", handle);
     return () => document.removeEventListener("keydown", handle);
   }, []);
-  function endCall() {
-    dispatch({ type: "end", at: now.toISOString() });
-    setStatus("Call ended. Choose your outcome, then save.");
+  async function endCall() {
+    await perform(
+      { type: "end", at: new Date().toISOString() },
+      "Call ended. Choose your outcome, then save.",
+    );
   }
-  function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const next = (event.nativeEvent as SubmitEvent).submitter?.getAttribute("data-next") === "true";
     if (active) return;
@@ -196,22 +292,15 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
       document.getElementById("outcome-heading")?.focus();
       return;
     }
-    if (lead.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email)) {
-      setContactOpen(true);
-      setError("Enter a valid contact email or clear the field.");
-      return;
-    }
-    if (
-      lead.callbackAt &&
-      lead.callback &&
-      bookingInstants(lead.callbackAt, lead.zone).length !== 1
-    ) {
-      setError("Choose an unambiguous callback time in the lead’s timezone.");
-      document.getElementById("callback-time")?.focus();
+    const validation =
+      validateDraft(lead) || validateCustomValues(state.customFields, lead.customValues);
+    if (validation) {
+      if (validation.includes("email") || validation.includes("contact")) setContactOpen(true);
+      setError(validation);
       return;
     }
     setError("");
-    dispatch({ type: "save", next });
+    if (!(await perform({ type: "save", next }))) return;
     setStatus(
       next ? "Saved. Next lead ready — no automatic dialing." : "Saved. You’re still on this lead.",
     );
@@ -270,7 +359,12 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
         </div>
         <div>
           {!session && (
-            <button type="button" className="button" disabled={active} onClick={startSession}>
+            <button
+              type="button"
+              className="button"
+              disabled={active || working}
+              onClick={startSession}
+            >
               <Play aria-hidden="true" size={15} /> Start session
             </button>
           )}
@@ -284,7 +378,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 type="button"
                 className="icon-button"
                 aria-label={session.status === "running" ? "Pause session" : "Resume session"}
-                disabled={active}
+                disabled={active || working}
                 onClick={() =>
                   dispatch(
                     session.status === "running"
@@ -440,16 +534,35 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <select
                   name="number-to-dial"
                   aria-label="Number to dial"
-                  value={numberChoice.leadId === lead.id && numberChoice.direct ? "direct" : "main"}
-                  disabled={active}
+                  value={
+                    contactChoice
+                      ? `contact:${contactChoice.id}`
+                      : numberChoice.leadId === lead.id && numberChoice.direct
+                        ? "direct"
+                        : "main"
+                  }
+                  disabled={active || working}
                   onChange={(event) =>
-                    setNumberChoice({ leadId: lead.id, direct: event.target.value === "direct" })
+                    setNumberChoice({
+                      leadId: lead.id,
+                      direct: event.target.value === "direct",
+                      contactId: event.target.value.startsWith("contact:")
+                        ? event.target.value.slice(8)
+                        : undefined,
+                    })
                   }
                 >
                   <option value="main">Main number</option>
                   <option value="direct" disabled={!lead.direct}>
                     Direct number
                   </option>
+                  {(lead.contacts ?? [])
+                    .filter((contact) => contact.phone)
+                    .map((contact) => (
+                      <option key={contact.id} value={`contact:${contact.id}`}>
+                        {contact.name} · {contact.role || "Contact"}
+                      </option>
+                    ))}
                 </select>
               </label>
               <button
@@ -535,6 +648,14 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                       placeholder="name@example.invalid…"
                       onChange={(e) => dispatch({ type: "edit", patch: { email: e.target.value } })}
                     />
+                    <button
+                      type="button"
+                      className="text-button"
+                      style={{ gridColumn: "1 / -1" }}
+                      onClick={() => setContactsModal(true)}
+                    >
+                      Manage contacts & fields
+                    </button>
                   </div>
                 )}
               </div>
@@ -592,6 +713,30 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 >
                   {guideVisible ? (
                     <>
+                      <label className="field script-picker">
+                        <span className="sr-only">Call script</span>
+                        <select
+                          aria-label="Call script"
+                          value={templateId}
+                          onChange={(event) => {
+                            setTemplateId(event.target.value);
+                            setGuideEditing(false);
+                          }}
+                        >
+                          <option value="">Lead talking points</option>
+                          {(state.templates ?? []).map((template) => (
+                            <option key={template.id} value={template.id}>
+                              {template.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {script && script.missing.length > 0 && (
+                        <p className="script-warning" role="status">
+                          Missing fields: {script.missing.join(", ")}. Edit the lead or your profile
+                          before using this script.
+                        </p>
+                      )}
                       <div className="guide-head">
                         <span className="section-label">YOUR CALL GUIDE</span>
                         <button
@@ -695,14 +840,15 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                   return;
                 event.preventDefault();
                 event.stopPropagation();
-                if (!state.call?.held) dispatch({ type: "digit", value: event.key });
+                if (!state.call?.held && connected)
+                  void perform({ type: "digit", value: event.key });
               }}
             >
               <div className="phone-source" aria-label="Dialing source" hidden={active}>
                 <button
                   type="button"
                   aria-pressed={!inlineManual}
-                  disabled={active}
+                  disabled={active || working}
                   onClick={() => {
                     setInlineManual(false);
                     setManualError("");
@@ -713,7 +859,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <button
                   type="button"
                   aria-pressed={inlineManual}
-                  disabled={active}
+                  disabled={active || working}
                   onClick={() => {
                     setInlineManual(true);
                     setManualPhone("");
@@ -795,10 +941,10 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <button
                   type="button"
                   id="dialer-mute"
-                  disabled={!active}
+                  disabled={!connected || working}
                   aria-label={state.call?.muted ? "Unmute" : "Mute"}
                   aria-pressed={Boolean(state.call?.muted)}
-                  onClick={() => dispatch({ type: "mute" })}
+                  onClick={() => void perform({ type: "mute" })}
                 >
                   {state.call?.muted ? (
                     <MicOff aria-hidden="true" size={21} />
@@ -811,9 +957,14 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                   type="button"
                   id="dialer-hold"
                   aria-label={state.call?.held ? "Resume call" : "Hold"}
-                  disabled={!active}
+                  disabled={!connected || working || !runtime.capabilities.hold}
+                  title={
+                    !runtime.capabilities.hold
+                      ? "Hold is unavailable for this calling connection"
+                      : undefined
+                  }
                   aria-pressed={Boolean(state.call?.held)}
-                  onClick={() => dispatch({ type: "hold" })}
+                  onClick={() => void perform({ type: "hold" })}
                 >
                   {state.call?.held ? (
                     <Play aria-hidden="true" size={21} />
@@ -825,7 +976,9 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <button
                   type="button"
                   aria-label="Add participant"
-                  disabled={!active || state.call?.held}
+                  disabled={
+                    !connected || working || state.call?.held || !runtime.capabilities.conference
+                  }
                   onClick={() => {
                     setParticipantError("");
                     setConference(true);
@@ -846,9 +999,15 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                       type="button"
                       key={digit}
                       aria-label={active ? `Send digit ${digit}` : `Enter digit ${digit}`}
-                      disabled={active && state.call?.held}
+                      disabled={
+                        active &&
+                        (!connected ||
+                          state.call?.held ||
+                          working ||
+                          (live && !runtime.capabilities.dtmf))
+                      }
                       onClick={() => {
-                        if (active) dispatch({ type: "digit", value: digit });
+                        if (active) void perform({ type: "digit", value: digit });
                         else {
                           setInlineManual(true);
                           setManualPhone((value) => (inlineManual ? value : "") + digit);
@@ -881,7 +1040,9 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               </div>
               {active && (
                 <output className="phone-dtmf mono" aria-label="Sent keypad digits">
-                  {state.call?.digits || "Keypad ready"}
+                  {live && !runtime.capabilities.dtmf
+                    ? "In-call tones unavailable on this connection"
+                    : state.call?.digits || "Keypad ready"}
                 </output>
               )}
               {active ? (
@@ -894,22 +1055,38 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                   id="dialer-dial"
                   type="button"
                   className="button primary phone-call-button"
-                  aria-label={!inlineManual && blocked ? "Do not call" : "Dial · simulated"}
-                  disabled={paused || (!inlineManual && blocked)}
+                  aria-label={
+                    !inlineManual && blocked
+                      ? "Do not call"
+                      : needsConnection
+                        ? "Connect calling"
+                        : live
+                          ? "Dial"
+                          : "Dial · simulated"
+                  }
+                  disabled={working || paused || (!inlineManual && blocked)}
                   onClick={() => {
                     if (inlineManual) dialManualNumber(manualPhone);
                     else startDial();
                   }}
                 >
                   <Phone aria-hidden="true" size={21} />
-                  {!inlineManual && blocked ? "Do not call" : "Call · simulated"}
+                  {working
+                    ? "Connecting…"
+                    : !inlineManual && blocked
+                      ? "Do not call"
+                      : needsConnection
+                        ? "Connect calling"
+                        : live
+                          ? "Call"
+                          : "Call · simulated"}
                 </button>
               )}
               <div className={`phone-card-footer ${active ? "is-active" : ""}`}>
                 <button
                   type="button"
                   className="text-button"
-                  disabled={active || blocked || paused || !history.length}
+                  disabled={working || active || blocked || paused || !history.length}
                   onClick={() => {
                     setInlineManual(false);
                     startDial(history[0]!.phone);
@@ -921,7 +1098,11 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <span className="recording-status">
                   {active
                     ? state.call?.recording
-                      ? "Recording this call (demo)"
+                      ? live
+                        ? runtime.capabilities.recording
+                          ? "Recording requested"
+                          : "Recording unavailable"
+                        : "Recording this call (demo)"
                       : "Recording off"
                     : `Auto recording ${state.recordingEnabled ? "on" : "off"}`}
                 </span>
@@ -937,8 +1118,18 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                       dispatch({ type: "preferences", patch: { microphone: event.target.value } })
                     }
                   >
-                    <option value="default">Default mic · demo</option>
-                    <option value="headset">USB headset · demo</option>
+                    <option value="default">
+                      {live ? "System default microphone" : "Default mic · demo"}
+                    </option>
+                    {!live && <option value="headset">USB headset · demo</option>}
+                    {live &&
+                      runtime.voice?.inputDevices
+                        ?.filter((device) => device.id !== "default")
+                        .map((device) => (
+                          <option key={device.id} value={device.id}>
+                            {device.label || "Microphone"}
+                          </option>
+                        ))}
                   </select>
                 </label>
                 <button
@@ -958,13 +1149,24 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                       <span>
                         <strong>{person.name}</strong>
                         <span className="mono">{person.phone}</span>
+                        {live && (
+                          <small>
+                            {runtime.voice?.snapshot.legs?.find((leg) => leg.phone === person.phone)
+                              ?.status === "in-progress"
+                              ? "Connected"
+                              : (runtime.voice?.snapshot.legs?.find(
+                                  (leg) => leg.phone === person.phone,
+                                )?.status ?? "Connecting…")}
+                          </small>
+                        )}
                       </span>
                       <button
                         type="button"
                         className="icon-button"
                         aria-label={`Remove ${person.name}`}
+                        disabled={working}
                         onClick={() =>
-                          dispatch({ type: "participant", phone: person.phone, remove: true })
+                          void perform({ type: "participant", phone: person.phone, remove: true })
                         }
                       >
                         <X aria-hidden="true" size={15} />
@@ -1050,7 +1252,16 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                   key={kind}
                   aria-label={label}
                   className={`button milestone ${attempt?.[kind] || (kind === "booked" && attempt?.outcome === "appointment_set") ? "selected" : ""}`}
-                  disabled={!attempt}
+                  disabled={
+                    !attempt ||
+                    working ||
+                    (kind === "booked" && Boolean(attempt.bookingIds?.length))
+                  }
+                  title={
+                    kind === "booked" && attempt?.bookingIds?.length
+                      ? "This milestone is linked to a saved appointment"
+                      : undefined
+                  }
                   aria-pressed={Boolean(
                     attempt?.[kind] ||
                     (kind === "booked" && attempt?.outcome === "appointment_set"),
@@ -1110,7 +1321,10 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                   type="datetime-local"
                   value={lead.callbackAt}
                   onChange={(e) =>
-                    dispatch({ type: "edit", patch: { callbackAt: e.target.value } })
+                    dispatch({
+                      type: "edit",
+                      patch: { callbackAt: e.target.value, callbackOccurrence: undefined },
+                    })
                   }
                 />
                 <Field
@@ -1121,15 +1335,71 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                     dispatch({ type: "edit", patch: { callbackReason: e.target.value } })
                   }
                 />
-                <p className="hint">Callback time uses the lead’s timezone.</p>
+                {callbackCandidates.length > 1 && (
+                  <label className="field">
+                    <span>Repeated local time · choose occurrence</span>
+                    <select
+                      aria-label="Callback time occurrence"
+                      value={lead.callbackOccurrence ?? ""}
+                      onChange={(event) =>
+                        dispatch({
+                          type: "edit",
+                          patch: {
+                            callbackOccurrence:
+                              event.target.value === "" ? undefined : Number(event.target.value),
+                          },
+                        })
+                      }
+                    >
+                      <option value="">Choose occurrence…</option>
+                      {callbackCandidates.map((instant, index) => (
+                        <option key={instant.toISOString()} value={index}>
+                          {dateAt(instant.toISOString(), lead.zone)} ·{" "}
+                          {timeAt(instant.toISOString(), lead.zone)} · {instant.toISOString()}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <div className="callback-presets">
+                  {[1, 3, 7].map((days) => (
+                    <button
+                      type="button"
+                      key={days}
+                      className="text-button"
+                      onClick={() => {
+                        const date = new Date(Date.now() + days * 86400000);
+                        const parts = new Intl.DateTimeFormat("en-CA", {
+                          timeZone: lead.zone,
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                        }).formatToParts(date);
+                        const value = ["year", "month", "day"]
+                          .map((part) => parts.find((item) => item.type === part)?.value)
+                          .join("-");
+                        dispatch({
+                          type: "edit",
+                          patch: { callbackAt: `${value}T10:00`, callbackOccurrence: undefined },
+                        });
+                      }}
+                    >
+                      {days === 1 ? "Tomorrow" : `+${days} days`}
+                    </button>
+                  ))}
+                </div>
+                <p className="hint">
+                  Callback time uses the lead’s timezone. Saving schedules the callback; it never
+                  starts a call.
+                </p>
               </div>
             )}
           </div>
           <div className="lead-save-controls">
             <div className="inline-status" aria-live="polite">
-              {error ? (
+              {error || runtime.voice?.error ? (
                 <span className="error" role="alert">
-                  {error}
+                  {error || runtime.voice?.error}
                 </span>
               ) : state.queueComplete ? (
                 "Queue complete. Your final lead is saved."
@@ -1150,13 +1420,13 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 id="dialer-previous"
                 aria-label="Previous"
                 title="Previous lead · Alt + Left arrow"
-                disabled={position <= 0 || active}
+                disabled={position <= 0 || active || working}
                 onClick={() => openLead(state.queueIds[position - 1]!)}
               >
                 <ArrowLeft aria-hidden="true" size={17} />
                 Previous
               </button>
-              <button type="submit" className="button" disabled={active}>
+              <button type="submit" className="button" disabled={active || working}>
                 <Save aria-hidden="true" size={17} />
                 Save
               </button>
@@ -1165,7 +1435,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 type="submit"
                 data-next="true"
                 className="button primary"
-                disabled={active}
+                disabled={active || working}
               >
                 Save & next
                 <ArrowRight aria-hidden="true" size={17} />
@@ -1192,9 +1462,33 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
           open
           lockedLead
           onClose={() => setBooking(false)}
-          onSaved={() => setStatus("Meeting saved for this lead. No invitation was sent.")}
+          onSaved={() =>
+            setStatus(
+              live
+                ? "Meeting saved and Google Calendar invitation sent."
+                : "Meeting saved for this lead. No invitation was sent.",
+            )
+          }
         />
       )}
+      <Modal
+        open={contactsModal}
+        onClose={() => setContactsModal(false)}
+        title="Decision makers & lead fields"
+        description="Manage contacts and research fields. These edits save with the lead when you choose Save or Save & next."
+      >
+        <ContactsPanel lead={lead} onChange={(patch) => dispatch({ type: "edit", patch })} />
+        <CustomFieldsEditor
+          fields={state.customFields}
+          values={lead.customValues ?? {}}
+          onChange={(customValues) => dispatch({ type: "edit", patch: { customValues } })}
+        />
+        <div className="modal-actions">
+          <button type="button" className="button primary" onClick={() => setContactsModal(false)}>
+            Done editing
+          </button>
+        </div>
+      </Modal>
       <Modal
         open={shortcuts}
         onClose={() => setShortcuts(false)}
@@ -1270,7 +1564,11 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               disabled={active || session?.status === "paused"}
             >
               <Phone aria-hidden="true" size={16} />
-              Dial number · simulated
+              {needsConnection
+                ? "Connect calling"
+                : live
+                  ? "Dial number"
+                  : "Dial number · simulated"}
             </button>
           </div>
         </form>
@@ -1282,7 +1580,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
         description="Dial another decision maker or contact into this business call. The original caller stays connected."
       >
         <form
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
             event.stopPropagation();
             const phone = dialNumber(participantPhone);
@@ -1304,27 +1602,36 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             const match = state.leads.find(
               (item) => dialNumber(item.phone) === phone || dialNumber(item.direct) === phone,
             );
-            if (
-              state.leads.some(
-                (item) =>
-                  item.outcome === "do_not_call" &&
-                  (dialNumber(item.phone) === phone || dialNumber(item.direct) === phone),
-              )
-            ) {
+            if (suppressedNumber(phone)) {
               setParticipantError(
                 "This number belongs to a do-not-call lead. Choose another number.",
               );
               return;
             }
-            dispatch({
-              type: "participant",
-              phone,
-              name: participantName.trim() || match?.contact || phone,
-            });
+            if (!connected || state.call?.held || !runtime.capabilities.conference) {
+              setParticipantError("Connect the call and resume it before adding a participant.");
+              return;
+            }
+            if (
+              !(await perform({
+                type: "participant",
+                phone,
+                name: participantName.trim() || match?.contact || phone,
+              }))
+            ) {
+              setParticipantError(
+                "The participant could not be added. Review calling status and try again.",
+              );
+              return;
+            }
             setConference(false);
             setParticipantName("");
             setParticipantPhone("");
-            setStatus("Participant connected to the simulated group call.");
+            setStatus(
+              live
+                ? "Participant dial requested. Their connection is confirmed by your calling provider."
+                : "Participant connected to the simulated group call.",
+            );
           }}
         >
           <Field
@@ -1346,8 +1653,9 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             onChange={(e) => setParticipantName(e.target.value)}
           />
           <p className="hint">
-            Add multiple contacts by repeating Add participant. Dialing and joining are simulated
-            here.
+            {live
+              ? "Add multiple decision makers by repeating Add participant. Each additional number is dialed into this business call."
+              : "Add multiple contacts by repeating Add participant. Dialing and joining are simulated here."}
           </p>
           {participantError && (
             <p className="error" role="alert">
@@ -1358,9 +1666,9 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             <button type="button" className="button" onClick={() => setConference(false)}>
               Cancel
             </button>
-            <button type="submit" className="button primary" disabled={!active}>
+            <button type="submit" className="button primary" disabled={!connected || working}>
               <Plus aria-hidden="true" size={16} />
-              Dial & add to call · simulated
+              {working ? "Adding…" : live ? "Dial & add to call" : "Dial & add to call · simulated"}
             </button>
           </div>
         </form>

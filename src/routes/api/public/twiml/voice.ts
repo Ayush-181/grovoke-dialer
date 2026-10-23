@@ -15,6 +15,15 @@ function esc(value: string) {
 }
 
 async function handle(request: Request) {
+  // The redesigned phone uses the existing TwiML app, with a signed per-attempt route.
+  // Requests from the original dialer retain their existing handling.
+  if (request.method === "POST") {
+    const form = new URLSearchParams(await request.clone().text());
+    if (form.has("WorkspaceId") && form.has("AttemptId")) {
+      const { callboardVoice } = await import("../../../../lib/callboard-handlers.server");
+      return callboardVoice(request);
+    }
+  }
   const url = new URL(request.url);
   const workspaceId = url.searchParams.get("ws") ?? "";
 

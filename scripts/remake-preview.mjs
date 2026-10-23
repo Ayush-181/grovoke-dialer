@@ -3,11 +3,20 @@ import { createServer } from "node:http";
 import { resolve } from "node:path";
 
 // Serve only the exported HTML. Never expose the checkout or any credentials.
-const html = await readFile(resolve(".smoke-work/callboard-preview.html"));
-const server = createServer((request, response) => {
+const previewPath = resolve(".smoke-work/callboard-preview.html");
+await readFile(previewPath);
+const server = createServer(async (request, response) => {
   if (request.method !== "GET" || request.url?.split("?")[0] !== "/remake/index.html") {
     response.writeHead(404);
     response.end();
+    return;
+  }
+  let html;
+  try {
+    html = await readFile(previewPath);
+  } catch {
+    response.writeHead(503);
+    response.end("Export the preview again, then refresh.");
     return;
   }
   response.writeHead(200, {

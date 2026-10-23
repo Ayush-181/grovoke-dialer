@@ -17,13 +17,14 @@ export function metrics(logs: Log[]) {
   const connected = logs.filter(
     (log) =>
       CONNECTED_OUTCOMES.includes(log.outcome as (typeof CONNECTED_OUTCOMES)[number]) ||
+      log.outcome === "not_interested" ||
       log.triage ||
       log.offered ||
       log.booked,
   ).length;
   const count = (outcome: string) => logs.filter((log) => log.outcome === outcome).length;
   const talk = logs.reduce(
-    (total, log) => total + Math.max(0, log.seconds - (log.heldSeconds ?? 0)),
+    (total, log) => total + Math.max(0, log.talkSeconds ?? log.seconds - (log.heldSeconds ?? 0)),
     0,
   );
   return {
