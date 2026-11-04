@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Call Board Dialer Light</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.dcm,.dcm *{box-sizing:border-box}
+.dcm{--rootbg:radial-gradient(760px 520px at 4% 0%,rgba(10,132,255,.34),transparent 62%),radial-gradient(620px 520px at 0% 100%,rgba(191,90,242,.26),transparent 62%),#18181B;--bg:#1E1E22;--pane:#28282D;--pane2:#303036;--segon:#3D3D45;--side:rgba(38,38,48,.55);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--text:#F5F5F7;--sub:#ABABB4;--accent:#0A84FF;--accent-t:#6CB0FF;--accent-fill:#0A6CE0;--accent-soft:rgba(10,132,255,.2);--accent-line:rgba(10,132,255,.6);--ring:rgba(10,132,255,.28);--green:#30D158;--green-t:#5BE384;--green-soft:rgba(48,209,88,.16);--red:#FF453A;--red-fill:#D92D20;--red-t:#FF8179;--amber:#FF9F0A;--amber-t:#FFB840;--amber-soft:rgba(255,159,10,.16);--key:rgba(255,255,255,.08);--shadow:0 1px 0 rgba(255,255,255,.05) inset,0 14px 32px -16px rgba(0,0,0,.7);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;color:var(--text);font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.dcm[data-theme="light"]{--rootbg:radial-gradient(760px 520px at 4% 0%,rgba(0,122,255,.2),transparent 62%),radial-gradient(620px 520px at 0% 100%,rgba(175,82,222,.16),transparent 62%),#ECECF1;--bg:#F4F4F8;--pane:#FFFFFF;--pane2:#F7F7FA;--segon:#FFFFFF;--side:rgba(246,246,250,.6);--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.14);--text:#1D1D1F;--sub:#5F5F68;--accent:#007AFF;--accent-t:#0062CC;--accent-fill:#0066D6;--accent-soft:rgba(0,122,255,.1);--accent-line:rgba(0,122,255,.5);--ring:rgba(0,122,255,.2);--green:#28CD41;--green-t:#0E7A2E;--green-soft:rgba(40,205,65,.15);--red:#FF3B30;--red-fill:#D1271B;--red-t:#C9150B;--amber:#FF9500;--amber-t:#8F5000;--amber-soft:rgba(255,149,0,.16);--key:rgba(0,0,0,.05);--shadow:0 1px 2px rgba(0,0,0,.05),0 14px 28px -16px rgba(0,0,0,.2)}
+.dcm button{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:"SF Mono","JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tl{display:block;width:12px;height:12px;border-radius:50%}
+.eye{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
+.sec{font-size:11px;font-weight:600;color:var(--sub);padding:14px 10px 4px}
+.nav-i{display:flex;align-items:center;gap:10px;width:100%;height:30px;padding:0 10px;border:0;border-radius:8px;background:transparent;font-size:13px;font-weight:500;text-align:left}
+.nav-i .i{stroke:var(--accent-t)}
+.nav-i .cnt{margin-left:auto;font-size:12px;color:var(--sub)}
+.nav-i.on{background:var(--accent-fill);color:#fff}
+.nav-i.on .i{stroke:#fff}
+.nav-i.on .cnt{color:rgba(255,255,255,.88)}
+.panel{background:var(--pane);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.pill{display:flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:14px;background:var(--key);font-size:12px;color:var(--sub);white-space:nowrap}
+.pill b{color:var(--text);font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:9px;border:1px solid var(--line2);background:var(--key);font-size:13px;font-weight:500;white-space:nowrap}
+.btn.p{background:linear-gradient(180deg,var(--accent),var(--accent-fill));border-color:rgba(255,255,255,.12);color:#fff;font-weight:600;box-shadow:0 8px 18px -8px var(--accent)}
+.btn.sm{height:30px;padding:0 12px;font-size:12px}
+.seg{display:flex;gap:2px;padding:2px;border-radius:9px;background:var(--key)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:500;color:var(--sub);flex:1}
+.seg button.on{background:var(--segon);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.in{width:100%;height:32px;padding:0 10px 0 32px;border-radius:8px;border:1px solid var(--line2);background:var(--key);color:var(--text);font:13px inherit}
+.in::placeholder{color:var(--sub)}
+.mb{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:13px;background:var(--key);font-size:12px;font-weight:500;color:var(--sub);white-space:nowrap}
+.mb.on{background:var(--green-soft);color:var(--green-t)}
+.mb.on::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green)}
+.mb.br{background:var(--accent-soft);color:var(--accent-t)}
+.mb.am{background:var(--amber-soft);color:var(--amber-t)}
+.st{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.gd{background:var(--green)}.ad{background:var(--amber)}.nd{background:var(--sub)}.bd{background:var(--accent)}.rd{background:var(--red)}
+.av{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;font-weight:600;font-size:13px;color:#fff;flex:none}
+.c0{background:linear-gradient(135deg,#5E5CE6,#4140BF)}
+.c1{background:linear-gradient(135deg,#0B8794,#07626B)}
+.c2{background:linear-gradient(135deg,#C25A00,#8F4000)}
+.c3{background:linear-gradient(135deg,#D6336C,#A3194F)}
+.c4{background:linear-gradient(135deg,#167A3A,#0E5A29)}
+.c5{background:linear-gradient(135deg,#6B6F80,#4B4E5C)}
+.qi{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:8px 10px;border:0;border-radius:10px;background:transparent;text-align:left}
+.qi.sel{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent-line)}
+.qn{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qs{display:block;font-size:12px;color:var(--sub)}
+.qm{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--sub)}
+.ring{display:block;position:absolute;border-radius:50%;border:1.5px solid var(--green)}
+.r1{inset:-8px;opacity:.55}.r2{inset:-18px;opacity:.25}
+.wv{display:flex;align-items:center;gap:3px;height:48px;flex:1;min-width:0}
+.wv i{display:block;width:3px;border-radius:2px;background:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.wv i{transform-origin:center;animation:wvp 1.3s ease-in-out infinite}}
+@keyframes wvp{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+.cb{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;border:0;background:var(--key)}
+.cb .i{width:20px;height:20px}
+.cb.rec{background:rgba(217,45,32,.2);color:var(--red-t)}
+.cl{display:block;margin-top:6px;font-size:11px;color:var(--sub);text-align:center}
+.hang{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;flex:1;border:0;border-radius:24px;background:var(--red-fill);color:#fff;font-size:15px;font-weight:600;box-shadow:0 10px 22px -8px var(--red)}
+.mic{display:flex;align-items:center;gap:8px;height:48px;flex:1;min-width:0;padding:0 12px;border-radius:24px;border:1px solid var(--line2);background:var(--key);font-size:12px;font-weight:500;text-align:left}
+.mic span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:64px;border:0;border-radius:32px;background:var(--key);font-size:24px;font-weight:500;line-height:1}
+.k small{margin-top:3px;font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--sub)}
+.stp{padding:16px 18px;border-radius:14px;background:var(--pane);border:1px solid var(--line);box-shadow:var(--shadow)}
+.sl{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-t)}
+.sn{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);font-size:11px;letter-spacing:0}
+.og{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.gh{grid-column:1/-1;margin-top:6px}
+.oc{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--line2);background:var(--key);font-size:13px;font-weight:500;text-align:left;white-space:nowrap}
+.oc.sel{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-t);box-shadow:0 0 0 3px var(--ring)}
+.ta{width:100%;min-height:78px;padding:10px 12px;border-radius:10px;border:1px solid var(--line2);background:var(--key);color:var(--text);font:13px/1.45 inherit;resize:none}
+.kbd{font:500 11px "SF Mono","JetBrains Mono",monospace;padding:2px 6px;border-radius:5px;background:var(--key);border:1px solid var(--line2);color:var(--sub)}
+</style>
+</helmet>
+<div class="dcm" data-theme="{{theme}}" style="width: 1600px; height: 1000px; display: flex; border-radius: 12px; overflow: hidden; background: var(--rootbg); border: 1px solid var(--line2)">
+
+<aside style="width: 224px; flex: none; display: flex; flex-direction: column; padding: 0 12px 14px; background: var(--side); backdrop-filter: blur(40px) saturate(170%); -webkit-backdrop-filter: blur(40px) saturate(170%); border-right: 1px solid var(--line)">
+<div style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 8px">
+<i class="tl" style="background: #FF5F57"></i>
+<i class="tl" style="background: #FEBC2E"></i>
+<i class="tl" style="background: #28C840"></i>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 8px 12px">
+<div style="width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(145deg, #4C9AFF, #0A5BD6); display: grid; place-items: center; box-shadow: 0 4px 12px -4px rgba(10,132,255,.7), inset 0 1px 0 rgba(255,255,255,.35)">
+<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+</div>
+<div>
+<div style="font-weight: 700; font-size: 14px; letter-spacing: .01em">Call Board</div>
+<div style="font-size: 11px; color: var(--sub)">A better rhythm for sales</div>
+</div>
+</div>
+<nav aria-label="Main navigation" style="display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="14">
+<sc-if value="{{n.isH}}" hint-placeholder-val="{{ false }}"><div class="sec">{{n.label}}</div></sc-if>
+<sc-if value="{{n.isI}}" hint-placeholder-val="{{ true }}">
+<button class="nav-i {{n.cls}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.d}}"/></svg><span>{{n.label}}</span><sc-if value="{{n.hasCount}}" hint-placeholder-val="{{ false }}"><span class="cnt mono">{{n.count}}</span></sc-if></button>
+</sc-if>
+</sc-for>
+</nav>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px">
+<div style="padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--key); font-size: 12px; color: var(--sub)">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--text); margin-bottom: 2px"><i class="st gd"></i>LOCAL WORKSPACE</div>
+Saved in this browser. Calls and invitations are simulated.
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 6px">
+<div class="av c0" style="width: 32px; height: 32px">A</div>
+<div><div style="font-weight: 600">Ash</div><div style="font-size: 12px; color: var(--sub)">Grovoke</div></div>
+</div>
+</div>
+</aside>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg)">
+<header style="height: 52px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line)">
+<svg class="i" viewBox="0 0 24 24" style="color: var(--sub)" aria-hidden="true"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM9 3v18"/></svg>
+<div style="font-size: 15px; font-weight: 650">Dialer</div>
+<span class="mb on">Session active</span>
+<div style="flex: 1"></div>
+<span class="pill">Dials <b class="mono">24</b></span>
+<span class="pill">Connected <b class="mono">6</b></span>
+<span class="pill">Booked <b class="mono">2</b></span>
+<span class="pill mono"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2"/></svg><b>00:42:18</b></span>
+<button class="btn sm"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg>Stop session</button>
+<button class="btn sm" aria-label="Toggle appearance" style="width: 30px; padding: 0"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+</header>
+
+<div style="flex: 1; min-height: 0; display: flex">
+
+<section style="width: 296px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--line)">
+<div style="padding: 18px 16px 12px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 15px; font-weight: 650">Calling queue</h2>
+<span class="mb mono">48</span>
+</div>
+<button class="btn" style="justify-content: space-between; width: 100%"><span>HVAC · Austin, TX</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+<div style="position: relative">
+<svg class="i" viewBox="0 0 24 24" style="position: absolute; left: 10px; top: 8px; color: var(--sub)" aria-hidden="true"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35"/></svg>
+<input class="in" type="search" aria-label="Search calling queue" placeholder="Search calling queue">
+</div>
+<div class="seg"><button class="on">All</button><button>New</button><button>Callbacks</button></div>
+</div>
+<div style="padding: 4px 10px; overflow: hidden; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{queue}}" as="q" hint-placeholder-count="10">
+<button class="qi {{q.cls}}">
+<span class="av {{q.av}}">{{q.ini}}</span>
+<span style="min-width: 0"><span class="qn">{{q.name}}</span><span class="qs">{{q.city}}</span></span>
+<span class="qm"><i class="st {{q.dot}}"></i>{{q.meta}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<main style="flex: 1; min-width: 0; padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px">
+<div style="min-width: 0">
+<div class="eye">Lead 12 of 48 · Never called</div>
+<h1 style="margin: 4px 0 10px; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -.02em">Lone Star Heating &amp; Air</h1>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<span class="mb">Austin, TX 78704</span>
+<span class="mb br">Main number</span>
+<span class="mb">Direct number</span>
+<span class="mb on">Not on DNC</span>
+</div>
+</div>
+<div class="panel" style="display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-radius: 12px; flex: none">
+<div><div class="eye" style="letter-spacing: .06em">Lead · CDT</div><div class="mono" style="font-size: 18px; font-weight: 600">10:25 AM</div></div>
+<svg class="i" viewBox="0 0 24 24" style="color: var(--sub)" aria-hidden="true"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+<div><div class="eye" style="letter-spacing: .06em">Home · IST</div><div class="mono" style="font-size: 18px; font-weight: 600">8:55 PM</div></div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 12px; background: var(--accent-soft); border: 1px solid var(--accent-line)">
+<div class="av c0" style="width: 40px; height: 40px">M</div>
+<div style="flex: 1; min-width: 0"><div class="eye" style="color: var(--accent-t)">Ask for</div><div style="font-size: 15px; font-weight: 650">Mike Dawson <span style="font-size: 12px; font-weight: 400; color: var(--sub)">Owner · Direct line</span></div></div>
+<button class="btn sm"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy number</button>
+<button class="btn sm" style="border-color: transparent; background: transparent; color: var(--sub)">Manage contacts &amp; fields</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 15px; font-weight: 650">Call guide</h2>
+<div class="seg" style="width: 240px"><button class="on">Script</button><button>Notes</button><button>History</button></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+<div class="stp"><div class="sl"><span class="sn mono">{{s.n}}</span>{{s.t}}</div><p style="margin: 8px 0 0; font-size: 14px; line-height: 1.5">{{s.b}}</p></div>
+</sc-for>
+</div>
+</div>
+
+<div class="panel" style="display: grid; grid-template-columns: minmax(0, 1fr) 216px; gap: 28px; padding: 24px; border-radius: 18px">
+<div style="display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-width: 0">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px">
+<div style="min-width: 0">
+<div class="eye" style="color: var(--green-t); display: flex; align-items: center; gap: 8px"><i class="st gd"></i>Live · Recording</div>
+<div class="mono" style="font-size: 24px; font-weight: 600; letter-spacing: -.02em; margin-top: 4px">+1 (512) 555-0148</div>
+</div>
+<div class="mono" style="font-size: 40px; font-weight: 600; letter-spacing: -.03em; line-height: 1">00:42</div>
+</div>
+<div class="wv" aria-hidden="true" style="flex: none">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="30"><i style="height: {{b.h}}px; animation-delay: {{b.delay}}"></i></sc-for>
+</div>
+<div style="display: flex; justify-content: space-between">
+<sc-for list="{{ctrls}}" as="c" hint-placeholder-count="5">
+<div><button class="cb {{c.cls}}" aria-label="{{c.label}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{c.d}}"/></svg></button><span class="cl">{{c.label}}</span></div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 10px">
+<button class="mic" aria-label="Microphone: MacBook Pro Microphone"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg><span>MacBook Pro Microphone</span><svg class="i" viewBox="0 0 24 24" style="color: var(--sub)" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+<button class="hang"><svg class="i" viewBox="0 0 24 24" style="width: 20px; height: 20px; transform: rotate(135deg)" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>End call</button>
+</div>
+</div>
+<div style="position: relative; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span class="eye">Keypad</span><span class="mono" style="font-size: 15px">5 1</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{keys}}" as="k" hint-placeholder-count="12"><button class="k"><span>{{k.n}}</span><small>{{k.l}}</small></button></sc-for>
+</div>
+</div>
+</div>
+
+</main>
+
+<aside style="width: 344px; flex: none; border-left: 1px solid var(--line); padding: 20px 18px 18px; display: flex; flex-direction: column; gap: 14px; background: var(--pane)">
+<div>
+<h2 style="margin: 0; font-size: 15px; font-weight: 650">Call outcome</h2>
+<div style="font-size: 12px; color: var(--sub); margin-top: 2px">Select, then Save or Save &amp; next.</div>
+</div>
+<div class="og">
+<sc-for list="{{outcomes}}" as="o" hint-placeholder-count="12">
+<sc-if value="{{o.isH}}" hint-placeholder-val="{{ false }}"><div class="eye gh">{{o.label}}</div></sc-if>
+<sc-if value="{{o.isC}}" hint-placeholder-val="{{ true }}"><button class="oc {{o.cls}}"><i class="st {{o.dot}}"></i>{{o.label}}</button></sc-if>
+</sc-for>
+</div>
+<div>
+<div class="eye" style="margin-bottom: 8px">Conversation milestones</div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{milestones}}" as="m" hint-placeholder-count="4"><span class="mb {{m.cls}}">{{m.t}}</span></sc-for>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--amber-soft)">
+<svg class="i" viewBox="0 0 24 24" style="color: var(--amber-t)" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18"/></svg>
+<div><div style="font-weight: 600">Callback · Thu 2:00 PM CDT</div><div class="mono" style="font-size: 12px; color: var(--amber-t)">Fri 12:30 AM IST</div></div>
+</div>
+<div>
+<div class="eye" style="margin-bottom: 8px">Conversation notes</div>
+<textarea class="ta" aria-label="Conversation notes">Owner says they miss ~10 calls/week after hours. Wants to see it work with ServiceTitan.</textarea>
+</div>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+<div style="display: grid; grid-template-columns: auto auto 1fr; gap: 8px">
+<button class="btn">Previous</button>
+<button class="btn">Save</button>
+<button class="btn p">Save &amp; next<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+</div>
+<button class="btn" style="width: 100%"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18"/></svg>Book meeting <span class="kbd">Alt B</span></button>
+</div>
+</aside>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["dark","light"]},"$preview":{"width":1600,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const I = {
+      dash: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
+      users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+      phone: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z",
+      list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+      act: "M22 12h-4l-3 9L9 3l-3 9H2",
+      cal: "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18",
+      clock: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2",
+      redo: "M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10",
+      file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8",
+      up: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
+      set: "M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6",
+      mic: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8",
+      pause: "M6 4h4v16H6zM14 4h4v16h-4z",
+      spk: "M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07",
+      addu: "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6",
+      rec: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
+    };
+    const H = (label) => ({ isH: true, isI: false, label });
+    const N = (label, d, extra) => Object.assign({ isH: false, isI: true, label, d, cls: '', hasCount: false, count: '' }, extra || {});
+    const nav = [
+      H('Workspace'),
+      N('Overview', I.dash), N('Leads', I.users, { hasCount: true, count: '248' }),
+      N('Dialer', I.phone, { cls: 'on' }), N('Sessions', I.list), N('Activity', I.act),
+      H('Schedule'),
+      N('Bookings', I.cal), N('Time Zones', I.clock), N('Follow-ups', I.redo, { hasCount: true, count: '8' }),
+      H('Setup'),
+      N('Configuration', I.file), N('Data', I.up), N('Settings', I.set)
+    ];
+    const Q = (ini, name, city, av, dot, meta, cls) => ({ ini, name, city, av, dot, meta, cls: cls || '' });
+    const queue = [
+      Q('CC', 'Capital City Air', 'Austin, TX', 'c1', 'ad', 'Voicemail'),
+      Q('HC', 'Hill Country Comfort', 'Round Rock, TX', 'c5', 'nd', 'No answer'),
+      Q('LS', 'Lone Star Heating & Air', 'Austin, TX', 'c0', 'gd', 'Live', 'sel'),
+      Q('BM', 'Bluebonnet Mechanical', 'Cedar Park, TX', 'c2', 'bd', 'Next'),
+      Q('ZC', 'Zilker Cooling Co.', 'Austin, TX', 'c3', 'bd', 'New'),
+      Q('BS', 'Barton Springs HVAC', 'Austin, TX', 'c4', 'bd', 'New'),
+      Q('MH', 'Mueller Heat & Cool', 'Austin, TX', 'c1', 'bd', 'New'),
+      Q('PA', 'Pflugerville Air Pros', 'Pflugerville, TX', 'c0', 'bd', 'New'),
+      Q('WC', 'Westlake Climate Control', 'Westlake, TX', 'c2', 'bd', 'New'),
+      Q('SM', 'Southpark Meadows HVAC', 'Austin, TX', 'c5', 'bd', 'New')
+    ];
+    const bars = [];
+    for (let i = 0; i < 34; i++) {
+      const h = Math.round(8 + Math.abs(Math.sin(i * 0.62) * Math.cos(i * 0.21)) * 36);
+      bars.push({ h, delay: '-' + (i * 0.07).toFixed(2) + 's' });
+    }
+    const ctrls = [
+      { label: 'Mute', d: I.mic, cls: '' }, { label: 'Hold', d: I.pause, cls: '' },
+      { label: 'Speaker', d: I.spk, cls: '' }, { label: 'Add call', d: I.addu, cls: '' },
+      { label: 'Record', d: I.rec, cls: 'rec' }
+    ];
+    const keys = [['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']].map(([n, l]) => ({ n, l }));
+    const steps = [
+      { n: '1', t: 'Open', b: 'Hi Mike, it’s Ash. I know I’m calling out of the blue — got 30 seconds to tell you why?' },
+      { n: '2', t: 'Hook', b: 'We answer every missed call for HVAC shops — 24/7, and book straight into your calendar.' },
+      { n: '3', t: 'Ask', b: 'How many calls roll to voicemail during a heat wave week?' },
+      { n: '4', t: 'Close', b: 'Worth a 15-minute demo Thursday? I can do 2 PM or 4 PM Central.' }
+    ];
+    const OH = (label) => ({ isH: true, isC: false, label });
+    const OC = (label, dot, cls) => ({ isH: false, isC: true, label, dot, cls: cls || '' });
+    const outcomes = [
+      OH('Connected'), OC('Connected – DM', 'bd', 'sel'), OC('Gatekeeper', 'gd'), OC('Other contact', 'nd'), OC('Appointment set', 'gd'),
+      OH('Not reached'), OC('Voicemail', 'ad'), OC('No answer', 'nd'), OC('Busy', 'nd'), OC('Bad number', 'rd'),
+      OH('Follow up'), OC('Callback requested', 'ad'), OC('Not interested', 'rd')
+    ];
+    const milestones = [
+      { t: 'Pain point', cls: 'on' }, { t: 'Demo pitched', cls: 'on' }, { t: 'Pricing', cls: '' }, { t: 'Decision maker', cls: '' }
+    ];
+    return { theme: this.props.theme ?? 'light', nav, queue, bars, ctrls, keys, steps, outcomes, milestones };
+  }
+}
+</script>
+</body>
+</html>
