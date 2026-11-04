@@ -50,6 +50,7 @@ export type RuntimeServices = {
   };
   /** Executes the requested provider operation and persists a valid model transition. */
   execute?: (action: Action, before: State, after: State) => Promise<void>;
+  getUsage?: () => Promise<import("../lib/twilio.functions").TwilioUsageResult>;
   refresh?: () => Promise<void>;
   signOut?: () => Promise<void>;
 };

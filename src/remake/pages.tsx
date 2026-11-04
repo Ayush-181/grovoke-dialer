@@ -1,3 +1,5 @@
+import { TimezoneExplorer } from "./TimezoneExplorer";
+import { GoalPanel, BalancePanel } from "./OverviewExtras";
 import { dateAt, timeAt } from "./format";
 import { useEffect, useState, type Dispatch } from "react";
 import {
@@ -58,6 +60,7 @@ type Props = {
 };
 export function Overview({
   state,
+  dispatch,
   navigate,
   openLead,
 }: Props & { navigate: (page: Page, view?: "all" | "callbacks") => void }) {
@@ -160,95 +163,101 @@ export function Overview({
         />
       </div>
       <div className="dashboard-grid">
-        <OverviewActivityChart logs={logs} month={month} />
-        <Funnel logs={logs} />
-        <Panel className="appointments-panel overview-followups">
-          <section className="followup-section">
-            <PanelHead
-              title="Upcoming appointments"
-              subtitle="Current follow-ups · next conversations"
-              action={
-                <button className="text-button" onClick={() => navigate("bookings")}>
-                  View all <ArrowRight aria-hidden="true" size={14} />
-                </button>
-              }
-            />
-            <div
-              className="followup-list appointments-list"
-              role="region"
-              aria-label="Upcoming appointments list"
-              tabIndex={0}
-            >
-              {upcoming.map((booking) => (
-                <button
-                  className="appointment"
-                  key={booking.id}
-                  onClick={() => navigate("bookings")}
-                >
-                  <span className="appointment-icon">
-                    <CalendarDays aria-hidden="true" size={19} />
-                  </span>
-                  <span>
-                    <strong>
-                      {state.leads.find((lead) => lead.id === booking.leadId)?.business ??
-                        booking.title}
-                    </strong>
-                    <small>{booking.title}</small>
-                    <span>
-                      {dateAt(booking.at, booking.zone)} · {timeAt(booking.at, booking.zone)}
+        <OverviewActivityChart logs={state.logs} month={month} />
+        <div className="mx-dashboard-column">
+          <Funnel logs={logs} />
+          <GoalPanel state={state} dispatch={dispatch} />
+        </div>
+        <div className="mx-dashboard-column">
+          <Panel className="appointments-panel overview-followups">
+            <section className="followup-section">
+              <PanelHead
+                title="Upcoming appointments"
+                subtitle="Current follow-ups · next conversations"
+                action={
+                  <button className="text-button" onClick={() => navigate("bookings")}>
+                    View all <ArrowRight aria-hidden="true" size={14} />
+                  </button>
+                }
+              />
+              <div
+                className="followup-list appointments-list"
+                role="region"
+                aria-label="Upcoming appointments list"
+                tabIndex={0}
+              >
+                {upcoming.map((booking) => (
+                  <button
+                    className="appointment"
+                    key={booking.id}
+                    onClick={() => navigate("bookings")}
+                  >
+                    <span className="appointment-icon">
+                      <CalendarDays aria-hidden="true" size={19} />
                     </span>
-                  </span>
-                  <ChevronRight aria-hidden="true" size={15} />
-                </button>
-              ))}
-              {!upcoming.length && (
-                <Empty
-                  title="No upcoming appointments"
-                  description="Your next appointments will appear here."
-                />
-              )}
-            </div>
-          </section>
-          <section className="followup-section callback-section">
-            <PanelHead
-              title="Worth a callback"
-              subtitle={`Current · ${callbacks.length} ${callbacks.length === 1 ? "lead" : "leads"} to follow up`}
-              action={
-                <button className="text-button" onClick={() => navigate("leads", "callbacks")}>
-                  View all <ArrowRight aria-hidden="true" size={14} />
-                </button>
-              }
-            />
-            <div
-              className="followup-list"
-              role="region"
-              aria-label="Worth a callback list"
-              tabIndex={0}
-            >
-              {callbacks.map((lead) => (
-                <button className="appointment" key={lead.id} onClick={() => openLead(lead.id)}>
-                  <span className="appointment-icon">
-                    <RotateCcw aria-hidden="true" size={19} />
-                  </span>
-                  <span>
-                    <strong>{lead.business}</strong>
-                    <small>{lead.contact}</small>
                     <span>
-                      {lead.callbackReason || lead.notes || "Follow up when you’re ready."}
+                      <strong>
+                        {state.leads.find((lead) => lead.id === booking.leadId)?.business ??
+                          booking.title}
+                      </strong>
+                      <small>{booking.title}</small>
+                      <span>
+                        {dateAt(booking.at, booking.zone)} · {timeAt(booking.at, booking.zone)}
+                      </span>
                     </span>
-                  </span>
-                  <ChevronRight aria-hidden="true" size={15} />
-                </button>
-              ))}
-              {!callbacks.length && (
-                <Empty
-                  title="No callbacks yet"
-                  description="Flag a lead as worth a callback in the dialer."
-                />
-              )}
-            </div>
-          </section>
-        </Panel>
+                    <ChevronRight aria-hidden="true" size={15} />
+                  </button>
+                ))}
+                {!upcoming.length && (
+                  <Empty
+                    title="No upcoming appointments"
+                    description="Your next appointments will appear here."
+                  />
+                )}
+              </div>
+            </section>
+            <section className="followup-section callback-section">
+              <PanelHead
+                title="Worth a callback"
+                subtitle={`Current · ${callbacks.length} ${callbacks.length === 1 ? "lead" : "leads"} to follow up`}
+                action={
+                  <button className="text-button" onClick={() => navigate("leads", "callbacks")}>
+                    View all <ArrowRight aria-hidden="true" size={14} />
+                  </button>
+                }
+              />
+              <div
+                className="followup-list"
+                role="region"
+                aria-label="Worth a callback list"
+                tabIndex={0}
+              >
+                {callbacks.map((lead) => (
+                  <button className="appointment" key={lead.id} onClick={() => openLead(lead.id)}>
+                    <span className="appointment-icon">
+                      <RotateCcw aria-hidden="true" size={19} />
+                    </span>
+                    <span>
+                      <strong>{lead.business}</strong>
+                      <small>{lead.contact}</small>
+                      <span>
+                        {lead.callbackReason || lead.notes || "Follow up when you’re ready."}
+                      </span>
+                    </span>
+                    <ChevronRight aria-hidden="true" size={15} />
+                  </button>
+                ))}
+                {!callbacks.length && (
+                  <Empty
+                    title="No callbacks yet"
+                    description="Flag a lead as worth a callback in the dialer."
+                  />
+                )}
+              </div>
+            </section>
+          </Panel>
+          <BalancePanel state={state} dispatch={dispatch} />
+        </div>
       </div>
       <div className="overview-bottom">
         <Panel>
@@ -986,6 +995,7 @@ export function FollowUpsPage({
   now = new Date(),
 }: Props & { now?: Date }) {
   const [showHistory, setShowHistory] = useState(false);
+  const [followTab, setFollowTab] = useState("all");
   const [editing, setEditing] = useState<{
     id: string;
     leadId: string;
@@ -1126,11 +1136,53 @@ export function FollowUpsPage({
   };
   return (
     <div className="follow-ups-page">
+      <div className="mx-legend">
+        {["all", "today", "upcoming", "callback"].map((tab) => (
+          <button key={tab} aria-pressed={followTab === tab} onClick={() => setFollowTab(tab)}>
+            {tab === "callback" ? "Worth a callback" : tab}
+          </button>
+        ))}
+      </div>
+      {(followTab === "all" || followTab === "callback") && (
+        <Panel className="follow-up-group">
+          <PanelHead
+            title="Worth a callback · pick a time"
+            subtitle="Flagged leads without a pending reminder"
+          />
+          {state.leads
+            .filter(
+              (lead) =>
+                lead.callback && allowed(lead) && !pending.some((item) => item.leadId === lead.id),
+            )
+            .map((lead) => (
+              <div className="follow-up-row" key={lead.id}>
+                <strong>{lead.business}</strong>
+                <button className="button" onClick={() => openLead(lead.id)}>
+                  Open lead
+                </button>
+                <button
+                  className="button"
+                  onClick={() => {
+                    startEdit();
+                    setEditing({
+                      id: crypto.randomUUID(),
+                      leadId: lead.id,
+                      contactId: "",
+                      local: "",
+                      zone: lead.zone,
+                      reason: lead.callbackReason || "",
+                      occurrence: "",
+                    });
+                  }}
+                >
+                  Pick a time
+                </button>
+              </div>
+            ))}
+        </Panel>
+      )}
       <div className="page-actions">
-        <p className="hint">
-          Scheduled promises, grouped in IST. Manually flagged “Worth a callback” leads remain
-          separate in Leads.
-        </p>
+        <p className="hint">Scheduled promises and flagged leads, grouped in IST.</p>
         <button
           className="button primary"
           disabled={!state.leads.some(allowed)}
@@ -1140,19 +1192,26 @@ export function FollowUpsPage({
           Schedule callback
         </button>
       </div>
-      {groups.map((group) => (
-        <Panel className="follow-up-group" key={group.title}>
-          <PanelHead title={`${group.title} · ${group.items.length}`} subtitle={group.subtitle} />
-          {group.items.length ? (
-            group.items.map(renderRow)
-          ) : (
-            <Empty
-              title={`No ${group.title.toLowerCase()} callbacks`}
-              description="Only callbacks you schedule appear here."
-            />
-          )}
-        </Panel>
-      ))}
+      {groups
+        .filter(
+          (group) =>
+            followTab === "all" ||
+            (followTab === "today" && group.title === "Due today") ||
+            (followTab === "upcoming" && group.title === "Coming up"),
+        )
+        .map((group) => (
+          <Panel className="follow-up-group" key={group.title}>
+            <PanelHead title={`${group.title} · ${group.items.length}`} subtitle={group.subtitle} />
+            {group.items.length ? (
+              group.items.map(renderRow)
+            ) : (
+              <Empty
+                title={`No ${group.title.toLowerCase()} callbacks`}
+                description="Only callbacks you schedule appear here."
+              />
+            )}
+          </Panel>
+        ))}
       <label className="checkbox-label">
         <input
           type="checkbox"
@@ -1390,8 +1449,27 @@ export function SessionsPage({
           New session
         </button>
       </div>
+      <div className="mx-session-summary">
+        {[
+          ["Sessions", state.sessions.length],
+          ["Dials", metrics(state.logs).dials],
+          ["Connected", metrics(state.logs).connected],
+          ["Booked", metrics(state.logs).booked],
+        ].map(([label, value]) => (
+          <Panel key={label}>
+            <span className="hint">{label}</span>
+            <strong>{value}</strong>
+          </Panel>
+        ))}
+      </div>
       <div className="sessions-grid">
         {state.sessions.map((s) => {
+          const sessionMetrics = metrics(state.logs.filter((log) => log.sessionId === s.id));
+          const mix = [
+            sessionMetrics.booked,
+            Math.max(0, sessionMetrics.connected - sessionMetrics.booked),
+            Math.max(0, sessionMetrics.dials - sessionMetrics.connected),
+          ];
           const completed = s.leadIds.filter(
             (id) => state.leads.find((l) => l.id === id)?.outcome,
           ).length;
@@ -1421,6 +1499,26 @@ export function SessionsPage({
                     width: `${s.leadIds.length ? (completed / s.leadIds.length) * 100 : 0}%`,
                   }}
                 />
+              </div>
+              <div>
+                <div
+                  className="mx-session-mix"
+                  role="img"
+                  aria-label={`Booked ${mix[0]}, connected without booking ${mix[1]}, not reached ${mix[2]}`}
+                >
+                  {mix.map((n, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        width: `${(n / Math.max(1, sessionMetrics.dials)) * 100}%`,
+                        background: ["var(--green)", "var(--teal)", "var(--amber)"][i],
+                      }}
+                    />
+                  ))}
+                </div>
+                <p className="mx-session-legend">
+                  Booked {mix[0]} · Connected {mix[1]} · Not reached {mix[2]}
+                </p>
               </div>
               <div className="session-totals">
                 <div>
@@ -1821,48 +1919,7 @@ export function ActivityPage({ state, openLead }: Props) {
 }
 
 export function TimezonesPage({ state, now }: Props & { now: Date }) {
-  const [instant, setInstant] = useState("");
-  const selectedDate = instant ? new Date(`${instant}:00+05:30`) : now;
-  const value = Number.isNaN(selectedDate.getTime()) ? now : selectedDate;
-  return (
-    <>
-      <Panel className="timezone-anchor">
-        <div>
-          <span className="eyebrow">YOUR ANCHOR · INDIA</span>
-          <h2>{timeAt(value, "Asia/Kolkata")}</h2>
-          <p>{dateAt(value)} · Asia/Kolkata</p>
-        </div>
-        <Field
-          label="Compare a date & time in IST"
-          type="datetime-local"
-          value={instant}
-          onChange={(e) => setInstant(e.target.value)}
-        />
-      </Panel>
-      <div className="timezone-grid">
-        {zones
-          .filter((z) => z.value !== "Asia/Kolkata")
-          .map((z) => (
-            <Panel key={z.value} className="timezone-card">
-              <span className="timezone-icon">
-                <Clock3 aria-hidden="true" size={21} />
-              </span>
-              <span className="eyebrow">{z.label}</span>
-              <h2 className="mono">{timeAt(value, z.value)}</h2>
-              <p>{dateAt(value, z.value)}</p>
-              <small>
-                {state.leads.filter((l) => l.zone === z.value).length} leads in this timezone
-              </small>
-              <div className="timezone-foot">Daylight saving applied automatically</div>
-            </Panel>
-          ))}
-      </div>
-      <p className="hint">
-        Arizona stays on Mountain Standard Time year-round. Date changes are shown when zones cross
-        midnight.
-      </p>
-    </>
-  );
+  return <TimezoneExplorer state={state} now={now} />;
 }
 
 export function SettingsPage({

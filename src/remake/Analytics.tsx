@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { activityDays } from "./mac-logic";
 import { Phone, Users, CalendarDays, Clock3, Check, RotateCcw, TrendingUp } from "lucide-react";
 import { Panel, PanelHead } from "./components";
 import { formatDuration } from "../lib/outcomes";
@@ -107,76 +109,68 @@ export function Funnel({ logs }: { logs: Log[] }) {
 }
 
 export function OverviewActivityChart({ logs, month }: { logs: Log[]; month: string }) {
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const data = weekdays.map((weekday) =>
-    metrics(
-      logs.filter(
-        (log) =>
-          new Intl.DateTimeFormat("en", { weekday: "short", timeZone: "Asia/Kolkata" }).format(
-            new Date(log.at),
-          ) === weekday,
-      ),
-    ),
+  const [days, setDays] = useState(7);
+  const [visible, setVisible] = useState([true, true, true]);
+  const data = activityDays(logs, month, days);
+  const counts = data.map((d) => [d.dials, d.decisionMaker, d.booked]);
+  const max = Math.max(
+    4,
+    Math.ceil(
+      Math.max(...counts.map((row) => row.reduce((n, v, i) => n + (visible[i] ? v : 0), 0))) / 4,
+    ) * 4,
   );
-  const max = Math.max(4, Math.ceil(Math.max(...data.map((day) => day.dials)) / 4) * 4);
-  const monthLabel = new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" }).format(
-    new Date(`${month}-01T00:00:00Z`),
-  );
+  const names = ["Dialed", "Connected with owner", "Booked"];
+  const colors = ["var(--accent)", "var(--teal)", "var(--green)"];
   return (
     <Panel className="activity-chart">
-      <PanelHead title="Calling activity" subtitle="Every conversation starts with a dial" />
-      <div className="chart-legend">
-        <span>
-          <i className="series-blue" />
-          Dials
-        </span>
-        <span>
-          <i className="series-jade" />
-          Connected
-        </span>
-        <span>
-          <i className="series-amber" />
-          Bookings
-        </span>
+      <PanelHead title="Calling activity" subtitle="Daily activity · IST" />
+      <div className="mx-chart-controls">
+        {[7, 14].map((n) => (
+          <button key={n} className="button" aria-pressed={days === n} onClick={() => setDays(n)}>
+            {n}D
+          </button>
+        ))}
       </div>
-      <figure
-        className="chart-figure"
-        aria-label={`Monthly totals grouped by weekday for ${month}: ${metrics(logs).dials} dials, ${metrics(logs).connected} connected, ${metrics(logs).booked} bookings`}
-      >
-        <div className="bar-chart">
-          <div className="chart-axis">
-            {[max, max * 0.75, max * 0.5, max * 0.25, 0].map((value) => (
-              <span key={value}>{value}</span>
-            ))}
-          </div>
-          <div className="chart-columns">
-            {data.map((day, i) => (
-              <div className="chart-day" key={weekdays[i]}>
-                <div className="bar-group">
-                  {[day.dials, day.connected, day.booked].map((count, j) => (
-                    <span
-                      key={j}
-                      className={`bar ${["series-blue", "series-jade", "series-amber"][j]}`}
-                      style={{
-                        height: `${(count / max) * 100}%`,
-                        minHeight: count ? undefined : 0,
-                      }}
-                      title={`${weekdays[i]}: ${count} ${["dials", "connected", "bookings"][j]}`}
-                    />
-                  ))}
-                </div>
-                <small>
-                  {weekdays[i]}
-                  <span>{monthLabel}</span>
-                </small>
+      <div className="mx-legend">
+        {names.map((name, i) => (
+          <button
+            key={name}
+            aria-pressed={visible[i]}
+            onClick={() => setVisible((v) => v.map((x, j) => (i === j ? !x : x)))}
+          >
+            <span style={{ color: colors[i] }}>●</span> {name}
+          </button>
+        ))}
+      </div>
+      <figure className="chart-figure">
+        <p className="hint">Scale: 0–{max}</p>
+        <div className="mx-stacks">
+          {data.map((day, i) => (
+            <div
+              className="mx-stack-day"
+              key={day.key}
+              tabIndex={0}
+              aria-label={day.key + ": " + names.map((n, j) => counts[i]![j] + " " + n).join(", ")}
+              title={day.key + ": " + names.map((n, j) => counts[i]![j] + " " + n).join(", ")}
+            >
+              <div className="mx-stack">
+                {counts[i]!.map(
+                  (count, j) =>
+                    visible[j] && (
+                      <span
+                        key={j}
+                        style={{ height: (count / max) * 100 + "%", background: colors[j] }}
+                      />
+                    ),
+                )}
               </div>
-            ))}
-          </div>
+              <small>{day.key.slice(5)}</small>
+            </div>
+          ))}
         </div>
         <figcaption>
-          {logs.length
-            ? "Monthly totals grouped by weekday · IST."
-            : "No calls recorded for this month. Monthly totals grouped by weekday · IST."}
+          One column per IST day. Owner connections use the decision-maker outcome. Series overlap:
+          stacked height is not a unique-call total.
         </figcaption>
       </figure>
     </Panel>

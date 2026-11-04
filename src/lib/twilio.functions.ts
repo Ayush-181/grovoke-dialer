@@ -46,7 +46,24 @@ export const getVoiceToken = createServerFn({ method: "POST" })
     return { ok: true, token, identity, callerId: settings.twilio_phone_number ?? null };
   });
 
-export type UsageCategory = { category: string; description: string; count: number; usage: string; usageUnit: string; price: number };
+type UsageRecord = {
+  category: string;
+  description?: string;
+  count?: string;
+  usage?: string;
+  usage_unit?: string;
+  price?: string;
+  price_unit?: string;
+};
+type UsageResponse = { balance?: string; currency?: string; usage_records?: UsageRecord[] };
+export type UsageCategory = {
+  category: string;
+  description: string;
+  count: number;
+  usage: string;
+  usageUnit: string;
+  price: number;
+};
 
 export type TwilioUsageResult =
   | {
@@ -54,6 +71,8 @@ export type TwilioUsageResult =
       currency: string;
       balance: number | null;
       monthSpend: number;
+      sevenDaySpend?: number | null;
+      sevenDayCategories?: UsageCategory[];
       calls: number;
       callMinutes: number;
       daysLeft: number | null;
@@ -76,24 +95,37 @@ export const getTwilioUsage = createServerFn({ method: "POST" })
     const sid = settings?.twilio_account_sid;
     const token = settings?.twilio_auth_token;
     if (!sid || !token) {
-      return { ok: false, error: "Add your Twilio Account SID and Auth Token in Settings to see usage." };
+      return {
+        ok: false,
+        error: "Add your Twilio Account SID and Auth Token in Settings to see usage.",
+      };
     }
 
     const auth = `Basic ${btoa(`${sid}:${token}`)}`;
     const base = `https://api.twilio.com/2010-04-01/Accounts/${sid}`;
     const get = async (path: string) => {
       const res = await fetch(`${base}${path}`, { headers: { Authorization: auth } });
-      if (!res.ok) throw new Error(`Twilio ${res.status}: ${await res.text()}`);
-      return res.json() as Promise<any>;
+      if (!res.ok)
+        throw new Error(
+          `Twilio usage request failed (${res.status}). Check credentials and try again.`,
+        );
+      return res.json() as Promise<UsageResponse>;
     };
 
     try {
-      const [balance, usage] = await Promise.all([
+      const end = new Date();
+      end.setUTCDate(end.getUTCDate() - 1);
+      const start = new Date(end);
+      start.setUTCDate(start.getUTCDate() - 6);
+      const [balance, usage, week] = await Promise.all([
         get(`/Balance.json`).catch(() => null),
         get(`/Usage/Records/ThisMonth.json?PageSize=200`),
+        get(
+          `/Usage/Records.json?StartDate=${start.toISOString().slice(0, 10)}&EndDate=${end.toISOString().slice(0, 10)}&PageSize=1000`,
+        ),
       ]);
 
-      const records: any[] = usage?.usage_records ?? [];
+      const records = usage?.usage_records ?? [];
       const categories: UsageCategory[] = records
         .map((r) => ({
           category: String(r.category ?? ""),
@@ -107,7 +139,9 @@ export const getTwilioUsage = createServerFn({ method: "POST" })
         .sort((a, b) => b.price - a.price);
 
       const total = records.find((r) => r.category === "totalprice");
-      const monthSpend = total ? Number(total.price ?? 0) : categories.reduce((s, c) => s + c.price, 0);
+      const monthSpend = total
+        ? Number(total.price ?? 0)
+        : categories.reduce((s, c) => s + c.price, 0);
 
       const callRecords = records.filter((r) => String(r.category) === "calls");
       const calls = callRecords.reduce((s, r) => s + Number(r.count ?? 0), 0);
@@ -121,9 +155,37 @@ export const getTwilioUsage = createServerFn({ method: "POST" })
 
       return {
         ok: true,
-        currency: String(balance?.currency ?? usage?.usage_records?.[0]?.price_unit ?? "USD").toUpperCase(),
+        currency: String(
+          balance?.currency ?? usage?.usage_records?.[0]?.price_unit ?? "USD",
+        ).toUpperCase(),
         balance: bal,
         monthSpend,
+        sevenDaySpend: week.usage_records?.some(
+          (r) => r.category === "totalprice" && Number.isFinite(Number(r.price)),
+        )
+          ? Number(week.usage_records.find((r) => r.category === "totalprice")!.price)
+          : null,
+        sevenDayCategories: (week.usage_records ?? [])
+          .filter(
+            (r) =>
+              [
+                "calls",
+                "calls-client",
+                "calls-sip",
+                "recordings",
+                "recordingstorage",
+                "transcriptions",
+                "voice-intelligence-transcription",
+              ].includes(r.category) && Number.isFinite(Number(r.price)),
+          )
+          .map((r) => ({
+            category: r.category,
+            description: r.description ?? r.category,
+            count: Number(r.count ?? 0),
+            usage: r.usage ?? "0",
+            usageUnit: r.usage_unit ?? "",
+            price: Number(r.price),
+          })),
         calls,
         callMinutes,
         daysLeft,
