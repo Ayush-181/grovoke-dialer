@@ -1,9 +1,11 @@
+import { CommandPalette } from "./CommandPalette";
+import { FloatingDialpad } from "./FloatingDialpad";
 import { timeAt } from "./format";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity,
   ArrowLeft,
-  BarChart3,
+  Search,
   CalendarDays,
   Check,
   ChevronRight,
@@ -219,17 +221,32 @@ export function App({
     } catch {
       /* Use the current document preference. */
     }
-    return document.documentElement.dataset["theme"] === "night" ||
-      matchMedia("(prefers-color-scheme: dark)").matches
-      ? "night"
-      : "day";
+    return "night";
   });
+  const [palette, setPalette] = useState(false);
+  const [pad, setPad] = useState(false);
+  const [prefill, setPrefill] = useState("");
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k" || event.repeat)
+        return;
+      if (
+        (event.target as Element)?.closest("input, textarea, select, [contenteditable=true]") ||
+        document.querySelector("[role=dialog]")
+      )
+        return;
+      event.preventDefault();
+      setPalette(true);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
   const [now, setNow] = useState(() => new Date());
   const [menu, setMenu] = useState(false);
   const [leadsView, setLeadsView] = useState<"all" | "callbacks">("all");
   const [collapsed, setCollapsed] = useState(() => {
     try {
-      return localStorage.getItem("callboard-remake-navigation") !== "expanded";
+      return localStorage.getItem("callboard-remake-navigation") === "compact";
     } catch {
       return true;
     }
@@ -402,7 +419,7 @@ export function App({
             }}
           >
             <span className="brand-mark">
-              <BarChart3 aria-hidden="true" size={22} />
+              <Phone aria-hidden="true" size={20} />
             </span>
             <span translate="no">
               CALL BOARD<small>A better rhythm for sales</small>
@@ -411,27 +428,35 @@ export function App({
           <div className="sidebar-label">WORKSPACE</div>
           <nav aria-label="Main navigation">
             {navigation.map(({ id, label, icon: Icon }) => (
-              <a
-                href={`#${id}`}
-                aria-label={label}
-                title={collapsed ? label : undefined}
-                key={id}
-                className={page === id ? "active" : ""}
-                aria-current={page === id ? "page" : undefined}
-                onClick={(event) => {
-                  if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
-                    event.preventDefault();
-                    navigate(id);
-                  }
-                }}
-              >
-                <Icon aria-hidden="true" size={18} />
-                <span>{label}</span>
-                <span className="nav-tooltip" aria-hidden="true">
-                  {label}
-                </span>
-                {id === "leads" && <small>{state.leads.length}</small>}
-              </a>
+              <div key={id} className="mx-nav-item">
+                {(id === "bookings" || id === "configuration") && (
+                  <div className="sidebar-label">{id === "bookings" ? "SCHEDULE" : "SETUP"}</div>
+                )}
+                <a
+                  href={`#${id}`}
+                  aria-label={label}
+                  title={collapsed ? label : undefined}
+                  key={id}
+                  className={page === id ? "active" : ""}
+                  aria-current={page === id ? "page" : undefined}
+                  onClick={(event) => {
+                    if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
+                      event.preventDefault();
+                      navigate(id);
+                    }
+                  }}
+                >
+                  <Icon aria-hidden="true" size={18} />
+                  <span>{label}</span>
+                  <span className="nav-tooltip" aria-hidden="true">
+                    {label}
+                  </span>
+                  {id === "leads" && <small>{state.leads.length}</small>}
+                  {id === "followups" && (
+                    <small>{state.leads.filter((l) => l.callback).length}</small>
+                  )}
+                </a>
+              </div>
             ))}
           </nav>
           <div className="sidebar-bottom">
@@ -494,6 +519,19 @@ export function App({
                 <h1 className="workspace-title">{navigation.find((n) => n.id === page)?.label}</h1>
               </div>
               <div className="topbar-tools">
+                <button
+                  className="button"
+                  aria-label="Search leads and pages"
+                  onClick={() => setPalette(true)}
+                >
+                  <Search size={16} />
+                  <span className="mx-search-label">Search</span>
+                  <kbd>⌘K</kbd>
+                </button>
+                <button className="button" onClick={() => setPad(true)}>
+                  <Phone size={16} />
+                  {state.call?.active ? formatDuration(state.call.seconds) : "Call"}
+                </button>
                 <span className="preview-chip">
                   {runtime.mode === "live" ? "Workspace" : "Offline copy"}
                 </span>
@@ -628,6 +666,27 @@ export function App({
             </div>
           )}
         </div>
+        <CommandPalette
+          open={palette}
+          onClose={() => setPalette(false)}
+          leads={state.leads}
+          pages={navigation}
+          navigate={navigate}
+          openLead={openLead}
+          dial={(phone) => {
+            setPrefill(phone);
+            setPad(true);
+          }}
+        />
+        <FloatingDialpad
+          open={pad}
+          onClose={() => setPad(false)}
+          prefill={prefill}
+          state={state}
+          dispatch={dispatch}
+          guarded={guarded}
+          now={now}
+        />
         <div className="toast-region" aria-live="polite" role="status">
           {notice && (
             <div className="toast">

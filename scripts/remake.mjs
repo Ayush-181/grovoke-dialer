@@ -17,7 +17,16 @@ for (const name of [
   await mkdir(resolve(scratch, name, ".."), { recursive: true });
   await cp(resolve(root, name), resolve(scratch, name), { recursive: true });
 }
-await symlink(resolve(root, "node_modules"), join(scratch, "node_modules"), "dir");
+try {
+  await symlink(
+    resolve(root, "node_modules"),
+    join(scratch, "node_modules"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
+} catch (error) {
+  if (process.platform !== "win32") throw error;
+  await cp(resolve(root, "node_modules"), join(scratch, "node_modules"), { recursive: true });
+}
 const child = spawn(
   process.execPath,
   [

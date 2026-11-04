@@ -530,7 +530,17 @@ const batchSchema = z
 const dataSchema = z
   .object({
     preferences: z
-      .object({ workspaceName: short, displayName: short, email: short, microphone: short })
+      .object({
+        workspaceName: short,
+        displayName: short,
+        email: short,
+        microphone: short,
+        dailyGoal: z.number().int().min(1).max(10000).optional(),
+        bestFrom: z.number().int().min(0).max(23).optional(),
+        bestTo: z.number().int().min(1).max(23).optional(),
+        scenarioRate: z.number().finite().min(0).optional(),
+        scenarioMinutes: z.number().finite().min(0).optional(),
+      })
       .strict(),
     recordingEnabled: z.boolean(),
     leads: z.array(leadSchema).max(DATA_ROW_LIMIT),

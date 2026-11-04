@@ -1,3 +1,4 @@
+import { getTwilioUsage } from "../../lib/twilio.functions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../../hooks/useAuth";
@@ -13,6 +14,9 @@ import { loadWorkspace, persistTransition } from "./repository";
 import { stateFromWorkspace } from "./mapping";
 import { useCallboardVoice } from "./useVoice";
 import remakeCss from "../remake.css?url";
+import macTheme from "../mac-theme.css?url";
+import macComponents from "../mac-components.css?url";
+import macLayout from "../mac-layout.css?url";
 
 const client = supabase as unknown as CallboardClient;
 export function LiveWorkspace() {
@@ -240,7 +244,12 @@ function ConnectedWorkspace({
       workspace.id,
     ],
   );
+  const loadUsage = useCallback(
+    () => getTwilioUsage({ data: { workspaceId: workspace.id } }),
+    [workspace.id],
+  );
   const runtime: RuntimeServices = {
+    getUsage: loadUsage,
     mode: "live",
     label: workspace.name,
     capabilities: {
@@ -294,6 +303,9 @@ function ConnectedWorkspace({
   return (
     <>
       <link rel="stylesheet" href={remakeCss} />
+      <link rel="stylesheet" href={macTheme} />
+      <link rel="stylesheet" href={macComponents} />
+      <link rel="stylesheet" href={macLayout} />
       <App initialState={seed} runtime={runtime} />
     </>
   );

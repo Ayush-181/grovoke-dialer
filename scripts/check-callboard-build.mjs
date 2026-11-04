@@ -13,7 +13,16 @@ for (const name of [
   "components.json",
 ])
   await cp(resolve(root, name), join(scratch, name), { recursive: true });
-await symlink(resolve(root, "node_modules"), join(scratch, "node_modules"), "dir");
+try {
+  await symlink(
+    resolve(root, "node_modules"),
+    join(scratch, "node_modules"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
+} catch (error) {
+  if (process.platform !== "win32") throw error;
+  await cp(resolve(root, "node_modules"), join(scratch, "node_modules"), { recursive: true });
+}
 await writeFile(
   join(scratch, "vite.check.config.ts"),
   `import base from './vite.config';

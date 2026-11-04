@@ -1,0 +1,90 @@
+/*
+ * Call Board — styles for the NEW components in the Mac-style redesign.
+ * All classes are prefixed mx- so they cannot collide with existing remake CSS.
+ * Requires tokens/mac-theme.css. Copy to src/remake/mac-components.css and import
+ * it after mac-theme.css once the matching component exists.
+ * Starter styles: verify visually in Day and Night and adjust.
+ */
+
+/* ---------- shared bits ---------- */
+.mx-mono { font-family: var(--mx-font-mono); font-variant-numeric: tabular-nums; }
+.mx-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.mx-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 0; border-radius: 13px; background: var(--key); color: var(--muted); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.mx-chip.is-ok { background: var(--green-soft); color: var(--green-t); }
+.mx-chip.is-info { background: var(--accent-soft); color: var(--accent-t); }
+.mx-chip.is-warn { background: var(--amber-soft); color: var(--amber-t); }
+.mx-chip.is-bad { background: var(--red-soft); color: var(--red-t); }
+.mx-chip.is-selected { background: var(--accent-soft); color: var(--accent-t); box-shadow: 0 0 0 2px var(--accent-line); }
+.mx-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.mx-icon-btn { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 15px; background: var(--key); color: inherit; }
+.mx-glass { background: color-mix(in srgb, var(--card) 78%, transparent); backdrop-filter: blur(40px) saturate(170%); -webkit-backdrop-filter: blur(40px) saturate(170%); border: 1px solid var(--line2); }
+
+/* ---------- floating dialpad ---------- */
+.mx-pad { position: fixed; right: 20px; top: 64px; z-index: 40; width: 392px; max-width: calc(100vw - 24px); display: flex; flex-direction: column; gap: 12px; padding: 16px 18px 18px; border-radius: 26px; box-shadow: 0 40px 80px -24px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.mx-pad-head { display: flex; align-items: center; justify-content: space-between; }
+.mx-pad-display { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 16px; background: var(--key); }
+.mx-pad-number { flex: 1; min-width: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; }
+.mx-pad-keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mx-key { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 62px; border: 0; border-radius: 31px; background: var(--key); font-size: 24px; font-weight: 500; line-height: 1; color: inherit; }
+.mx-key small { margin-top: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; color: var(--muted); }
+.mx-key:active { background: var(--accent-soft); }
+.mx-key:disabled { opacity: 0.4; cursor: not-allowed; }
+.mx-call, .mx-hang { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 54px; flex: 1; border: 0; border-radius: 27px; font-size: 16px; font-weight: 650; }
+.mx-call { background: var(--green-fill); color: #06260f; box-shadow: 0 10px 24px -8px var(--green); }
+:root[data-theme="day"] .mx-call { color: #fff; }
+.mx-hang { background: var(--red-fill); color: #fff; box-shadow: 0 10px 22px -8px var(--red); }
+.mx-call:disabled { opacity: 0.4; cursor: not-allowed; }
+.mx-pad-pill { position: fixed; right: 20px; top: 64px; z-index: 40; display: flex; align-items: center; gap: 12px; width: 300px; height: 60px; padding: 0 12px 0 16px; border-radius: 30px; }
+
+/* ---------- inline Add-call panel (Dialer call card) ---------- */
+.mx-addcall { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: var(--key); border: 1px solid var(--line2); }
+.mx-addcall-row { display: flex; gap: 8px; align-items: center; }
+.mx-addcall input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--accent-line); background: var(--card); color: var(--text); font: 600 15px var(--mx-font-mono); outline: 0; }
+.mx-addcall input:focus-visible { box-shadow: 0 0 0 3px var(--ring); }
+.mx-addcall .mx-call { flex: none; height: 40px; padding: 0 18px; font-size: 14px; box-shadow: none; }
+.mx-addcall-hint { font-size: 12px; color: var(--muted); }
+.mx-addcall-hint.is-error { color: var(--amber-t); }
+.mx-addcall-hint.is-ok { color: var(--green-t); }
+
+/* ---------- Worth a callback toggle (call card) ---------- */
+.mx-cbk { display: flex; align-items: center; gap: 10px; width: 100%; height: 40px; padding: 0 14px; border: 1px dashed var(--line2); border-radius: 12px; background: var(--key); font-size: 13px; font-weight: 600; text-align: left; color: inherit; }
+.mx-cbk .mx-cbk-sub { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--muted); }
+.mx-cbk[aria-pressed="true"] { border-style: solid; border-color: var(--amber); background: var(--amber-soft); color: var(--amber-t); }
+.mx-cbk[aria-pressed="true"] .mx-cbk-sub { color: var(--amber-t); }
+
+/* ---------- command palette ---------- */
+.mx-palette { width: 680px; max-width: calc(100vw - 24px); border-radius: 18px; overflow: hidden; box-shadow: 0 40px 90px -20px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.mx-palette-input { display: flex; align-items: center; gap: 12px; padding: 8px 18px; border-bottom: 1px solid var(--line); }
+.mx-palette-input input { flex: 1; min-width: 0; height: 44px; border: 0; outline: 0; background: transparent; font-size: 19px; font-weight: 500; color: var(--text); }
+.mx-palette-list { display: flex; flex-direction: column; gap: 2px; padding: 8px; max-height: 420px; overflow: auto; }
+.mx-palette-row { display: flex; align-items: center; gap: 12px; width: 100%; height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; text-align: left; color: inherit; }
+.mx-palette-row[aria-selected="true"] { background: var(--accent); color: #fff; }
+.mx-palette-foot { display: flex; align-items: center; gap: 16px; padding: 10px 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.mx-kbd { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 6px; background: var(--key); font-size: 11px; font-weight: 600; color: var(--muted); }
+
+/* ---------- Overview: goal ring ---------- */
+.mx-ring { position: relative; width: 76px; height: 76px; flex: none; }
+.mx-ring svg { transform: rotate(-90deg); }
+.mx-ring-track { fill: none; stroke: var(--line2); stroke-width: 7; }
+.mx-ring-fill { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray 150ms; }
+.mx-ring-label { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+
+/* ---------- Overview: stacked column chart ---------- */
+.mx-stack { display: flex; align-items: flex-end; gap: 10px; height: 220px; }
+.mx-stack-col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; opacity: 1; transition: opacity 150ms; }
+.mx-stack:hover .mx-stack-col:not(:hover) { opacity: 0.55; }
+.mx-seg-dialed { background: linear-gradient(180deg, var(--accent-t), var(--accent-fill)); border-radius: 0 0 3px 3px; }
+.mx-seg-connected { background: var(--teal); }
+.mx-seg-booked { background: var(--green); border-radius: 8px 8px 3px 3px; }
+.mx-legend-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--key); text-align: left; color: inherit; }
+.mx-legend-btn[aria-pressed="false"] { opacity: 0.5; }
+
+/* ---------- Overview: balance panel ---------- */
+.mx-balance-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--key); }
+.mx-balance-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 42px; gap: 10px; align-items: center; height: 28px; font-size: 13px; }
+.mx-balance-row > :last-child { text-align: right; color: var(--muted); }
+.mx-input-inline { height: 28px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--accent-line); background: var(--key); color: var(--text); font: 600 13px var(--mx-font-mono); outline: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mx-stack-col, .mx-ring-fill { transition: none; }
+}

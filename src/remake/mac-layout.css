@@ -1,0 +1,692 @@
+/* Layout layer for the supplied Mac design. Both entry points load this last. */
+:root {
+  --jade: var(--accent-t);
+  --red: var(--red-t);
+  --green-fill: #157c32;
+}
+:root[data-theme="night"] {
+  --jade: var(--accent-t);
+  --red: var(--red-t);
+  --green-fill: #157c32;
+}
+body {
+  font-family: var(--mx-font);
+  font-size: 13px;
+  background: var(--mx-backdrop);
+}
+.mono,
+.stat > strong {
+  font-family: var(--mx-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.workspace {
+  background: var(--canvas);
+}
+.sidebar {
+  width: 224px;
+  background: var(--forest);
+  backdrop-filter: blur(40px) saturate(170%);
+  border-right: 1px solid var(--line);
+  color: var(--sidebar-text);
+}
+.workspace-body {
+  margin-left: 224px;
+}
+.brand {
+  gap: 10px;
+  font-size: 14px;
+  padding: 18px 12px;
+}
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(150deg, var(--accent), var(--purple));
+  color: white;
+}
+.brand small {
+  font-size: 11px;
+}
+.sidebar nav a {
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+}
+.sidebar nav a.active {
+  background: var(--accent-fill);
+  color: white;
+}
+.sidebar nav a svg {
+  stroke-width: 1.8;
+  color: var(--accent-t);
+}
+.sidebar nav a.active svg {
+  color: white;
+}
+.sidebar-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 16px 10px 6px;
+  color: var(--sidebar-muted);
+}
+.sidebar nav small {
+  background: var(--key);
+  color: inherit;
+  font-family: var(--mx-font-mono);
+}
+.nav-collapsed .mx-nav-item > .sidebar-label {
+  display: none;
+}
+.topbar {
+  min-height: 52px;
+  border-bottom: 1px solid var(--line);
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.workspace-title {
+  font-size: 15px;
+  font-weight: 650;
+}
+.header-clock {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--key);
+  padding: 4px 10px;
+}
+.header-clock strong {
+  font-size: 12px;
+}
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.button {
+  border-radius: 9px;
+  min-height: 36px;
+  font-size: 13px;
+}
+.button.primary {
+  background: var(--accent-fill);
+  color: white;
+}
+.button.danger {
+  background: var(--red-fill);
+  color: white;
+}
+.field input,
+.field select,
+.field textarea {
+  background: var(--key);
+  border-color: var(--line2);
+  border-radius: 9px;
+}
+.modal {
+  border-radius: 18px;
+  background: var(--card);
+  max-height: 90dvh;
+  overflow: auto;
+}
+.stat > strong {
+  font-size: 30px;
+}
+.stat-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+.page-dialer .lead-workspace {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+.page-dialer .lead-panel {
+  overflow: auto;
+  container-type: normal;
+}
+.page-dialer .call-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 192px;
+  gap: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--raised);
+  padding: 18px;
+  margin: 12px;
+}
+.call-card > .keypad {
+  grid-column: 2;
+  grid-row: 1 / span 6;
+}
+.page-dialer .call-card .keypad {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  align-content: center;
+}
+.page-dialer .call-card .keypad button {
+  height: 58px;
+  min-height: 58px;
+  border-radius: 50%;
+  background: var(--key);
+  border: 0;
+}
+.call-card > .phone-tools {
+  grid-column: 1;
+}
+.phone-tools button {
+  background: var(--key);
+  border-radius: 26px;
+}
+.phone-number-entry input {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+.phone-call-button {
+  border-radius: 26px;
+  min-height: 48px;
+}
+.phone-call-button.primary {
+  background: var(--green-fill);
+}
+.call-card > .phone-device-row,
+.call-card > .mx-callback,
+.call-card > .mx-add-call {
+  grid-column: 1 / -1;
+}
+.mx-add-call {
+  padding: 14px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--card);
+}
+.mx-callback {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: transparent;
+  border: 1px dashed var(--line2);
+  border-radius: 10px;
+  padding: 12px;
+  color: var(--text);
+}
+.mx-callback small {
+  display: block;
+  color: var(--muted);
+}
+.mx-callback[aria-pressed="true"] {
+  background: var(--amber-soft);
+  color: var(--amber-t);
+  border-style: solid;
+}
+.guide-sections > div {
+  background: var(--key);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 8px;
+}
+.guide-step {
+  color: var(--accent-t);
+}
+.mx-command-input {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.mx-command-input input {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 0;
+  font-size: 18px;
+  color: var(--text);
+}
+[cmdk-list] {
+  max-height: 50vh;
+  overflow: auto;
+}
+[cmdk-group-heading] {
+  color: var(--muted);
+  padding: 14px 8px 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+[cmdk-item] {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+[cmdk-item][data-selected="true"] {
+  background: var(--accent-fill);
+  color: white;
+}
+[cmdk-item] small {
+  font-size: 11px;
+}
+.mx-floating {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  width: 392px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid var(--line2);
+  border-radius: 26px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(40px);
+}
+.mx-floating header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mx-floating .keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 60px);
+  justify-content: center;
+  gap: 12px;
+  margin: 18px 0;
+}
+.mx-floating .keypad button {
+  height: 60px;
+  border-radius: 50%;
+  background: var(--key);
+  border: 0;
+  font-size: 23px;
+}
+.mx-floating input[type="tel"] {
+  width: 100%;
+  min-width: 0;
+  font-size: 26px;
+  font-family: var(--mx-font-mono);
+  background: var(--key);
+  border: 1px solid var(--line);
+  padding: 12px;
+  border-radius: 12px;
+}
+.mx-floating .phone-call-button {
+  width: 100%;
+}
+.mx-floating-min {
+  width: 300px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mx-floating .field {
+  margin: 8px 0;
+}
+.mx-chart-controls,
+.mx-legend {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+}
+.mx-legend button {
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--key);
+  padding: 5px 10px;
+  color: var(--text);
+}
+.mx-legend button[aria-pressed="false"] {
+  opacity: 0.5;
+}
+.mx-stacks {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  height: 200px;
+}
+.mx-stack-day {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+.mx-stack {
+  height: 170px;
+  width: 80%;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+}
+.mx-stack span {
+  display: block;
+  width: 100%;
+}
+.mx-stack-day small {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.mx-stacks:has(.mx-stack-day:hover) .mx-stack-day:not(:hover) {
+  opacity: 0.5;
+}
+.mx-zone-button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  padding: 14px;
+  border-radius: 14px;
+}
+.mx-zone-button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--accent-t);
+}
+.mx-hours {
+  display: flex;
+  gap: 2px;
+  margin: 12px 0;
+}
+.mx-hours span {
+  height: 14px;
+  flex: 1;
+  background: var(--key);
+}
+.mx-hours .open {
+  background: var(--green-soft);
+}
+.mx-hours .now {
+  outline: 2px solid var(--accent-t);
+}
+.mx-goal {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+}
+.mx-goal svg {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+.mx-goal circle {
+  fill: none;
+  stroke: var(--key);
+  stroke-width: 7;
+}
+.mx-goal circle:last-child {
+  stroke: var(--accent-t);
+}
+.mx-balance {
+  padding: 18px;
+  margin-top: 16px;
+}
+.mx-balance dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+.mx-balance dd {
+  margin: 0;
+  font-family: var(--mx-font-mono);
+}
+:focus-visible {
+  outline: 2px solid var(--accent-t);
+  outline-offset: 3px;
+}
+@media (min-width: 1100px) {
+  .page-dialer .dialer-grid {
+    grid-template-columns: 296px minmax(0, 1fr) 300px;
+  }
+  .page-dialer .queue-collapsed .dialer-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+@media (max-width: 1100px) {
+  .page-dialer .call-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .call-card > .keypad {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .page-dialer .call-card .keypad {
+    grid-template-columns: repeat(3, 58px);
+    justify-content: center;
+  }
+  .mx-search-label {
+    display: none;
+  }
+}
+@media (max-width: 768px) {
+  .workspace-body,
+  .nav-collapsed .workspace-body {
+    margin-left: 0;
+  }
+  .sidebar {
+    width: 224px;
+  }
+  .topbar-tools {
+    flex-wrap: wrap;
+  }
+  .header-clock {
+    display: none;
+  }
+  .button {
+    min-height: 44px;
+  }
+  .mx-floating {
+    right: 12px;
+    bottom: 12px;
+  }
+  .mx-stack-day small {
+    font-size: 9px;
+  }
+  .mx-stacks {
+    gap: 3px;
+  }
+}
+
+/* Keep the phone controls reachable while the call guide scrolls independently. */
+@media (min-width: 769px) {
+  .page-dialer .lead-panel {
+    overflow: hidden;
+  }
+  .page-dialer .lead-workspace {
+    flex: 1;
+    min-height: 0;
+  }
+  .page-dialer .lead-context {
+    flex: 1;
+    min-height: 120px;
+    overflow: auto;
+  }
+  .page-dialer .call-card {
+    flex: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Final layout and contrast refinements from browser review. */
+.mx-dashboard-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.mx-dashboard-column > .panel {
+  height: auto;
+  flex: none;
+}
+.mx-dashboard-column .overview-followups {
+  max-height: 380px;
+}
+.mx-dashboard-column .mx-balance {
+  margin-top: 0;
+}
+.page-overview .dashboard-grid {
+  align-items: start;
+}
+.page-overview .activity-chart {
+  min-height: 440px;
+}
+.mx-goal {
+  min-height: 150px;
+  align-items: center;
+}
+[data-theme="night"] .button.primary {
+  color: white;
+  background: var(--accent-fill);
+}
+[data-theme="night"] .phone-call-button.primary,
+.phone-call-button.primary {
+  background: var(--green-fill);
+  color: white;
+}
+.page-dialer .lead-context {
+  flex: none;
+  min-height: 260px;
+}
+.page-dialer .call-guide {
+  flex: none;
+  min-height: 180px;
+  overflow: visible;
+}
+.page-dialer .guide-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  height: auto;
+  max-height: 240px;
+  overflow: auto;
+  flex: none;
+  gap: 8px;
+  padding: 0;
+}
+.page-dialer .guide-sections > div {
+  padding: 10px;
+  margin: 0;
+  min-height: 88px;
+  display: flex;
+  gap: 8px;
+}
+.page-dialer .guide-sections > div > div {
+  display: block;
+  min-width: 0;
+}
+.page-dialer .guide-sections p {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.5;
+  margin: 5px 0;
+  color: var(--muted);
+}
+.page-dialer .guide-sections strong::after {
+  content: none;
+}
+.page-dialer .lead-workspace {
+  flex: none;
+  min-height: 0;
+}
+@media (max-width: 768px) {
+  .page-dialer .guide-sections {
+    grid-template-columns: 1fr;
+  }
+  .mx-dashboard-column {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .page-dialer .lead-panel {
+    overflow: hidden;
+  }
+  .page-dialer .lead-workspace {
+    flex: 1;
+    min-height: 0;
+  }
+  .page-dialer .lead-context {
+    flex: 1;
+    min-height: 120px;
+    overflow: auto;
+  }
+  .page-dialer .call-card {
+    flex: none;
+  }
+}
+.mx-session-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.mx-session-summary > .panel {
+  padding: 18px;
+}
+.mx-session-summary strong {
+  display: block;
+  font-size: 26px;
+  font-family: var(--mx-font-mono);
+}
+.mx-session-mix {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--key);
+  margin-top: 14px;
+}
+.mx-session-legend {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 8px 0;
+}
+.page-sessions .sessions-grid {
+  display: flex;
+  flex-direction: column;
+}
+.page-sessions .session-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+.page-sessions .session-card h2 {
+  margin: 0;
+}
+.page-sessions .session-card-actions {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  justify-content: flex-end;
+}
+.page-sessions .session-card-top {
+  justify-content: flex-start;
+  gap: 12px;
+}
+@media (max-width: 768px) {
+  .mx-session-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .page-sessions .session-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .page-sessions .session-card-actions {
+    justify-content: flex-start;
+  }
+}

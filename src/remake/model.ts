@@ -1,3 +1,4 @@
+import { deriveLeadZone } from "../lib/timezones";
 import { dialNumber } from "./numbers";
 import { OUTCOMES, type Outcome } from "../lib/outcomes";
 import { bookingInstants } from "../lib/booking-time";
@@ -115,7 +116,17 @@ export type Session = {
   startedAt: number | null;
 };
 export type State = {
-  preferences: { workspaceName: string; displayName: string; email: string; microphone: string };
+  preferences: {
+    dailyGoal?: number;
+    bestFrom?: number;
+    bestTo?: number;
+    scenarioRate?: number;
+    scenarioMinutes?: number;
+    workspaceName: string;
+    displayName: string;
+    email: string;
+    microphone: string;
+  };
   leads: Lead[];
   selectedId: string;
   draft: Lead;
@@ -320,6 +331,7 @@ export type Action =
   | { type: "dial"; id: string; at?: string; phone?: string; phase?: "connecting" | "connected" }
   | {
       type: "manualDial";
+      zone?: string;
       id: string;
       leadId: string;
       phone: string;
@@ -605,13 +617,23 @@ export function reducer(state: State, action: Action): State {
         return state;
       const existing = state.leads.find((lead) => leadPhones(lead).includes(phone));
       if (!existing && state.leads.some((lead) => lead.id === action.leadId)) return state;
+      const inferred = phone.startsWith("+1")
+        ? deriveLeadZone(null, phone)
+        : { zone: "", source: "unknown" };
+      const manualZone =
+        action.zone && isValidZone(action.zone)
+          ? action.zone
+          : inferred.source !== "unknown"
+            ? inferred.zone
+            : "";
+      if (!existing && !manualZone) return state;
       const lead: Lead = existing ?? {
         ...emptyLead(),
         id: action.leadId,
         business: action.name.trim() || `Manual number ${phone}`,
         category: "Manual call",
         city: "Location not set",
-        zone: state.draft.zone,
+        zone: manualZone,
         phone,
         contact: action.name.trim(),
       };

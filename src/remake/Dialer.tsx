@@ -221,6 +221,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
         if (
           !(await perform({
             type: "manualDial",
+            zone: lead.zone,
             id: crypto.randomUUID(),
             leadId: crypto.randomUUID(),
             phone,
@@ -768,7 +769,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                         <div className="guide-sections">
                           {guide
                             .split(/\n\n/)
-                            .slice(0, 3)
+                            .slice(0, 4)
                             .map((part, index) => {
                               const [heading, ...lines] = part.split("\n");
                               return (
@@ -840,8 +841,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                   return;
                 event.preventDefault();
                 event.stopPropagation();
-                if (!state.call?.held && connected)
-                  void perform({ type: "digit", value: event.key });
+                if (!state.call?.held && active) void perform({ type: "digit", value: event.key });
               }}
             >
               <div className="phone-source" aria-label="Dialing source" hidden={active}>
@@ -923,8 +923,14 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                     <span className="call-status">
                       {active
                         ? state.call?.held
-                          ? "On hold · simulated"
-                          : "Simulated call connected"
+                          ? "On hold"
+                          : state.call?.phase === "connecting"
+                            ? "Connecting · ringback"
+                            : state.call?.participants.length
+                              ? "Conference connected"
+                              : live
+                                ? "Call connected"
+                                : "Simulated call connected"
                         : state.call
                           ? "Call ended"
                           : inlineManual
@@ -988,6 +994,124 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                   <span>Add call</span>
                 </button>
               </div>
+              {conference && (
+                <section className="mx-add-call" aria-label="Add a participant">
+                  <h3>Add a participant</h3>{" "}
+                  <Field
+                    id="participant-phone"
+                    label="Participant phone number"
+                    type="tel"
+                    required
+                    value={participantPhone}
+                    placeholder="+1 212 555 0198…"
+                    onChange={(e) => {
+                      setParticipantPhone(e.target.value);
+                      setParticipantError("");
+                    }}
+                  />
+                  <Field
+                    label="Participant name (optional)"
+                    value={participantName}
+                    placeholder="Owner, co-founder, decision maker…"
+                    onChange={(e) => setParticipantName(e.target.value)}
+                  />
+                  <p className="hint">
+                    {live
+                      ? "Add multiple decision makers by repeating Add participant. Each additional number is dialed into this business call."
+                      : "Add multiple contacts by repeating Add participant. Dialing and joining are simulated here."}
+                  </p>
+                  {participantError && (
+                    <p className="error" role="alert">
+                      {participantError}
+                    </p>
+                  )}
+                  <div className="modal-actions">
+                    <button type="button" className="button" onClick={() => setConference(false)}>
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="button primary"
+                      disabled={
+                        !connected ||
+                        working ||
+                        state.call?.held ||
+                        !runtime.capabilities.conference
+                      }
+                      onClick={async (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const phone = dialNumber(participantPhone);
+                        if (!phone) {
+                          setParticipantError(
+                            "Enter a valid participant number, including +country code for international numbers.",
+                          );
+                          document.getElementById("participant-phone")?.focus();
+                          return;
+                        }
+                        if (
+                          phone === state.call?.phone ||
+                          state.call?.participants.some((person) => person.phone === phone)
+                        ) {
+                          setParticipantError(
+                            "This number is already in the call. Enter another number.",
+                          );
+                          document.getElementById("participant-phone")?.focus();
+                          return;
+                        }
+                        const match = state.leads.find(
+                          (item) =>
+                            dialNumber(item.phone) === phone || dialNumber(item.direct) === phone,
+                        );
+                        if (suppressedNumber(phone)) {
+                          setParticipantError(
+                            "This number belongs to a do-not-call lead. Choose another number.",
+                          );
+                          return;
+                        }
+                        if (!connected || state.call?.held || !runtime.capabilities.conference) {
+                          setParticipantError(
+                            "Connect the call and resume it before adding a participant.",
+                          );
+                          return;
+                        }
+                        if (
+                          !(await perform({
+                            type: "participant",
+                            phone,
+                            name: participantName.trim() || match?.contact || phone,
+                          }))
+                        ) {
+                          setParticipantError(
+                            "The participant could not be added. Review calling status and try again.",
+                          );
+                          return;
+                        }
+                        setConference(false);
+                        setParticipantName("");
+                        setParticipantPhone("");
+                        setStatus(
+                          live
+                            ? "Participant dial requested. Their connection is confirmed by your calling provider."
+                            : "Participant connected to the simulated group call.",
+                        );
+                      }}
+                    >
+                      <Plus aria-hidden="true" size={16} />
+                      {working ? "Ringing · you stay on the call" : "Dial"}
+                    </button>
+                  </div>
+                  <p className="hint">
+                    {state.call?.held
+                      ? "Resume the call first."
+                      : !connected
+                        ? "Connect the first call before adding another."
+                        : !runtime.capabilities.conference
+                          ? "Conference calling is unavailable."
+                          : "The original caller stays connected."}
+                  </p>
+                </section>
+              )}
               <div
                 className="keypad"
                 role="group"
@@ -1001,10 +1125,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                       aria-label={active ? `Send digit ${digit}` : `Enter digit ${digit}`}
                       disabled={
                         active &&
-                        (!connected ||
-                          state.call?.held ||
-                          working ||
-                          (live && !runtime.capabilities.dtmf))
+                        (state.call?.held || working || (live && !runtime.capabilities.dtmf))
                       }
                       onClick={() => {
                         if (active) void perform({ type: "digit", value: digit });
@@ -1080,6 +1201,23 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                         : live
                           ? "Call"
                           : "Call · simulated"}
+                </button>
+              )}
+              {(active || state.call) && (
+                <button
+                  type="button"
+                  className="mx-callback"
+                  aria-pressed={lead.callback}
+                  onClick={() => dispatch({ type: "edit", patch: { callback: !lead.callback } })}
+                >
+                  <RotateCcw size={18} />
+                  <span>
+                    Worth a callback
+                    <small>
+                      {lead.callback ? "In Follow-ups · tap to undo" : "Add to Follow-ups"}
+                    </small>
+                  </span>
+                  {lead.callback && <Check size={18} />}
                 </button>
               )}
               <div className={`phone-card-footer ${active ? "is-active" : ""}`}>
@@ -1569,106 +1707,6 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 : live
                   ? "Dial number"
                   : "Dial number · simulated"}
-            </button>
-          </div>
-        </form>
-      </Modal>
-      <Modal
-        open={conference}
-        onClose={() => setConference(false)}
-        title="Add a participant"
-        description="Dial another decision maker or contact into this business call. The original caller stays connected."
-      >
-        <form
-          onSubmit={async (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            const phone = dialNumber(participantPhone);
-            if (!phone) {
-              setParticipantError(
-                "Enter a valid participant number, including +country code for international numbers.",
-              );
-              document.getElementById("participant-phone")?.focus();
-              return;
-            }
-            if (
-              phone === state.call?.phone ||
-              state.call?.participants.some((person) => person.phone === phone)
-            ) {
-              setParticipantError("This number is already in the call. Enter another number.");
-              document.getElementById("participant-phone")?.focus();
-              return;
-            }
-            const match = state.leads.find(
-              (item) => dialNumber(item.phone) === phone || dialNumber(item.direct) === phone,
-            );
-            if (suppressedNumber(phone)) {
-              setParticipantError(
-                "This number belongs to a do-not-call lead. Choose another number.",
-              );
-              return;
-            }
-            if (!connected || state.call?.held || !runtime.capabilities.conference) {
-              setParticipantError("Connect the call and resume it before adding a participant.");
-              return;
-            }
-            if (
-              !(await perform({
-                type: "participant",
-                phone,
-                name: participantName.trim() || match?.contact || phone,
-              }))
-            ) {
-              setParticipantError(
-                "The participant could not be added. Review calling status and try again.",
-              );
-              return;
-            }
-            setConference(false);
-            setParticipantName("");
-            setParticipantPhone("");
-            setStatus(
-              live
-                ? "Participant dial requested. Their connection is confirmed by your calling provider."
-                : "Participant connected to the simulated group call.",
-            );
-          }}
-        >
-          <Field
-            id="participant-phone"
-            label="Participant phone number"
-            type="tel"
-            required
-            value={participantPhone}
-            placeholder="+1 212 555 0198…"
-            onChange={(e) => {
-              setParticipantPhone(e.target.value);
-              setParticipantError("");
-            }}
-          />
-          <Field
-            label="Participant name (optional)"
-            value={participantName}
-            placeholder="Owner, co-founder, decision maker…"
-            onChange={(e) => setParticipantName(e.target.value)}
-          />
-          <p className="hint">
-            {live
-              ? "Add multiple decision makers by repeating Add participant. Each additional number is dialed into this business call."
-              : "Add multiple contacts by repeating Add participant. Dialing and joining are simulated here."}
-          </p>
-          {participantError && (
-            <p className="error" role="alert">
-              {participantError}
-            </p>
-          )}
-          <div className="modal-actions">
-            <button type="button" className="button" onClick={() => setConference(false)}>
-              Cancel
-            </button>
-            <button type="submit" className="button primary" disabled={!connected || working}>
-              <Plus aria-hidden="true" size={16} />
-              {working ? "Adding…" : live ? "Dial & add to call" : "Dial & add to call · simulated"}
             </button>
           </div>
         </form>

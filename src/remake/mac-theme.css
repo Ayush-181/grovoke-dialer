@@ -1,0 +1,113 @@
+/*
+ * Call Board — Mac-style theme overlay (variables only).
+ *
+ * Import AFTER remake.css and the other remake CSS files:
+ *   src/remake/main.tsx →  import "./mac-theme.css";
+ *
+ * It re-maps the existing remake tokens and adds the new ones the design uses.
+ * In this codebase: --jade = primary blue, --forest = sidebar background.
+ * Night (data-theme="night") is the design's default; Day is the light variant.
+ * No selectors other than :root, so nothing structural changes in Phase 1.
+ */
+
+:root {
+  /* ---- existing tokens, re-mapped (Day) ---- */
+  --canvas: #f4f4f8;
+  --card: #ffffff;
+  --raised: #f7f7fa;
+  --text: #1d1d1f;
+  --muted: #5f5f68;
+  --border: rgba(0, 0, 0, 0.1);
+  --jade: #007aff;
+  --jade-soft: rgba(0, 122, 255, 0.1);
+  --forest: rgba(246, 246, 250, 0.72); /* sidebar */
+  --sidebar-text: #1d1d1f;
+  --sidebar-muted: #5f5f68;
+  --blue: #007aff; /* chart: dialed */
+  --teal: #1fb6c1; /* chart: connected with owner */
+  --green: #28cd41;
+  --amber: #ff9500;
+  --coral: #ff6b5b;
+  --red: #ff3b30;
+  --red-soft: rgba(255, 59, 48, 0.12);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 14px 28px -16px rgba(0, 0, 0, 0.2);
+
+  /* ---- new tokens (Day) ---- */
+  --mx-backdrop:
+    radial-gradient(760px 520px at 4% 0%, rgba(0, 122, 255, 0.2), transparent 62%),
+    radial-gradient(620px 520px at 0% 100%, rgba(175, 82, 222, 0.16), transparent 62%), #ececf1;
+  --pane2: #f7f7fa;
+  --segon: #ffffff; /* selected segmented control */
+  --key: rgba(0, 0, 0, 0.05); /* keys, chips, quiet fills */
+  --line: rgba(0, 0, 0, 0.08);
+  --line2: rgba(0, 0, 0, 0.14);
+  --accent: #007aff;
+  --accent-t: #0062cc; /* accent text on surfaces */
+  --accent-fill: #0066d6; /* filled buttons, active nav */
+  --accent-soft: rgba(0, 122, 255, 0.1);
+  --accent-line: rgba(0, 122, 255, 0.5);
+  --ring: rgba(0, 122, 255, 0.2);
+  --green-t: #0e7a2e;
+  --green-soft: rgba(40, 205, 65, 0.15);
+  --green-fill: #1fa83a; /* Call button (white text) */
+  --red-fill: #d1271b; /* End call */
+  --red-t: #c9150b;
+  --amber-t: #8f5000;
+  --amber-soft: rgba(255, 149, 0, 0.16);
+  --purple: #af52de;
+  --mx-radius-panel: 14px;
+  --mx-radius-button: 9px;
+  --mx-radius-sheet: 18px;
+  --mx-font:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mx-font-mono: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+  --mx-traffic-lights: 0; /* 1 = show decorative macOS dots in the sidebar */
+  font-family: var(--mx-font);
+}
+
+:root[data-theme="night"] {
+  /* ---- existing tokens, re-mapped (Night) ---- */
+  --canvas: #1e1e22;
+  --card: #28282d;
+  --raised: #303036;
+  --text: #f5f5f7;
+  --muted: #ababb4;
+  --border: rgba(255, 255, 255, 0.12);
+  --jade: #0a84ff;
+  --jade-soft: rgba(10, 132, 255, 0.2);
+  --forest: rgba(38, 38, 48, 0.72); /* sidebar */
+  --sidebar-text: #f5f5f7;
+  --sidebar-muted: #ababb4;
+  --blue: #0a84ff;
+  --teal: #2cc4ce;
+  --green: #30d158;
+  --amber: #ff9f0a;
+  --coral: #ff7a6b;
+  --red: #ff453a;
+  --red-soft: rgba(255, 69, 58, 0.16);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 14px 32px -16px rgba(0, 0, 0, 0.7);
+
+  /* ---- new tokens (Night) ---- */
+  --mx-backdrop:
+    radial-gradient(760px 520px at 4% 0%, rgba(10, 132, 255, 0.34), transparent 62%),
+    radial-gradient(620px 520px at 0% 100%, rgba(191, 90, 242, 0.26), transparent 62%), #18181b;
+  --pane2: #303036;
+  --segon: #3d3d45;
+  --key: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.08);
+  --line2: rgba(255, 255, 255, 0.15);
+  --accent: #0a84ff;
+  --accent-t: #6cb0ff;
+  --accent-fill: #0a6ce0;
+  --accent-soft: rgba(10, 132, 255, 0.2);
+  --accent-line: rgba(10, 132, 255, 0.6);
+  --ring: rgba(10, 132, 255, 0.28);
+  --green-t: #5be384;
+  --green-soft: rgba(48, 209, 88, 0.16);
+  --green-fill: #30d158;
+  --red-fill: #d92d20;
+  --red-t: #ff8179;
+  --amber-t: #ffb840;
+  --amber-soft: rgba(255, 159, 10, 0.16);
+  --purple: #bf5af2;
+}

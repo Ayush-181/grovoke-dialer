@@ -11,7 +11,27 @@ fonts, oversized heroes, and promotional screenshots are not Grovoke's theme.
 The implementation in src/styles.css and src/components/AppShell.tsx is authoritative.
 See docs/vendor-notices for source licenses.
 
-## Existing tokens
+## Call Board remake (`src/remake/`)
+
+The owner-approved Mac redesign in `design/mac-redesign/CODEX_GUIDE.md` is the
+visual authority for the remake. The original app tokens below remain scoped to
+`src/styles.css` and do not override the remake. Behavior rules in AGENTS.md apply.
+
+The remake loads `mac-theme.css`, `mac-components.css`, then `mac-layout.css` after
+its existing styles in both standalone and authenticated entry points. Night is
+the default; the existing Day/Night preference is retained. Use charcoal surfaces,
+blue selection, 224px translucent sidebar, 52px utility header, 14px panels,
+9px buttons, 18px sheets and round phone keys. Use the system UI stack before
+Inter, and JetBrains Mono for numerical information. Accent text and filled
+buttons have separate tokens for contrast. Call and hang-up actions have white
+labels on dark green/red fills. Preserve all keyboard, microphone, DNC and
+timezone behavior; never start a call from search or navigation.
+
+Overview activity uses actual IST dates with 7D/14D selection and independently
+toggleable stacked series. Series overlap; stacked height is not a unique-call
+total. The owner series uses the existing decisionMaker metric.
+
+## Original application tokens
 Use semantic Tailwind utilities backed by the existing OKLCH variables:
 - background/card: white; surface: near #F7F8FA; raised surface: pale cool gray.
 - foreground: near #0A0A0A; muted-foreground: near #6B6F76.
