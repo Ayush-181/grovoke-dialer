@@ -1,0 +1,134 @@
+/*
+ * Call Board — Mac-style structural overrides  (Phase 2)
+ *
+ * Restyles shared pieces (sidebar, nav, panels, buttons, badges, keypad, focus)
+ * using ONLY existing class names from src/remake/remake.css. No TSX changes.
+ * Import AFTER remake.css and AFTER mac-theme.css (see CODEX_GUIDE.md).
+ *
+ * remake.css has several stacked override layers (the dialer rules alone appear at
+ * lines ~1462, ~3226 and ~4552), so selectors here repeat the more specific forms
+ * (.page-dialer .call-card .keypad ...) to win without !important.
+ *
+ * Not yet rendered in the real app. Review one block at a time in Day and Night.
+ */
+
+/* ---- Sidebar: frosted glass, tinted pill for the active item ---- */
+.sidebar {
+  background: var(--forest);
+  -webkit-backdrop-filter: var(--mac-glass-blur);
+  backdrop-filter: var(--mac-glass-blur);
+  border-right: 1px solid var(--mac-line);
+  color: var(--sidebar-text);
+}
+.brand-mark {
+  border: 0;
+  border-radius: var(--mac-radius-md);
+  background: linear-gradient(145deg, #4c9aff, #0a5bd6);
+  color: #fff;
+  box-shadow: 0 4px 12px -4px rgba(10, 132, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.sidebar-label {
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 600;
+}
+.sidebar nav {
+  gap: 1px;
+}
+.sidebar nav a {
+  padding: 7px 10px;
+  border-radius: var(--mac-radius-sm);
+  font-weight: 500;
+  color: var(--sidebar-text);
+}
+.sidebar nav a:hover {
+  background: var(--mac-line);
+}
+.sidebar nav a.active {
+  background: var(--jade);
+  box-shadow: none; /* removes the old 3px left marker */
+  color: #fff;
+  font-weight: 600;
+}
+.sidebar nav a.active small {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+[data-theme="night"] .sidebar nav a.active {
+  color: #06203f;
+}
+[data-theme="night"] .sidebar nav a.active small {
+  background: rgba(6, 32, 63, 0.18);
+  color: #06203f;
+}
+.sidebar nav small {
+  background: var(--mac-line);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+
+/* ---- Panels: larger radius, hairline border, soft layered shadow ---- */
+.panel {
+  border-radius: var(--mac-radius-lg);
+  border-color: var(--mac-line);
+  box-shadow: var(--shadow);
+}
+
+/* ---- Buttons ---- */
+.button {
+  border-radius: 9px;
+  border-color: var(--mac-line-strong);
+  background: var(--raised);
+  font-weight: 500;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.button:hover:not(:disabled),
+.icon-button:hover {
+  background: var(--raised);
+  border-color: var(--mac-line-strong);
+  filter: none; /* replaces brightness() hover */
+}
+.button.primary {
+  background: linear-gradient(180deg, var(--jade), var(--jade));
+  border-color: rgba(255, 255, 255, 0.12);
+  font-weight: 600;
+}
+.button.primary:hover:not(:disabled) {
+  filter: none;
+  opacity: 0.92;
+}
+
+/* ---- Badges: pill shape ---- */
+.badge {
+  border-radius: 12px;
+  padding: 3px 10px;
+}
+
+/* ---- Dialer keypad: round keys (grid is already 3 x 4) ---- */
+.page-dialer .call-card .keypad button {
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  min-height: 52px;
+  background: var(--raised);
+  border-color: transparent;
+}
+.page-dialer .call-card .keypad button:hover:not(:disabled) {
+  background: var(--jade-soft);
+}
+
+/* ---- Focus: keep a visible ring everywhere ---- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--jade);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .sidebar nav a {
+    transition: none;
+  }
+}

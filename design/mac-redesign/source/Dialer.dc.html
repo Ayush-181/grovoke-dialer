@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Call Board Dialer Interactive</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.dcm,.dcm *{box-sizing:border-box}
+.dcm{--rootbg:radial-gradient(760px 520px at 4% 0%,rgba(10,132,255,.34),transparent 62%),radial-gradient(620px 520px at 0% 100%,rgba(191,90,242,.26),transparent 62%),#18181B;--bg:#1E1E22;--pane:#28282D;--segon:#3D3D45;--side:rgba(38,38,48,.55);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--text:#F5F5F7;--sub:#ABABB4;--accent:#0A84FF;--accent-t:#6CB0FF;--accent-fill:#0A6CE0;--accent-soft:rgba(10,132,255,.2);--accent-line:rgba(10,132,255,.6);--ring:rgba(10,132,255,.28);--green:#30D158;--green-t:#5BE384;--green-soft:rgba(48,209,88,.16);--red:#FF453A;--red-fill:#D92D20;--red-t:#FF8179;--red-soft:rgba(255,69,58,.16);--amber:#FF9F0A;--amber-t:#FFB840;--amber-soft:rgba(255,159,10,.16);--key:rgba(255,255,255,.08);--shadow:0 1px 0 rgba(255,255,255,.05) inset,0 14px 32px -16px rgba(0,0,0,.7);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;color:var(--text);font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.dcm[data-theme="light"]{--rootbg:radial-gradient(760px 520px at 4% 0%,rgba(0,122,255,.2),transparent 62%),radial-gradient(620px 520px at 0% 100%,rgba(175,82,222,.16),transparent 62%),#ECECF1;--bg:#F4F4F8;--pane:#FFFFFF;--segon:#FFFFFF;--side:rgba(246,246,250,.6);--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.14);--text:#1D1D1F;--sub:#5F5F68;--accent:#007AFF;--accent-t:#0062CC;--accent-fill:#0066D6;--accent-soft:rgba(0,122,255,.1);--accent-line:rgba(0,122,255,.5);--ring:rgba(0,122,255,.2);--green:#28CD41;--green-t:#0E7A2E;--green-soft:rgba(40,205,65,.15);--red:#FF3B30;--red-fill:#D1271B;--red-t:#C9150B;--red-soft:rgba(255,59,48,.12);--amber:#FF9500;--amber-t:#8F5000;--amber-soft:rgba(255,149,0,.16);--key:rgba(0,0,0,.05);--shadow:0 1px 2px rgba(0,0,0,.05),0 14px 28px -16px rgba(0,0,0,.2)}
+.dcm button{font:inherit;color:inherit;cursor:pointer}
+.dcm button:disabled{opacity:.4;cursor:not-allowed}
+.mono{font-family:"SF Mono","JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tl{display:block;width:12px;height:12px;border-radius:50%}
+.eye{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
+.sec{font-size:11px;font-weight:600;color:var(--sub);padding:14px 10px 4px}
+.nav-i{display:flex;align-items:center;gap:10px;width:100%;height:30px;padding:0 10px;border:0;border-radius:8px;background:transparent;font-size:13px;font-weight:500;text-align:left}
+.nav-i .i{stroke:var(--accent-t)}
+.nav-i .cnt{margin-left:auto;font-size:12px;color:var(--sub)}
+.nav-i.on{background:var(--accent-fill);color:#fff}
+.nav-i.on .i{stroke:#fff}
+.nav-i.on .cnt{color:rgba(255,255,255,.88)}
+.panel{background:var(--pane);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.pill{display:flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:14px;background:var(--key);font-size:12px;color:var(--sub);white-space:nowrap}
+.pill b{color:var(--text);font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:9px;border:1px solid var(--line2);background:var(--key);font-size:13px;font-weight:500;white-space:nowrap}
+.btn.p{background:linear-gradient(180deg,var(--accent),var(--accent-fill));border-color:rgba(255,255,255,.12);color:#fff;font-weight:600;box-shadow:0 8px 18px -8px var(--accent)}
+.btn.sm{height:30px;padding:0 12px;font-size:12px}
+.seg{display:flex;gap:2px;padding:2px;border-radius:9px;background:var(--key)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:500;color:var(--sub);flex:1}
+.seg button.on{background:var(--segon);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.in{width:100%;height:32px;padding:0 10px 0 32px;border-radius:8px;border:1px solid var(--line2);background:var(--key);color:var(--text);font:13px inherit}
+.in::placeholder{color:var(--sub)}
+.mb{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:13px;background:var(--key);font-size:12px;font-weight:500;color:var(--sub);white-space:nowrap}
+.mb.on{background:var(--green-soft);color:var(--green-t)}
+.mb.on::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green)}
+.mb.br{background:var(--accent-soft);color:var(--accent-t)}
+.mb.am{background:var(--amber-soft);color:var(--amber-t)}
+.mb.bad{background:var(--red-soft);color:var(--red-t)}
+.st{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.gd{background:var(--green)}.ad{background:var(--amber)}.nd{background:var(--sub)}.bd{background:var(--accent)}.rd{background:var(--red)}
+.av{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;font-weight:600;font-size:13px;color:#fff;flex:none}
+.c0{background:linear-gradient(135deg,#5E5CE6,#4140BF)}
+.c1{background:linear-gradient(135deg,#0B8794,#07626B)}
+.c2{background:linear-gradient(135deg,#C25A00,#8F4000)}
+.c3{background:linear-gradient(135deg,#D6336C,#A3194F)}
+.c4{background:linear-gradient(135deg,#167A3A,#0E5A29)}
+.c5{background:linear-gradient(135deg,#6B6F80,#4B4E5C)}
+.qi{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:8px 10px;border:0;border-radius:10px;background:transparent;text-align:left}
+.qi.sel{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent-line)}
+.qn{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qs{display:block;font-size:12px;color:var(--sub)}
+.qm{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--sub)}
+.ring{display:block;position:absolute;border-radius:50%;border:1.5px solid var(--accent)}
+.r1{inset:-8px;opacity:.5}.r2{inset:-18px;opacity:.22}
+@media (prefers-reduced-motion:no-preference){.rp{animation:rp 1.4s ease-out infinite}.wv i{transform-origin:center;animation:wvp 1.3s ease-in-out infinite}}
+@keyframes rp{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.25);opacity:0}}
+@keyframes wvp{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+.wv{display:flex;align-items:center;gap:3px;height:44px;flex:1;min-width:0}
+.wv i{display:block;width:3px;border-radius:2px;background:var(--accent)}
+.cb{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;border:0;background:var(--key)}
+.cb .i{width:20px;height:20px}
+.cb.act{background:var(--accent-fill);color:#fff}
+.cb.rec{background:var(--red-soft);color:var(--red-t)}
+.cl{display:block;margin-top:6px;font-size:11px;color:var(--sub);text-align:center}
+.hang{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;flex:1;border:0;border-radius:24px;background:var(--red-fill);color:#fff;font-size:15px;font-weight:600;box-shadow:0 10px 22px -8px var(--red)}
+.call{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:52px;flex:1;border:0;border-radius:26px;background:var(--green);color:#06260F;font-size:16px;font-weight:650;box-shadow:0 10px 24px -8px var(--green)}
+.dcm[data-theme="light"] .call{color:#fff;background:#1FA83A}
+.mic{display:flex;align-items:center;gap:8px;height:44px;flex:1;min-width:0;padding:0 12px;border-radius:22px;border:1px solid var(--line2);background:var(--key);font-size:12px;font-weight:500;text-align:left}
+.mic span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:60px;border:0;border-radius:30px;background:var(--key);font-size:23px;font-weight:500;line-height:1}
+.k small{margin-top:3px;font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--sub)}
+.k:active{background:var(--accent-soft)}
+.stp{padding:14px 16px;border-radius:14px;background:var(--pane);border:1px solid var(--line);box-shadow:var(--shadow)}
+.sl{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-t)}
+.sn{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);font-size:11px;letter-spacing:0}
+.og{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.gh{grid-column:1/-1;margin-top:4px}
+.oc{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line2);background:var(--key);font-size:13px;font-weight:500;text-align:left;white-space:nowrap}
+.oc.sel{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-t);box-shadow:0 0 0 3px var(--ring)}
+.oc.need{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.ta{width:100%;min-height:64px;padding:10px 12px;border-radius:10px;border:1px solid var(--line2);background:var(--key);color:var(--text);font:13px/1.45 inherit;resize:none}
+.kbd{font:500 11px "SF Mono","JetBrains Mono",monospace;padding:2px 6px;border-radius:5px;background:var(--key);border:1px solid var(--line2);color:var(--sub)}
+.sheet{width:620px;border-radius:18px;background:var(--pane);border:1px solid var(--line2);box-shadow:0 40px 80px -20px rgba(0,0,0,.7);padding:22px;display:flex;flex-direction:column;gap:16px}
+.dchip{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;padding:9px 0;border-radius:12px;border:1px solid var(--line2);background:var(--key)}
+.dchip small{font-size:11px;font-weight:600;color:var(--sub)}
+.dchip b{font-size:15px}
+.dchip.sel{background:var(--accent-fill);border-color:transparent;color:#fff}
+.dchip.sel small{color:rgba(255,255,255,.85)}
+.slot{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 10px;border-radius:10px;border:1px solid var(--line2);background:var(--key);text-align:left}
+.slot b{font-size:14px;font-weight:600}
+.slot small{font-size:11px;color:var(--sub)}
+.slot.sel{background:var(--accent-soft);border-color:var(--accent-line);box-shadow:0 0 0 3px var(--ring)}
+.slot.sel b{color:var(--accent-t)}
+.fin2{flex:1;min-width:0;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--accent-line);background:var(--pane);color:var(--text);font:600 15px "SF Mono","JetBrains Mono",monospace;outline:0}
+.fin2::placeholder{color:var(--sub);font-weight:400}
+.xb{border:0;background:transparent;padding:0 0 0 6px;font-size:14px;line-height:1;color:inherit;cursor:pointer}
+.wcb{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:38px;border-radius:19px;border:1px solid var(--amber);background:var(--amber-soft);color:var(--amber-t);font-size:13px;font-weight:650;letter-spacing:.01em}
+.wcb.on{background:var(--amber);border-color:transparent;color:#2A1800}
+.wcb .i{width:15px;height:15px}
+</style>
+</helmet>
+<div class="dcm" data-theme="{{theme}}" style="position: relative; width: 1600px; height: 1000px; display: flex; border-radius: 12px; overflow: hidden; background: var(--rootbg); border: 1px solid var(--line2)">
+
+<aside style="width: 224px; flex: none; display: flex; flex-direction: column; padding: 0 12px 14px; background: var(--side); backdrop-filter: blur(40px) saturate(170%); -webkit-backdrop-filter: blur(40px) saturate(170%); border-right: 1px solid var(--line)">
+<div style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 8px">
+<i class="tl" style="background: #FF5F57"></i><i class="tl" style="background: #FEBC2E"></i><i class="tl" style="background: #28C840"></i>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 8px 12px">
+<div style="width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(145deg, #4C9AFF, #0A5BD6); display: grid; place-items: center; box-shadow: 0 4px 12px -4px rgba(10,132,255,.7), inset 0 1px 0 rgba(255,255,255,.35)">
+<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+</div>
+<div><div style="font-weight: 700; font-size: 14px; letter-spacing: .01em">Call Board</div><div style="font-size: 11px; color: var(--sub)">A better rhythm for sales</div></div>
+</div>
+<nav aria-label="Main navigation" style="display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="14">
+<sc-if value="{{n.isH}}" hint-placeholder-val="{{ false }}"><div class="sec">{{n.label}}</div></sc-if>
+<sc-if value="{{n.isI}}" hint-placeholder-val="{{ true }}">
+<button class="nav-i {{n.cls}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.d}}"></path></svg><span>{{n.label}}</span><sc-if value="{{n.hasCount}}" hint-placeholder-val="{{ false }}"><span class="cnt mono">{{n.count}}</span></sc-if></button>
+</sc-if>
+</sc-for>
+</nav>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px">
+<div style="padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--key); font-size: 12px; color: var(--sub)">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--text); margin-bottom: 2px"><i class="st gd"></i>LOCAL WORKSPACE</div>
+Saved in this browser. Calls and invitations are simulated.
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 6px"><div class="av c0" style="width: 32px; height: 32px">A</div><div><div style="font-weight: 600">Ash</div><div style="font-size: 12px; color: var(--sub)">Grovoke</div></div></div>
+</div>
+</aside>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg)">
+<header style="height: 52px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line)">
+<div style="font-size: 15px; font-weight: 650">Dialer</div>
+<span class="mb {{phaseCls}}">{{phaseLabel}}</span>
+<div style="flex: 1"></div>
+<span class="pill">Dials <b class="mono">{{dials}}</b></span>
+<span class="pill">Connected <b class="mono">6</b></span>
+<span class="pill">Booked <b class="mono">{{bookedCount}}</b></span>
+<span class="pill mono"><b>00:42:18</b></span>
+<button class="btn sm"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"></path></svg>Stop session</button>
+</header>
+
+<div style="flex: 1; min-height: 0; display: flex">
+
+<section style="width: 296px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--line)">
+<div style="padding: 18px 16px 12px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 15px; font-weight: 650">Calling queue</h2><span class="mb mono">48</span></div>
+<button class="btn" style="justify-content: space-between; width: 100%"><span>HVAC · Austin, TX</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<div class="seg"><button class="on">All</button><button>New</button><button>Callbacks</button></div>
+</div>
+<div style="padding: 4px 10px; overflow: hidden; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{queue}}" as="q" hint-placeholder-count="8">
+<button class="qi {{q.cls}}" onClick="{{q.pick}}">
+<span class="av {{q.av}}">{{q.ini}}</span>
+<span style="min-width: 0"><span class="qn">{{q.name}}</span><span class="qs">{{q.city}}</span></span>
+<span class="qm"><i class="st {{q.dot}}"></i>{{q.meta}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<main style="flex: 1; min-width: 0; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px">
+<div style="min-width: 0">
+<div class="eye">Lead {{leadNo}} of 48 · {{leadState}}</div>
+<h1 style="margin: 4px 0 10px; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -.02em">{{lead.name}}</h1>
+<div style="display: flex; gap: 6px; flex-wrap: wrap"><span class="mb">{{lead.city}} {{lead.zip}}</span><span class="mb br">Main number</span><span class="mb on">Not on DNC</span></div>
+</div>
+<div class="panel" style="display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-radius: 12px; flex: none">
+<div><div class="eye" style="letter-spacing: .06em">Lead · {{leadAbbr}}</div><div class="mono" style="font-size: 18px; font-weight: 600">{{leadClock}}</div></div>
+<svg class="i" viewBox="0 0 24 24" style="color: var(--sub)" aria-hidden="true"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+<div><div class="eye" style="letter-spacing: .06em">Home · IST</div><div class="mono" style="font-size: 18px; font-weight: 600">{{homeClock}}</div></div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 14px; padding: 11px 16px; border-radius: 12px; background: var(--accent-soft); border: 1px solid var(--accent-line)">
+<div class="av {{lead.av}}" style="width: 40px; height: 40px">{{askIni}}</div>
+<div style="flex: 1; min-width: 0"><div class="eye" style="color: var(--accent-t)">Ask for</div><div style="font-size: 15px; font-weight: 650">{{lead.ask}} <span style="font-size: 12px; font-weight: 400; color: var(--sub)">{{lead.role}} · Direct line</span></div></div>
+<button class="btn sm"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy number</button>
+<button class="btn sm" style="border-color: transparent; background: transparent; color: var(--sub)">Manage contacts &amp; fields</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 15px; font-weight: 650">Call guide</h2><div class="seg" style="width: 240px"><button class="on">Script</button><button>Notes</button><button>History</button></div></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+<div class="stp"><div class="sl"><span class="sn mono">{{s.n}}</span>{{s.t}}</div><p style="margin: 6px 0 0; font-size: 13px; line-height: 1.45">{{s.b}}</p></div>
+</sc-for>
+</div>
+</div>
+
+<div class="panel" style="display: grid; grid-template-columns: {{cardCols}}; gap: 26px; padding: 22px; border-radius: 18px; margin-top: auto">
+<div style="display: flex; flex-direction: column; justify-content: space-between; gap: 14px; min-width: 0">
+
+<sc-if value="{{isIdle}}" hint-placeholder-val="{{ false }}">
+<div>
+<div class="eye" style="display: flex; align-items: center; gap: 8px"><i class="st nd"></i>Ready to call</div>
+<div class="mono" style="font-size: 28px; font-weight: 600; letter-spacing: -.02em; margin-top: 6px">{{lead.phone}}</div>
+<div style="font-size: 13px; color: var(--sub); margin-top: 2px">{{lead.ask}} · {{lead.city}}</div>
+</div>
+<div style="display: flex; gap: 10px; align-items: center">
+<button class="mic" aria-label="Microphone: MacBook Pro Microphone"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"></path></svg><span>MacBook Pro Microphone</span></button>
+<button class="call" onClick="{{start}}" style="flex: 1.3"><svg class="i" viewBox="0 0 24 24" style="width: 20px; height: 20px" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>Call {{firstName}}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isConn}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 20px">
+<div style="position: relative; width: 64px; height: 64px; flex: none; margin: 8px">
+<i class="ring rp" style="inset: 0"></i><i class="ring rp" style="inset: 0; animation-delay: .7s"></i>
+<div class="av c0" style="position: relative; width: 64px; height: 64px; background: var(--accent-fill)"><svg class="i" viewBox="0 0 24 24" style="width: 26px; height: 26px; color: #fff" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div>
+</div>
+<div><div class="eye" style="color: var(--amber-t)">Connecting · ringback</div><div class="mono" style="font-size: 26px; font-weight: 600; margin-top: 4px">{{lead.phone}}</div></div>
+</div>
+<div style="display: flex; gap: 10px"><button class="hang" onClick="{{hang}}">Cancel call</button></div>
+</sc-if>
+
+<sc-if value="{{isLiveish}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px">
+<div style="min-width: 0">
+<div class="eye" style="color: var(--green-t); display: flex; align-items: center; gap: 8px"><i class="st gd"></i>{{liveLabel}}</div>
+<div class="mono" style="font-size: 24px; font-weight: 600; letter-spacing: -.02em; margin-top: 4px">{{lead.phone}}</div>
+</div>
+<div class="mono" style="font-size: 40px; font-weight: 600; letter-spacing: -.03em; line-height: 1">{{clock}}</div>
+</div>
+<sc-if value="{{isConf}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><span class="mb on">You</span><span class="mb on">{{lead.ask}}</span><sc-for list="{{parts}}" as="p" hint-placeholder-count="1"><span class="mb br">{{p.label}}<button class="xb" aria-label="Drop from call" onClick="{{p.drop}}">×</button></span></sc-for></div>
+</sc-if>
+<sc-if value="{{showWave}}" hint-placeholder-val="{{ true }}">
+<div class="wv" aria-hidden="true"><sc-for list="{{bars}}" as="b" hint-placeholder-count="30"><i style="height: {{b.h}}px; animation-delay: {{b.delay}}"></i></sc-for></div>
+</sc-if>
+<sc-if value="{{addOpen}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: var(--key); border: 1px solid var(--line2)">
+<sc-if value="{{addIdle}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 8px; align-items: center"><input class="fin2" placeholder="Number to add, e.g. +1 (737) 555-0166" value="{{addIn}}" onChange="{{onAddIn}}" aria-label="Number to add to the call"><button class="call" style="flex: none; height: 40px; padding: 0 18px; font-size: 14px; box-shadow: none" disabled="{{addBad}}" onClick="{{addDial}}">Dial</button><button class="btn sm" onClick="{{closeAdd}}" aria-label="Close add call">Close</button></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px"><span style="font-size: 12px; color: {{addMsgColor}}">{{addMsg}}</span><span style="display: flex; gap: 6px"><sc-for list="{{quick}}" as="q" hint-placeholder-count="2"><button class="mb" onClick="{{q.pick}}">{{q.label}}</button></sc-for></span></div>
+</sc-if>
+<sc-if value="{{addRinging}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 12px"><i class="st ad rp" style="width: 10px; height: 10px"></i><div style="flex: 1; min-width: 0"><div class="eye" style="color: var(--amber-t)">Ringing · stays on the call with {{lead.ask}}</div><div class="mono" style="font-size: 16px; font-weight: 600">{{addPending}}</div></div><button class="btn sm" onClick="{{cancelAdd}}">Cancel</button></div>
+</sc-if>
+</div>
+</sc-if>
+<div style="display: flex; justify-content: space-between">
+<sc-for list="{{ctrls}}" as="c" hint-placeholder-count="5">
+<div><button class="cb {{c.cls}}" aria-label="{{c.label}}" aria-pressed="{{c.on}}" onClick="{{c.tap}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{c.d}}"></path></svg></button><span class="cl">{{c.label}}</span></div>
+</sc-for>
+</div>
+<button class="wcb {{wcbCls}}" onClick="{{toggleWcb}}" aria-pressed="{{wcbOn}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{wcbIcon}}"></path></svg>{{wcbLabel}}</button>
+<div style="display: flex; gap: 10px">
+<button class="mic" aria-label="Microphone: MacBook Pro Microphone"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"></path></svg><span>MacBook Pro Microphone</span></button>
+<button class="hang" onClick="{{hang}}"><svg class="i" viewBox="0 0 24 24" style="width: 20px; height: 20px; transform: rotate(135deg)" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>End call</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isWrap}}" hint-placeholder-val="{{ false }}">
+<div>
+<div class="eye" style="color: var(--amber-t); display: flex; align-items: center; gap: 8px"><i class="st ad"></i>Call ended · wrap-up</div>
+<div style="display: flex; align-items: baseline; gap: 14px; margin-top: 6px"><div class="mono" style="font-size: 40px; font-weight: 600; letter-spacing: -.03em; line-height: 1">{{clock}}</div><div style="font-size: 13px; color: var(--sub)">with {{lead.ask}} · recording saved</div></div>
+</div>
+<button class="wcb {{wcbCls}}" onClick="{{toggleWcb}}" aria-pressed="{{wcbOn}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{wcbIcon}}"></path></svg>{{wcbLabel}}</button>
+<div style="padding: 12px 14px; border-radius: 12px; background: {{wrapBg}}; font-size: 13px">{{wrapMsg}}</div>
+<div style="display: flex; gap: 10px"><button class="btn" style="height: 48px; border-radius: 24px; flex: 1" onClick="{{start}}">Redial</button><button class="btn p" style="height: 48px; border-radius: 24px; flex: 1.6" onClick="{{saveNext}}">Save &amp; next lead</button></div>
+</sc-if>
+</div>
+
+<sc-if value="{{showPad}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span class="eye">Keypad</span><span class="mono" style="font-size: 14px; min-height: 20px">{{dtmfText}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{keys}}" as="k" hint-placeholder-count="12"><button class="k" disabled="{{padOff}}" onClick="{{k.tap}}"><span>{{k.n}}</span><small>{{k.l}}</small></button></sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</main>
+
+<aside style="width: 344px; flex: none; border-left: 1px solid var(--line); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 12px; background: var(--pane)">
+<div><h2 style="margin: 0; font-size: 15px; font-weight: 650">Call outcome</h2><div style="font-size: 12px; color: {{needColor}}; margin-top: 2px">{{outHint}}</div></div>
+<div class="og">
+<sc-for list="{{outcomes}}" as="o" hint-placeholder-count="12">
+<sc-if value="{{o.isH}}" hint-placeholder-val="{{ false }}"><div class="eye gh">{{o.label}}</div></sc-if>
+<sc-if value="{{o.isC}}" hint-placeholder-val="{{ true }}"><button class="oc {{o.cls}}" aria-pressed="{{o.on}}" onClick="{{o.tap}}"><i class="st {{o.dot}}"></i>{{o.label}}</button></sc-if>
+</sc-for>
+</div>
+<div>
+<div class="eye" style="margin-bottom: 6px">Conversation milestones</div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{milestones}}" as="m" hint-placeholder-count="4"><button class="mb {{m.cls}}" aria-pressed="{{m.on}}" onClick="{{m.tap}}" style="border: 0">{{m.t}}</button></sc-for>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; background: {{meetBg}}">
+<svg class="i" viewBox="0 0 24 24" style="color: {{meetColor}}" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18"></path></svg>
+<div><div style="font-weight: 600">{{meetTitle}}</div><div class="mono" style="font-size: 12px; color: {{meetColor}}">{{meetSub}}</div></div>
+</div>
+<div><div class="eye" style="margin-bottom: 6px">Conversation notes</div><textarea class="ta" aria-label="Conversation notes">Owner says they miss ~10 calls/week after hours.</textarea></div>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+<div style="display: grid; grid-template-columns: auto auto 1fr; gap: 8px">
+<button class="btn" onClick="{{prev}}">Previous</button>
+<button class="btn" onClick="{{save}}">Save</button>
+<button class="btn p" onClick="{{saveNext}}">Save &amp; next<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+</div>
+<button class="btn" style="width: 100%" onClick="{{openBook}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18"></path></svg>Book meeting <span class="kbd">Alt B</span></button>
+</div>
+</aside>
+
+</div>
+</div>
+
+<sc-if value="{{showBook}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 20; background: rgba(0,0,0,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: flex-start; padding-top: 44px">
+<div class="sheet" role="dialog" aria-label="Book a meeting">
+<div style="display: flex; justify-content: space-between; align-items: flex-start">
+<div><h2 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em">Book a meeting</h2><div style="font-size: 13px; color: var(--sub); margin-top: 2px">{{lead.name}} · {{lead.ask}}</div></div>
+<button class="btn sm" aria-label="Close" onClick="{{closeBook}}" style="width: 30px; padding: 0"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: var(--key)">
+<svg class="i" viewBox="0 0 24 24" style="color: var(--accent-t)" aria-hidden="true"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2"></path></svg>
+<div style="font-size: 13px">On this date Austin is <b class="mono">{{gapText}}</b> behind IST <span style="color: var(--sub)">({{leadAbbrDay}} vs IST)</span></div>
+</div>
+<sc-if value="{{dstWarn}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 10px; padding: 10px 14px; border-radius: 12px; background: var(--amber-soft); color: var(--amber-t); font-size: 13px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"></path></svg><span>{{dstText}}</span></div>
+</sc-if>
+<div style="display: flex; gap: 8px">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="5"><button class="dchip {{d.cls}}" aria-pressed="{{d.on}}" onClick="{{d.tap}}"><small>{{d.w}}</small><b class="mono">{{d.n}}</b></button></sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{slots}}" as="s" hint-placeholder-count="16"><button class="slot {{s.cls}}" disabled="{{s.dis}}" aria-pressed="{{s.on}}" onClick="{{s.tap}}"><b class="mono">{{s.local}}</b><small class="mono">{{s.ist}} IST</small></button></sc-for>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+<div style="padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); border: 1px solid var(--accent-line)"><div class="eye" style="color: var(--accent-t)">Say this out loud</div><div style="font-size: 16px; font-weight: 650; margin-top: 2px">{{sayText}}</div></div>
+<div style="padding: 12px 14px; border-radius: 12px; background: var(--key)"><div class="eye">Your clock (IST)</div><div style="font-size: 16px; font-weight: 650; margin-top: 2px">{{istText}}</div></div>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 8px"><button class="btn" onClick="{{closeBook}}">Cancel</button><button class="btn p" disabled="{{noSlot}}" onClick="{{confirmBook}}">Confirm booking</button></div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"dark","options":["dark","light"]},"$preview":{"width":1600,"height":1000}}'>
+class Component extends DCLogic {
+  st() { return this.state || {}; }
+  componentWillUnmount() { this.clear(); }
+  clear() {
+    if (this._int) { clearInterval(this._int); this._int = null; }
+    if (this._to) { clearTimeout(this._to); this._to = null; }
+    if (this._to2) { clearTimeout(this._to2); this._to2 = null; }
+  }
+  offsetMin(tz, ms) {
+    const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const p = {};
+    f.formatToParts(new Date(ms)).forEach((x) => { p[x.type] = x.value; });
+    const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+    return Math.round((asUtc - Math.floor(ms / 1000) * 1000) / 60000);
+  }
+  zonedToUtc(y, mo, d, h, mi, tz) {
+    const wall = Date.UTC(y, mo - 1, d, h, mi);
+    let g = wall;
+    for (let i = 0; i < 3; i++) g = wall - this.offsetMin(tz, g) * 60000;
+    return g;
+  }
+  fmt(ms, tz, o) { return new Intl.DateTimeFormat('en-US', Object.assign({ timeZone: tz }, o)).format(new Date(ms)); }
+  abbr(ms, tz) {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' }).formatToParts(new Date(ms));
+    const z = parts.find((x) => x.type === 'timeZoneName');
+    return z ? z.value : '';
+  }
+  mmss(s) { const m = Math.floor(s / 60); const r = s % 60; return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0'); }
+  renderVals() {
+    const s = this.st();
+    const TZ = 'America/Chicago', HOME = 'Asia/Kolkata';
+    const NOW = Date.UTC(2026, 9, 30, 15, 25);
+    const I = {
+      dash: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
+      users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+      phone: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z",
+      list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+      act: "M22 12h-4l-3 9L9 3l-3 9H2",
+      cal: "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18",
+      clock: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2",
+      redo: "M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10",
+      file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8",
+      up: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
+      set: "M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6",
+      mic: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8",
+      pause: "M6 4h4v16H6zM14 4h4v16h-4z",
+      spk: "M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07",
+      addu: "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6",
+      rec: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
+    };
+    const H = (label) => ({ isH: true, isI: false, label });
+    const N = (label, d, extra) => Object.assign({ isH: false, isI: true, label, d, cls: '', hasCount: false, count: '' }, extra || {});
+    const nav = [
+      H('Workspace'), N('Overview', I.dash), N('Leads', I.users, { hasCount: true, count: '248' }),
+      N('Dialer', I.phone, { cls: 'on' }), N('Sessions', I.list), N('Activity', I.act),
+      H('Schedule'), N('Bookings', I.cal), N('Time Zones', I.clock), N('Follow-ups', I.redo, { hasCount: true, count: String(8 + Object.keys(s.wcb || {}).filter((k) => (s.wcb || {})[k]).length) }),
+      H('Setup'), N('Configuration', I.file), N('Data', I.up), N('Settings', I.set)
+    ];
+
+    const L = [
+      { ini: 'CC', name: 'Capital City Air', city: 'Austin, TX', zip: '78701', phone: '+1 (512) 555-0133', ask: 'Janet Cole', role: 'Owner', av: 'c1' },
+      { ini: 'HC', name: 'Hill Country Comfort', city: 'Round Rock, TX', zip: '78664', phone: '+1 (512) 555-0127', ask: 'Tom Reyes', role: 'Owner', av: 'c5' },
+      { ini: 'LS', name: 'Lone Star Heating & Air', city: 'Austin, TX', zip: '78704', phone: '+1 (512) 555-0148', ask: 'Mike Dawson', role: 'Owner', av: 'c0' },
+      { ini: 'BM', name: 'Bluebonnet Mechanical', city: 'Cedar Park, TX', zip: '78613', phone: '+1 (512) 555-0172', ask: 'Sara Ortiz', role: 'General manager', av: 'c2' },
+      { ini: 'ZC', name: 'Zilker Cooling Co.', city: 'Austin, TX', zip: '78702', phone: '+1 (512) 555-0119', ask: 'Chris Nolan', role: 'Owner', av: 'c3' },
+      { ini: 'BS', name: 'Barton Springs HVAC', city: 'Austin, TX', zip: '78746', phone: '+1 (512) 555-0186', ask: 'Priya Nair', role: 'General manager', av: 'c4' },
+      { ini: 'MH', name: 'Mueller Heat & Cool', city: 'Austin, TX', zip: '78723', phone: '+1 (512) 555-0154', ask: 'Dev Patel', role: 'Owner', av: 'c1' },
+      { ini: 'PA', name: 'Pflugerville Air Pros', city: 'Pflugerville, TX', zip: '78660', phone: '+1 (512) 555-0191', ask: 'Luis Garza', role: 'Owner', av: 'c0' }
+    ];
+    const OUT = [
+      { h: 'Connected' }, { id: 'dm', label: 'Connected – DM', dot: 'bd' }, { id: 'gk', label: 'Gatekeeper', dot: 'gd' }, { id: 'oc', label: 'Other contact', dot: 'nd' }, { id: 'ap', label: 'Appointment set', dot: 'gd' },
+      { h: 'Not reached' }, { id: 'vm', label: 'Voicemail', dot: 'ad' }, { id: 'na', label: 'No answer', dot: 'nd' }, { id: 'bz', label: 'Busy', dot: 'nd' }, { id: 'bn', label: 'Bad number', dot: 'rd' },
+      { h: 'Follow up' }, { id: 'cb', label: 'Callback requested', dot: 'ad' }, { id: 'ni', label: 'Not interested', dot: 'rd' }
+    ];
+
+    const phase = s.phase || 'idle';
+    const secs = s.secs || 0;
+    const idx = typeof s.leadIdx === 'number' ? s.leadIdx : 2;
+    const lead = L[idx];
+    const saved = s.saved || { 0: 'Voicemail', 1: 'No answer' };
+    const outcome = s.outcome || null;
+    const isIdle = phase === 'idle', isConn = phase === 'connecting', isLive = phase === 'live', isConf = phase === 'conf', isWrap = phase === 'wrap';
+    const isLiveish = isLive || isConf;
+    const firstName = lead.ask.split(' ')[0];
+
+    const doStart = () => {
+      const c = this.st().phase || 'idle';
+      if (c === 'connecting' || c === 'live' || c === 'conf') return;
+      this.clear();
+      this.setState({ phase: 'connecting', secs: 0, dtmf: '', muted: false, hold: false, speaker: false, rec: true, dials: (this.st().dials || 24) + 1 });
+      this._to = setTimeout(() => {
+        this.setState({ phase: 'live' });
+        this._int = setInterval(() => this.setState({ secs: (this.st().secs || 0) + 1 }), 1000);
+      }, 2200);
+    };
+    const doHang = () => {
+      const c = this.st().phase;
+      this.clear();
+      if (c === 'connecting') this.setState({ phase: 'idle', secs: 0 });
+      else if (c === 'live' || c === 'conf') this.setState({ phase: 'wrap', parts: [], addOpen: false, addStatus: null, addIn: '' });
+    };
+    const reset = (extra) => Object.assign({ phase: 'idle', secs: 0, outcome: null, needOutcome: false, dtmf: '', booked: null, parts: [], addOpen: false, addStatus: null, addIn: '' }, extra || {});
+    const doSaveNext = () => {
+      const c = this.st();
+      if (!c.outcome) { this.setState({ needOutcome: true }); return; }
+      const label = OUT.find((o) => o.id === c.outcome).label;
+      const at = typeof c.leadIdx === 'number' ? c.leadIdx : 2;
+      this.clear();
+      this.setState(reset({ saved: Object.assign({}, c.saved || { 0: 'Voicemail', 1: 'No answer' }, { [at]: label }), leadIdx: (at + 1) % L.length }));
+    };
+    const doSave = () => {
+      const c = this.st();
+      if (!c.outcome) { this.setState({ needOutcome: true }); return; }
+      const label = OUT.find((o) => o.id === c.outcome).label;
+      const at = typeof c.leadIdx === 'number' ? c.leadIdx : 2;
+      this.clear();
+      this.setState({ saved: Object.assign({}, c.saved || { 0: 'Voicemail', 1: 'No answer' }, { [at]: label }), phase: 'idle', secs: 0, needOutcome: false });
+    };
+    const busy = isConn || isLive || isConf;
+    const pickLead = (i) => () => { if (!busy) this.setState(reset({ leadIdx: i })); };
+    const doPrev = () => { if (!busy) this.setState(reset({ leadIdx: Math.max(0, idx - 1) })); };
+
+    const phaseLabel = { idle: 'Ready', connecting: 'Connecting…', live: 'Live', conf: 'Conference', wrap: 'Wrap-up' }[phase];
+    const phaseCls = { idle: '', connecting: 'am', live: 'on', conf: 'br', wrap: 'am' }[phase];
+    const wcbMap = s.wcb || {};
+    const wcbOn = !!wcbMap[idx];
+    const queue = L.map((l, i) => {
+      const cur = i === idx;
+      const lab = saved[i];
+      return {
+        ini: l.ini, name: l.name, city: l.city, av: l.av, cls: cur ? 'sel' : '',
+        dot: cur ? (busy ? 'gd' : 'bd') : wcbMap[i] ? 'ad' : lab ? (lab === 'Voicemail' ? 'ad' : lab === 'Appointment set' ? 'gd' : 'nd') : 'bd',
+        meta: cur ? phaseLabel : wcbMap[i] ? 'Callback' : lab || 'New',
+        pick: pickLead(i)
+      };
+    });
+
+    const bars = [];
+    for (let i = 0; i < 34; i++) bars.push({ h: Math.round(8 + Math.abs(Math.sin(i * 0.62) * Math.cos(i * 0.21)) * 32), delay: '-' + (i * 0.07).toFixed(2) + 's' });
+    const muted = !!s.muted, hold = !!s.hold, speaker = !!s.speaker, rec = s.rec !== false;
+    const addOpen = !!s.addOpen && isLiveish, addRinging = s.addStatus === 'ringing', parts = s.parts || [];
+    const QUICK = [{ label: 'Recent', num: '+1 (737) 555-0166' }];
+    const addIn = s.addIn || '';
+    const parseAdd = (txt) => {
+      const tt = (txt || '').trim(); const dg = tt.replace(/\D/g, '');
+      if (!dg) return { ok: false, neutral: true, msg: 'Type a number, or tap a quick contact.' };
+      let label, msg;
+      if (tt.startsWith('+91') || (dg.length === 12 && dg.startsWith('91'))) {
+        const n = dg.slice(2);
+        if (n.length < 10) return { ok: false, msg: (10 - n.length) + ' more digit' + (10 - n.length === 1 ? '' : 's') + ' for an Indian number' };
+        if (n.length > 10) return { ok: false, msg: 'Too many digits' };
+        if (!'6789'.includes(n[0])) return { ok: false, msg: 'Indian mobile numbers start with 6–9.' };
+        label = '+91 ' + n.slice(0, 5) + ' ' + n.slice(5); msg = 'India · ready to dial';
+      } else {
+        const n = dg.length === 11 && dg[0] === '1' ? dg.slice(1) : dg;
+        if (n.length < 10) return { ok: false, msg: (10 - n.length) + ' more digit' + (10 - n.length === 1 ? '' : 's') };
+        if (n.length > 10) return { ok: false, msg: 'Too many digits' };
+        if ('01'.includes(n[0]) || '01'.includes(n[3])) return { ok: false, msg: 'Not a valid US number — area code and exchange can’t start with 0 or 1.' };
+        label = '+1 (' + n.slice(0, 3) + ') ' + n.slice(3, 6) + '-' + n.slice(6); msg = 'US / Canada · ready to dial';
+      }
+      if (label === lead.phone || parts.some((x) => x.num === label)) return { ok: false, msg: 'That number is already on this call.' };
+      return { ok: true, label, msg };
+    };
+    const pa = parseAdd(addIn);
+    const addDial = () => {
+      const c = this.st(); const r = parseAdd(c.addIn);
+      if (!r.ok || c.addStatus === 'ringing') return;
+      const q = QUICK.find((x) => parseAdd(x.num).label === r.label);
+      this.setState({ addStatus: 'ringing', addPending: r.label });
+      this._to2 = setTimeout(() => {
+        const c2 = this.st();
+        this.setState({ parts: (c2.parts || []).concat([{ label: q ? q.label + ' · ' + r.label : r.label, num: r.label }]), phase: 'conf', addOpen: false, addStatus: null, addIn: '' });
+      }, 2200);
+    };
+    const cancelAdd = () => { if (this._to2) { clearTimeout(this._to2); this._to2 = null; } this.setState({ addStatus: null }); };
+    const partsView = parts.map((x, i) => ({ label: x.label, drop: () => { const next = (this.st().parts || []).filter((_, j) => j !== i); this.setState({ parts: next, phase: next.length ? 'conf' : 'live' }); } }));
+    const ctrls = [
+      { label: muted ? 'Unmute' : 'Mute', d: I.mic, cls: muted ? 'act' : '', on: muted, tap: () => this.setState({ muted: !muted }) },
+      { label: hold ? 'Resume' : 'Hold', d: I.pause, cls: hold ? 'act' : '', on: hold, tap: () => this.setState({ hold: !hold }) },
+      { label: 'Speaker', d: I.spk, cls: speaker ? 'act' : '', on: speaker, tap: () => this.setState({ speaker: !speaker }) },
+      { label: 'Add call', d: I.addu, cls: (addOpen || isConf) ? 'act' : '', on: addOpen, tap: () => { if (!addRinging) this.setState({ addOpen: !addOpen }); } },
+      { label: rec ? 'Recording' : 'Record', d: I.rec, cls: rec ? 'rec' : '', on: rec, tap: () => this.setState({ rec: !rec }) }
+    ];
+    const KEYS = [['1', ''], ['2', 'ABC'], ['3', 'DEF'], ['4', 'GHI'], ['5', 'JKL'], ['6', 'MNO'], ['7', 'PQRS'], ['8', 'TUV'], ['9', 'WXYZ'], ['*', ''], ['0', '+'], ['#', '']];
+    const dtmf = s.dtmf || '';
+    const keys = KEYS.map(([n, l]) => ({ n, l, tap: () => { if (busy) this.setState({ dtmf: (this.st().dtmf || '') + n }); } }));
+    const steps = [
+      { n: '1', t: 'Open', b: 'Hi ' + firstName + ', it’s Ash. I know I’m calling out of the blue — got 30 seconds to tell you why?' },
+      { n: '2', t: 'Hook', b: 'We answer every missed call for HVAC shops — 24/7, and book straight into your calendar.' },
+      { n: '3', t: 'Ask', b: 'How many calls roll to voicemail during a heat wave week?' },
+      { n: '4', t: 'Close', b: 'Worth a 15-minute demo this week? I can do a couple of slots in your afternoon.' }
+    ];
+
+    const needOutcome = !!s.needOutcome && !outcome;
+    const outcomes = OUT.map((o) => o.h ? { isH: true, isC: false, label: o.h } : {
+      isH: false, isC: true, label: o.label, dot: o.dot, on: outcome === o.id,
+      cls: (outcome === o.id ? 'sel' : '') + (needOutcome ? ' need' : ''),
+      tap: () => this.setState({ outcome: o.id, needOutcome: false })
+    });
+    const outHint = needOutcome ? 'Select an outcome before saving.' : isWrap && !outcome ? 'Call ended — pick the outcome.' : 'Select, then Save or Save & next.';
+    const MS = s.ms || { pain: true, demo: true, price: false, dm: false };
+    const milestones = [['pain', 'Pain point'], ['demo', 'Demo pitched'], ['price', 'Pricing'], ['dm', 'Decision maker']].map(([k, t]) => ({
+      t, on: !!MS[k], cls: MS[k] ? 'on' : '', tap: () => this.setState({ ms: Object.assign({}, this.st().ms || MS, { [k]: !MS[k] }) })
+    }));
+
+    // booking sheet logic
+    const DAYS = [{ y: 2026, m: 10, d: 30, w: 'Fri' }, { y: 2026, m: 11, d: 2, w: 'Mon' }, { y: 2026, m: 11, d: 3, w: 'Tue' }, { y: 2026, m: 11, d: 4, w: 'Wed' }, { y: 2026, m: 11, d: 5, w: 'Thu' }];
+    const MON = { 10: 'Oct', 11: 'Nov' };
+    const bookDay = typeof s.bookDay === 'number' ? s.bookDay : 1;
+    const bookSlot = typeof s.bookSlot === 'number' ? s.bookSlot : -1;
+    const day = DAYS[bookDay];
+    const noonUtc = this.zonedToUtc(day.y, day.m, day.d, 12, 0, TZ);
+    const gapNow = 330 - this.offsetMin(TZ, NOW);
+    const gap = 330 - this.offsetMin(TZ, noonUtc);
+    const gapFmt = (g) => Math.floor(g / 60) + 'h ' + String(g % 60).padStart(2, '0') + 'm';
+    const dstWarn = gap !== gapNow;
+    const hm = (h, m) => ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h < 12 ? 'AM' : 'PM');
+    const slotDefs = [];
+    for (let t = 9 * 60; t <= 16 * 60 + 30; t += 30) slotDefs.push({ h: Math.floor(t / 60), m: t % 60 });
+    const slots = slotDefs.map((sd, i) => {
+      const utc = this.zonedToUtc(day.y, day.m, day.d, sd.h, sd.m, TZ);
+      const past = utc < NOW + 15 * 60000;
+      const nextDay = this.fmt(utc, HOME, { day: 'numeric' }) !== String(day.d);
+      return {
+        local: hm(sd.h, sd.m),
+        ist: this.fmt(utc, HOME, nextDay ? { weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: true } : { hour: 'numeric', minute: '2-digit', hour12: true }),
+        dis: past, on: bookSlot === i, cls: bookSlot === i ? 'sel' : '', tap: () => this.setState({ bookSlot: i })
+      };
+    });
+    const sel = bookSlot >= 0 ? slotDefs[bookSlot] : null;
+    let sayText = 'Pick a time', istText = '—', bookedText = null;
+    if (sel) {
+      const utc = this.zonedToUtc(day.y, day.m, day.d, sel.h, sel.m, TZ);
+      const ab = this.abbr(utc, TZ);
+      sayText = day.w + ' ' + MON[day.m] + ' ' + day.d + ' at ' + hm(sel.h, sel.m) + ' ' + ab;
+      istText = this.fmt(utc, HOME, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+      bookedText = { title: 'Meeting · ' + day.w + ' ' + MON[day.m] + ' ' + day.d + ', ' + hm(sel.h, sel.m) + ' ' + ab, sub: istText + ' IST' };
+    }
+    const days = DAYS.map((d, i) => ({ w: d.w, n: MON[d.m] + ' ' + d.d, on: bookDay === i, cls: bookDay === i ? 'sel' : '', tap: () => this.setState({ bookDay: i, bookSlot: -1 }) }));
+    const booked = s.booked || null;
+
+    const leadAbbr = this.abbr(NOW, TZ);
+    const dstText = 'US clocks fall back on Sun Nov 1. From then on Austin is ' + gapFmt(gap) + ' behind IST, not ' + gapFmt(gapNow) + '. Every time below is already converted.';
+    const wrapNeed = !outcome;
+    return {
+      theme: this.props.theme ?? 'dark', nav, queue, lead, firstName,
+      leadNo: idx + 1, leadState: saved[idx] ? saved[idx] : 'Never called', askIni: lead.ask.split(' ').map((w) => w[0]).join(''),
+      leadAbbr, leadClock: this.fmt(NOW, TZ, { hour: 'numeric', minute: '2-digit', hour12: true }), homeClock: this.fmt(NOW, HOME, { hour: 'numeric', minute: '2-digit', hour12: true }),
+      phaseLabel, phaseCls, dials: s.dials || 24, bookedCount: booked ? 3 : 2,
+      wcbOn, wcbCls: wcbOn ? 'on' : '', wcbLabel: wcbOn ? 'Worth a callback · saved to Follow-ups' : 'Worth a callback', wcbIcon: wcbOn ? 'M20 6L9 17l-5-5' : 'M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7', toggleWcb: () => { const m = Object.assign({}, (this.state || {}).wcb || {}); m[idx] = !m[idx]; this.setState({ wcb: m }); },
+      addOpen, addIdle: !addRinging, addRinging, parts: partsView, showWave: isLive && !addOpen, addIn, addBad: !pa.ok, addMsg: pa.msg, addMsgColor: pa.ok ? 'var(--green-t)' : pa.neutral ? 'var(--sub)' : 'var(--amber-t)',
+      addPending: s.addPending || '', addDial, cancelAdd, closeAdd: () => this.setState({ addOpen: false }),
+      onAddIn: (e) => this.setState({ addIn: e && e.target ? e.target.value : '' }),
+      quick: QUICK.map((q) => ({ label: q.label, pick: () => this.setState({ addIn: q.num }) })),
+      isIdle, isConn, isLive, isConf, isWrap, isLiveish, showPad: !isWrap, padOff: isIdle,
+      cardCols: isWrap ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) 216px',
+      liveLabel: isConf ? 'Conference · ' + (2 + parts.length) + ' on the line' : hold ? 'On hold' : 'Live · Recording', clock: this.mmss(secs), bars, ctrls, keys,
+      dtmfText: dtmf ? 'Sent: ' + dtmf.split('').join(' ') : isIdle ? 'Active during a call' : 'Tap to send tones',
+      start: doStart, hang: doHang, saveNext: doSaveNext, save: doSave, prev: doPrev,
+      wrapBg: wrapNeed ? 'var(--amber-soft)' : 'var(--green-soft)',
+      wrapMsg: wrapNeed ? 'Choose an outcome on the right, then save and move to the next lead.' : 'Outcome set — ' + OUT.find((o) => o.id === outcome).label + '. Save to continue.',
+      steps, outcomes, outHint, needColor: needOutcome ? 'var(--amber-t)' : 'var(--sub)', milestones,
+      meetBg: booked ? 'var(--green-soft)' : 'var(--key)', meetColor: booked ? 'var(--green-t)' : 'var(--sub)',
+      meetTitle: booked ? booked.title : 'No meeting booked yet', meetSub: booked ? booked.sub : 'Use Book meeting',
+      showBook: !!s.showBook, openBook: () => this.setState({ showBook: true, bookDay: 1, bookSlot: -1 }), closeBook: () => this.setState({ showBook: false }),
+      days, slots, noSlot: !sel, gapText: gapFmt(gap), leadAbbrDay: this.abbr(noonUtc, TZ), dstWarn, dstText, sayText, istText,
+      confirmBook: () => { if (bookedText) this.setState({ booked: bookedText, showBook: false, outcome: 'ap', needOutcome: false }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Call Board Follow-ups</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.dcm,.dcm *{box-sizing:border-box}
+.dcm{--rootbg:radial-gradient(760px 520px at 4% 0%,rgba(10,132,255,.34),transparent 62%),radial-gradient(620px 520px at 0% 100%,rgba(191,90,242,.26),transparent 62%),#18181B;--bg:#1E1E22;--pane:#28282D;--segon:#3D3D45;--side:rgba(38,38,48,.55);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--text:#F5F5F7;--sub:#ABABB4;--accent:#0A84FF;--accent-t:#6CB0FF;--accent-fill:#0A6CE0;--accent-soft:rgba(10,132,255,.2);--accent-line:rgba(10,132,255,.6);--green:#30D158;--green-t:#5BE384;--green-soft:rgba(48,209,88,.16);--red:#FF453A;--red-t:#FF8179;--red-soft:rgba(255,69,58,.16);--amber:#FF9F0A;--amber-t:#FFB840;--amber-soft:rgba(255,159,10,.16);--key:rgba(255,255,255,.08);--shadow:0 1px 0 rgba(255,255,255,.05) inset,0 14px 32px -16px rgba(0,0,0,.7);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;color:var(--text);font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.dcm[data-theme="light"]{--rootbg:radial-gradient(760px 520px at 4% 0%,rgba(0,122,255,.2),transparent 62%),radial-gradient(620px 520px at 0% 100%,rgba(175,82,222,.16),transparent 62%),#ECECF1;--bg:#F4F4F8;--pane:#FFFFFF;--segon:#FFFFFF;--side:rgba(246,246,250,.6);--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.14);--text:#1D1D1F;--sub:#5F5F68;--accent:#007AFF;--accent-t:#0062CC;--accent-fill:#0066D6;--accent-soft:rgba(0,122,255,.1);--accent-line:rgba(0,122,255,.5);--green:#28CD41;--green-t:#0E7A2E;--green-soft:rgba(40,205,65,.15);--red:#FF3B30;--red-t:#C9150B;--red-soft:rgba(255,59,48,.12);--amber:#FF9500;--amber-t:#8F5000;--amber-soft:rgba(255,149,0,.16);--key:rgba(0,0,0,.05);--shadow:0 1px 2px rgba(0,0,0,.05),0 14px 28px -16px rgba(0,0,0,.2)}
+.dcm button{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:"SF Mono","JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tl{display:block;width:12px;height:12px;border-radius:50%}
+.eye{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
+.sec{font-size:11px;font-weight:600;color:var(--sub);padding:14px 10px 4px}
+.nav-i{display:flex;align-items:center;gap:10px;width:100%;height:30px;padding:0 10px;border:0;border-radius:8px;background:transparent;font-size:13px;font-weight:500;text-align:left}
+.nav-i .i{stroke:var(--accent-t)}
+.nav-i .cnt{margin-left:auto;font-size:12px;color:var(--sub)}
+.nav-i.on{background:var(--accent-fill);color:#fff}
+.nav-i.on .i{stroke:#fff}
+.nav-i.on .cnt{color:rgba(255,255,255,.88)}
+.panel{background:var(--pane);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line2);background:var(--key);font-size:12px;font-weight:500;white-space:nowrap}
+.btn.p{background:linear-gradient(180deg,var(--accent),var(--accent-fill));border-color:rgba(255,255,255,.12);color:#fff;font-weight:600;box-shadow:0 8px 18px -8px var(--accent)}
+.seg{display:flex;gap:2px;padding:2px;border-radius:9px;background:var(--key)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:500;color:var(--sub)}
+.seg button.on{background:var(--segon);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.mb{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:12px;background:var(--key);font-size:12px;font-weight:500;color:var(--sub);white-space:nowrap}
+.mb.on{background:var(--green-soft);color:var(--green-t)}
+.mb.br{background:var(--accent-soft);color:var(--accent-t)}
+.mb.am{background:var(--amber-soft);color:var(--amber-t)}
+.mb.bad{background:var(--red-soft);color:var(--red-t)}
+.st{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.av{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;font-weight:600;font-size:12px;color:#fff;flex:none}
+.c0{background:linear-gradient(135deg,#5E5CE6,#4140BF)}
+.c1{background:linear-gradient(135deg,#0B8794,#07626B)}
+.c2{background:linear-gradient(135deg,#C25A00,#8F4000)}
+.c3{background:linear-gradient(135deg,#D6336C,#A3194F)}
+.c4{background:linear-gradient(135deg,#167A3A,#0E5A29)}
+.c5{background:linear-gradient(135deg,#6B6F80,#4B4E5C)}
+.th{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,1.1fr) minmax(0,1.3fr) 56px;gap:12px;align-items:center;padding:0 16px}
+.th>div{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+.tr{height:54px;border-top:1px solid var(--line)}
+.tr.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.tr .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .sb{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f{display:flex;flex-direction:column;gap:2px}
+.f b{font-weight:600;font-size:13px}
+
+.fu{display:grid;grid-template-columns:36px minmax(0,1fr) 150px 108px 76px;gap:14px;align-items:center;padding:9px 18px;border-top:1px solid transparent}
+.fu:hover{background:var(--key)}
+.fu.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.fu.dn{opacity:.5}
+.dchip{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;padding:8px 0;border-radius:12px;border:1px solid var(--line2);background:var(--key)}
+.dchip small{font-size:11px;font-weight:600;color:var(--sub)}
+.dchip b{font-size:15px}
+.dchip.sel{background:var(--accent-fill);border-color:transparent;color:#fff}
+.dchip.sel small{color:rgba(255,255,255,.85)}
+.slot{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 10px;border-radius:10px;border:1px solid var(--line2);background:var(--key);text-align:left}
+.slot b{font-size:14px;font-weight:600}
+.slot small{font-size:11px;color:var(--sub)}
+.slot.sel{background:var(--accent-soft);border-color:var(--accent-line);box-shadow:0 0 0 3px var(--ring)}
+.slot.sel b{color:var(--accent-t)}
+.slot:disabled{opacity:.4}
+.dcm .ring{--ring:rgba(10,132,255,.28)}
+
+</style>
+</helmet>
+<div class="dcm" data-theme="{{theme}}" style="position: relative; width: 1600px; height: 1000px; display: flex; border-radius: 12px; overflow: hidden; background: var(--rootbg); border: 1px solid var(--line2)">
+
+<aside style="width: 224px; flex: none; display: flex; flex-direction: column; padding: 0 12px 14px; background: var(--side); backdrop-filter: blur(40px) saturate(170%); -webkit-backdrop-filter: blur(40px) saturate(170%); border-right: 1px solid var(--line)">
+<div style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 8px"><i class="tl" style="background: #FF5F57"></i><i class="tl" style="background: #FEBC2E"></i><i class="tl" style="background: #28C840"></i></div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 8px 12px">
+<div style="width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(145deg, #4C9AFF, #0A5BD6); display: grid; place-items: center; box-shadow: 0 4px 12px -4px rgba(10,132,255,.7), inset 0 1px 0 rgba(255,255,255,.35)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div>
+<div><div style="font-weight: 700; font-size: 14px">Call Board</div><div style="font-size: 11px; color: var(--sub)">A better rhythm for sales</div></div>
+</div>
+<nav aria-label="Main navigation" style="display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="14">
+<sc-if value="{{n.isH}}" hint-placeholder-val="{{ false }}"><div class="sec">{{n.label}}</div></sc-if>
+<sc-if value="{{n.isI}}" hint-placeholder-val="{{ true }}"><button class="nav-i {{n.cls}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.d}}"></path></svg><span>{{n.label}}</span><sc-if value="{{n.hasCount}}" hint-placeholder-val="{{ false }}"><span class="cnt mono">{{n.count}}</span></sc-if></button></sc-if>
+</sc-for>
+</nav>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 4px 6px"><div class="av c0" style="width: 32px; height: 32px">A</div><div><div style="font-weight: 600">Ash</div><div style="font-size: 12px; color: var(--sub)">Grovoke</div></div></div>
+</aside>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg)">
+<header style="height: 52px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line)">
+<div style="font-size: 15px; font-weight: 650">Follow-ups</div>
+<span class="mb mono">{{openCount}} open</span>
+<div style="flex: 1"></div>
+<div class="seg"><sc-for list="{{filters}}" as="f" hint-placeholder-count="4"><button class="{{f.cls}}" aria-pressed="{{f.on}}" onClick="{{f.tap}}">{{f.label}}</button></sc-for></div>
+<button class="btn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add follow-up</button>
+</header>
+<div style="flex: 1; min-height: 0; display: flex; gap: 16px; padding: 18px 20px 20px">
+
+<section style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4"><div class="panel" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 4px"><span class="eye">{{t.l}}</span><span class="mono" style="font-size: 26px; font-weight: 650; color: {{t.c}}">{{t.v}}</span></div></sc-for>
+</div>
+<div class="panel" style="flex: 1; min-height: 0; overflow: hidden; padding: 6px 0">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+<sc-if value="{{r.isH}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 18px 6px"><span class="eye" style="color: {{r.c}}">{{r.label}}</span><span class="mono" style="font-size: 12px; color: var(--sub)">{{r.n}}</span></div></sc-if>
+<sc-if value="{{r.isI}}" hint-placeholder-val="{{ true }}">
+<div class="fu {{r.cls}}" onClick="{{r.pick}}" role="button" aria-pressed="{{r.on}}">
+<span class="av {{r.av}}">{{r.ini}}</span>
+<div style="min-width: 0"><div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: {{r.strike}}">{{r.name}}</div><div style="font-size: 12px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.who}} · {{r.note}}</div></div>
+<div><div class="mono" style="font-size: 13px; font-weight: 600">{{r.when}}</div><div class="mono" style="font-size: 11px; color: var(--sub)">{{r.ist}}</div></div>
+<span class="mb {{r.cc}}">{{r.chip}}</span>
+<button class="btn sm" onClick="{{r.done}}" aria-label="Mark done">{{r.doneLabel}}</button>
+</div>
+</sc-if>
+</sc-for>
+</div>
+</section>
+
+<aside class="panel" style="width: 400px; flex: none; display: flex; flex-direction: column; gap: 14px; padding: 20px; overflow: hidden">
+<div style="display: flex; align-items: center; gap: 14px"><span class="av {{sel.av}}" style="width: 48px; height: 48px; font-size: 16px">{{sel.ini}}</span><div style="min-width: 0"><div style="font-size: 17px; font-weight: 650">{{sel.name}}</div><div style="color: var(--sub)">{{sel.who}} · {{sel.city}}</div></div></div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><span class="mb {{sel.cc}}">{{sel.chip}}</span><span class="mb {{sel.openCls}}">{{sel.openText}}</span></div>
+<div style="padding: 12px 14px; border-radius: 12px; background: var(--key); line-height: 1.5"><div class="eye" style="margin-bottom: 4px">Why it’s on this list</div>{{sel.note}}</div>
+<div style="display: flex; gap: 10px"><button class="btn p" style="flex: 1; height: 40px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>Call {{sel.first}} now</button><button class="btn" style="height: 40px" onClick="{{sel.snooze}}">Snooze 1 day</button></div>
+<div style="display: flex; flex-direction: column; gap: 10px; min-height: 0">
+<div style="display: flex; align-items: center; justify-content: space-between"><span class="eye">{{sel.schedTitle}}</span><span style="font-size: 12px; color: var(--sub)">Austin time · your IST</span></div>
+<div style="display: flex; gap: 6px"><sc-for list="{{days}}" as="d" hint-placeholder-count="5"><button class="dchip {{d.cls}}" aria-pressed="{{d.on}}" onClick="{{d.tap}}"><small>{{d.dow}}</small><b>{{d.num}}</b></button></sc-for></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><sc-for list="{{slots}}" as="s" hint-placeholder-count="8"><button class="slot {{s.cls}}" aria-pressed="{{s.on}}" onClick="{{s.tap}}"><b class="mono">{{s.ct}}</b><small class="mono">{{s.ist}}</small></button></sc-for></div>
+<sc-if value="{{sel.hasWarn}}" hint-placeholder-val="{{ false }}"><div style="padding: 10px 12px; border-radius: 10px; background: var(--amber-soft); color: var(--amber-t); font-size: 12px">US clocks go back Nov 1: Austin is 11h 30m behind IST from then, so the same Austin time lands an hour later for you.</div></sc-if>
+</div>
+</aside>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"dark","options":["dark","light"]},"$preview":{"width":1600,"height":1000}}'>
+class Component extends DCLogic {
+  st() { return this.state || {}; }
+  renderVals() {
+    const s = this.st();
+
+    const I = {
+      dash: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
+      users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+      phone: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z",
+      list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+      act: "M22 12h-4l-3 9L9 3l-3 9H2",
+      cal: "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18",
+      clock: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2",
+      redo: "M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10",
+      file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8",
+      up: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
+      set: "M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"
+    };
+    const H = (label) => ({ isH: true, isI: false, label });
+    const N = (label, d, extra) => Object.assign({ isH: false, isI: true, label, d, cls: label === 'Follow-ups' ? 'on' : '', hasCount: false, count: '' }, extra || {});
+    const nav = [
+      H('Workspace'), N('Overview', I.dash), N('Leads', I.users, { hasCount: true, count: '248' }),
+      N('Dialer', I.phone), N('Sessions', I.list), N('Activity', I.act),
+      H('Schedule'), N('Bookings', I.cal), N('Time Zones', I.clock), N('Follow-ups', I.redo, { hasCount: true, count: '8' }),
+      H('Setup'), N('Configuration', I.file), N('Data', I.up), N('Settings', I.set)
+    ];
+
+    const CT = 'America/Chicago', IST = 'Asia/Kolkata';
+    const NOW = Date.UTC(2026, 9, 30, 15, 25);
+    const offMin = (tz, ms) => { const p = {}; new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(ms)).forEach((x) => { p[x.type] = x.value; }); return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000) / 60000); };
+    const toUtc = (y, mo, d, h, mi, tz) => { const w = Date.UTC(y, mo - 1, d, h, mi); let g = w; for (let i = 0; i < 3; i++) g = w - offMin(tz, g) * 60000; return g; };
+    const f = (ms, tz, o) => new Intl.DateTimeFormat('en-US', Object.assign({ timeZone: tz }, o)).format(new Date(ms));
+    const tm = (ms, tz) => f(ms, tz, { hour: 'numeric', minute: '2-digit', hour12: true });
+    const ctLabel = (ms) => f(ms, CT, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + tm(ms, CT);
+    const BASE = [
+      { id: 1, ini: 'HC', av: 'c5', name: 'Hill Country Comfort', who: 'Tom Reyes', city: 'Round Rock, TX', note: 'Voicemail — owner is in meetings until the afternoon. Try again after lunch.', due: toUtc(2026, 10, 29, 16, 0, CT) },
+      { id: 2, ini: 'LS', av: 'c0', name: 'Lone Star Heating & Air', who: 'Mike Dawson', city: 'Austin, TX', note: 'Asked for a call back after 10 AM — on a job site. Ask for Rosa if he is out.', due: toUtc(2026, 10, 30, 11, 0, CT) },
+      { id: 3, ini: 'ZC', av: 'c3', name: 'Zilker Cooling Co.', who: 'Chris Nolan', city: 'Austin, TX', note: 'Send the demo link, then call to walk through it together.', due: toUtc(2026, 10, 30, 14, 0, CT) },
+      { id: 4, ini: 'CC', av: 'c1', name: 'Capital City Air', who: 'Janet Cole', city: 'Austin, TX', note: 'Wants pricing before she agrees to a demo.', due: toUtc(2026, 11, 2, 9, 30, CT) },
+      { id: 5, ini: 'BS', av: 'c4', name: 'Barton Springs HVAC', who: 'Priya Nair', city: 'Austin, TX', note: 'Demo is booked for Wednesday — confirm the day before.', due: toUtc(2026, 11, 3, 13, 0, CT) },
+      { id: 6, ini: 'BM', av: 'c2', name: 'Bluebonnet Mechanical', who: 'Sara Ortiz', city: 'Cedar Park, TX', note: 'Interested but slammed this week. Marked worth a callback from the dialer.', due: null },
+      { id: 7, ini: 'MH', av: 'c1', name: 'Mueller Heat & Cool', who: 'Dev Patel', city: 'Austin, TX', note: 'Gatekeeper said try the owner on Monday. Marked worth a callback.', due: null },
+      { id: 8, ini: 'PA', av: 'c0', name: 'Pflugerville Air Pros', who: 'Luis Garza', city: 'Pflugerville, TX', note: 'Not now, but did not say no. Marked worth a callback.', due: null }
+    ];
+    const dueMap = s.due || {};
+    const doneMap = s.done || {};
+    const items = BASE.map((b) => Object.assign({}, b, { due: dueMap[b.id] !== undefined ? dueMap[b.id] : b.due, done: !!doneMap[b.id] }));
+    const filt = s.filter || 'all';
+    const stateOf = (it) => it.done ? 'done' : it.due === null ? 'needs' : it.due < NOW ? 'overdue' : f(it.due, CT, { year: 'numeric', month: 'numeric', day: 'numeric' }) === f(NOW, CT, { year: 'numeric', month: 'numeric', day: 'numeric' }) ? 'today' : 'upcoming';
+    const withState = items.map((it) => Object.assign({}, it, { st: stateOf(it) }));
+    const open = withState.filter((x) => !x.done);
+    const cnt = (k) => open.filter((x) => x.st === k).length;
+    const selId = s.sel || 2;
+    const selIt = withState.find((x) => x.id === selId) || withState[0];
+    const FILT = [['all', 'All'], ['today', 'Today'], ['upcoming', 'Upcoming'], ['needs', 'Worth a callback']];
+    const filters = FILT.map(([k, l]) => ({ label: l + (k === 'all' ? '' : ' ' + (k === 'today' ? cnt('overdue') + cnt('today') : cnt(k))), on: filt === k, cls: filt === k ? 'on' : '', tap: () => this.setState({ filter: k }) }));
+    const GROUPS = [['overdue', 'Overdue', 'var(--red-t)'], ['today', 'Today', 'var(--accent-t)'], ['upcoming', 'Upcoming', 'var(--sub)'], ['needs', 'Worth a callback · needs a time', 'var(--amber-t)'], ['done', 'Done', 'var(--sub)']];
+    const showGroup = (k) => filt === 'all' || (filt === 'today' && (k === 'overdue' || k === 'today')) || filt === k;
+    const CHIP = { overdue: ['bad', 'Overdue'], today: ['br', 'Today'], upcoming: ['', 'Scheduled'], needs: ['am', 'Needs a time'], done: ['on', 'Done'] };
+    const rows = [];
+    GROUPS.forEach(([k, label, c]) => {
+      const list = withState.filter((x) => x.st === k).sort((a, b) => (a.due || 9e15) - (b.due || 9e15));
+      if (!list.length || !showGroup(k)) return;
+      rows.push({ isH: true, isI: false, label, c, n: list.length });
+      list.forEach((it) => rows.push({
+        isH: false, isI: true, id: it.id, ini: it.ini, av: it.av, name: it.name, who: it.who, note: it.note,
+        when: it.due === null ? 'No time yet' : ctLabel(it.due), ist: it.due === null ? 'Pick a slot →' : tm(it.due, IST) + ' IST',
+        cc: CHIP[k][0], chip: CHIP[k][1], cls: (it.id === selId ? 'sel ' : '') + (it.done ? 'dn' : ''), on: it.id === selId, strike: it.done ? 'line-through' : 'none',
+        doneLabel: it.done ? 'Undo' : 'Done', pick: () => this.setState({ sel: it.id }),
+        done: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const d = Object.assign({}, (this.state || {}).done || {}); d[it.id] = !it.done; this.setState({ done: d }); }
+      }));
+    });
+    const tiles = [
+      { l: 'Overdue', v: String(cnt('overdue')), c: 'var(--red-t)' }, { l: 'Due today', v: String(cnt('today')), c: 'var(--accent-t)' },
+      { l: 'Upcoming', v: String(cnt('upcoming')), c: 'var(--text)' }, { l: 'Worth a callback', v: String(cnt('needs')), c: 'var(--amber-t)' }
+    ];
+    // scheduling
+    const DAYS = [[2026, 11, 2], [2026, 11, 3], [2026, 11, 4], [2026, 11, 5], [2026, 11, 6]];
+    const sd = s.sd === undefined ? 0 : s.sd;
+    const days = DAYS.map((d, i) => { const ms = toUtc(d[0], d[1], d[2], 12, 0, CT); return { dow: f(ms, CT, { weekday: 'short' }), num: d[2], on: i === sd, cls: i === sd ? 'sel' : '', tap: () => this.setState({ sd: i }) }; });
+    const HRS = [9, 10, 11, 12, 13, 14, 15, 16].map((h) => h);
+    const day = DAYS[sd];
+    const setDue = (ms) => { const d = Object.assign({}, (this.state || {}).due || {}); d[selIt.id] = ms; const dn = Object.assign({}, (this.state || {}).done || {}); dn[selIt.id] = false; this.setState({ due: d, done: dn }); };
+    const slots = HRS.map((h) => { const ms = toUtc(day[0], day[1], day[2], h, 0, CT); const on = selIt.due === ms; return { ct: tm(ms, CT) + ' ' + f(ms, CT, { timeZoneName: 'short' }).split(' ').pop(), ist: tm(ms, IST) + ' IST' + (f(ms, IST, { day: 'numeric' }) !== f(ms, CT, { day: 'numeric' }) ? ' +1' : ''), on, cls: on ? 'sel' : '', tap: () => setDue(ms) }; });
+    const ctOpen = f(selIt.due || NOW, CT, { hour: 'numeric', hourCycle: 'h23' });
+    const sel = Object.assign({}, selIt, {
+      first: selIt.who.split(' ')[0], cc: CHIP[selIt.st][0], chip: CHIP[selIt.st][1],
+      openText: tm(NOW, CT) + ' CT now · open', openCls: 'on',
+      schedTitle: selIt.due === null ? 'Pick a time' : 'Reschedule',
+      hasWarn: day[1] === 11 && day[2] >= 2,
+      snooze: () => setDue((selIt.due && selIt.due > NOW ? selIt.due : NOW) + 864e5 - ((selIt.due && selIt.due > NOW ? selIt.due : NOW) % 3600000) + 0)
+    });
+    const openCount = open.length;
+    const fnav = nav.find((n) => n.label === 'Follow-ups'); if (fnav) { fnav.hasCount = true; fnav.count = String(openCount); }
+    return { theme: this.props.theme ?? 'dark', nav, filters, tiles, rows, days, slots, sel, openCount };
+
+  }
+}
+</script>
+</body>
+</html>
