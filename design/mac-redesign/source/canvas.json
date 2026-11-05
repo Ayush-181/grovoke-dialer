@@ -1,0 +1,158 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Activity.dc.html": {
+      "h": 1000,
+      "radius": 12,
+      "title": "Activity · call log",
+      "w": 1600,
+      "x": 1680,
+      "y": 5360
+    },
+    "Dialer.dc.html": {
+      "h": 1000,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Dialer · interactive (call states + booking)",
+      "w": 1600,
+      "x": 0,
+      "y": 2560
+    },
+    "Floating.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Floating dialpad · dial any number",
+      "w": 560,
+      "x": 1680,
+      "y": 2560
+    },
+    "Leads.dc.html": {
+      "h": 1000,
+      "radius": 12,
+      "title": "Leads",
+      "w": 1600,
+      "x": 0,
+      "y": 3960
+    },
+    "Light.dc.html": {
+      "h": 1000,
+      "radius": 12,
+      "title": "Dialer · light",
+      "w": 1600,
+      "x": 0,
+      "y": 1120
+    },
+    "Main.dc.html": {
+      "h": 1000,
+      "radius": 12,
+      "title": "Dialer · live call (dark)",
+      "w": 1600,
+      "x": 0,
+      "y": 0
+    },
+    "Overview.dc.html": {
+      "h": 1000,
+      "radius": 12,
+      "title": "Overview (dark · click Call for the dialpad)",
+      "w": 1600,
+      "x": 1680,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Palette.dc.html": {
+      "h": 640,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "⌘K command palette",
+      "w": 960,
+      "x": 2320,
+      "y": 2560
+    },
+    "Sessions.dc.html": {
+      "h": 1000,
+      "radius": 12,
+      "title": "Sessions",
+      "w": 1600,
+      "x": 1680,
+      "y": 3960
+    },
+    "Settings.dc.html": {
+      "h": 1000,
+      "radius": 12,
+      "title": "Settings",
+      "w": 1600,
+      "x": 0,
+      "y": 6760
+    },
+    "TimeZones.dc.html": {
+      "h": 1000,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Time Zones (click a card to re-anchor)",
+      "w": 1600,
+      "x": 0,
+      "y": 5360
+    },
+    "Followups.dc.html": {
+      "h": 1000,
+      "is_interactive": true,
+      "radius": 12,
+      "title": "Follow-ups (pick a time for “Worth a callback”)",
+      "w": 1600,
+      "x": 1680,
+      "y": 6760
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-28T15:41:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "t1": {
+      "kind": "title1",
+      "maxW": 3280,
+      "text": "Call Board — Mac-style redesign",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 3280,
+      "text": "Interactive prototypes",
+      "w": 240,
+      "x": 0,
+      "y": 2260
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 3280,
+      "text": "More screens",
+      "w": 240,
+      "x": 0,
+      "y": 3660
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Overview.dc.html",
+    "Light.dc.html",
+    "Dialer.dc.html",
+    "Floating.dc.html",
+    "Palette.dc.html",
+    "Leads.dc.html",
+    "Sessions.dc.html",
+    "TimeZones.dc.html",
+    "Activity.dc.html",
+    "Settings.dc.html",
+    "Followups.dc.html"
+  ],
+  "pages": [],
+  "title": "Call Board Mac Redesign"
+}

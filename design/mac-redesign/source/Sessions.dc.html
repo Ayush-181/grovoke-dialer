@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Call Board Sessions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.dcm,.dcm *{box-sizing:border-box}
+.dcm{--rootbg:radial-gradient(760px 520px at 4% 0%,rgba(10,132,255,.34),transparent 62%),radial-gradient(620px 520px at 0% 100%,rgba(191,90,242,.26),transparent 62%),#18181B;--bg:#1E1E22;--pane:#28282D;--segon:#3D3D45;--side:rgba(38,38,48,.55);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--text:#F5F5F7;--sub:#ABABB4;--accent:#0A84FF;--accent-t:#6CB0FF;--accent-fill:#0A6CE0;--accent-soft:rgba(10,132,255,.2);--accent-line:rgba(10,132,255,.6);--green:#30D158;--green-t:#5BE384;--green-soft:rgba(48,209,88,.16);--red:#FF453A;--red-t:#FF8179;--red-soft:rgba(255,69,58,.16);--amber:#FF9F0A;--amber-t:#FFB840;--amber-soft:rgba(255,159,10,.16);--key:rgba(255,255,255,.08);--shadow:0 1px 0 rgba(255,255,255,.05) inset,0 14px 32px -16px rgba(0,0,0,.7);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;color:var(--text);font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.dcm[data-theme="light"]{--rootbg:radial-gradient(760px 520px at 4% 0%,rgba(0,122,255,.2),transparent 62%),radial-gradient(620px 520px at 0% 100%,rgba(175,82,222,.16),transparent 62%),#ECECF1;--bg:#F4F4F8;--pane:#FFFFFF;--segon:#FFFFFF;--side:rgba(246,246,250,.6);--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.14);--text:#1D1D1F;--sub:#5F5F68;--accent:#007AFF;--accent-t:#0062CC;--accent-fill:#0066D6;--accent-soft:rgba(0,122,255,.1);--accent-line:rgba(0,122,255,.5);--green:#28CD41;--green-t:#0E7A2E;--green-soft:rgba(40,205,65,.15);--red:#FF3B30;--red-t:#C9150B;--red-soft:rgba(255,59,48,.12);--amber:#FF9500;--amber-t:#8F5000;--amber-soft:rgba(255,149,0,.16);--key:rgba(0,0,0,.05);--shadow:0 1px 2px rgba(0,0,0,.05),0 14px 28px -16px rgba(0,0,0,.2)}
+.dcm button{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:"SF Mono","JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tl{display:block;width:12px;height:12px;border-radius:50%}
+.eye{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
+.sec{font-size:11px;font-weight:600;color:var(--sub);padding:14px 10px 4px}
+.nav-i{display:flex;align-items:center;gap:10px;width:100%;height:30px;padding:0 10px;border:0;border-radius:8px;background:transparent;font-size:13px;font-weight:500;text-align:left}
+.nav-i .i{stroke:var(--accent-t)}
+.nav-i .cnt{margin-left:auto;font-size:12px;color:var(--sub)}
+.nav-i.on{background:var(--accent-fill);color:#fff}
+.nav-i.on .i{stroke:#fff}
+.nav-i.on .cnt{color:rgba(255,255,255,.88)}
+.panel{background:var(--pane);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line2);background:var(--key);font-size:12px;font-weight:500;white-space:nowrap}
+.btn.p{background:linear-gradient(180deg,var(--accent),var(--accent-fill));border-color:rgba(255,255,255,.12);color:#fff;font-weight:600;box-shadow:0 8px 18px -8px var(--accent)}
+.seg{display:flex;gap:2px;padding:2px;border-radius:9px;background:var(--key)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:500;color:var(--sub)}
+.seg button.on{background:var(--segon);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.mb{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:12px;background:var(--key);font-size:12px;font-weight:500;color:var(--sub);white-space:nowrap}
+.mb.on{background:var(--green-soft);color:var(--green-t)}
+.mb.br{background:var(--accent-soft);color:var(--accent-t)}
+.mb.am{background:var(--amber-soft);color:var(--amber-t)}
+.mb.bad{background:var(--red-soft);color:var(--red-t)}
+.st{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.av{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;font-weight:600;font-size:12px;color:#fff;flex:none}
+.c0{background:linear-gradient(135deg,#5E5CE6,#4140BF)}
+.c1{background:linear-gradient(135deg,#0B8794,#07626B)}
+.c2{background:linear-gradient(135deg,#C25A00,#8F4000)}
+.c3{background:linear-gradient(135deg,#D6336C,#A3194F)}
+.c4{background:linear-gradient(135deg,#167A3A,#0E5A29)}
+.c5{background:linear-gradient(135deg,#6B6F80,#4B4E5C)}
+.th{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,1.1fr) minmax(0,1.3fr) 56px;gap:12px;align-items:center;padding:0 16px}
+.th>div{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+.tr{height:54px;border-top:1px solid var(--line)}
+.tr.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.tr .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .sb{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f{display:flex;flex-direction:column;gap:2px}
+.f b{font-weight:600;font-size:13px}
+
+</style>
+</helmet>
+<div class="dcm" data-theme="{{theme}}" style="position: relative; width: 1600px; height: 1000px; display: flex; border-radius: 12px; overflow: hidden; background: var(--rootbg); border: 1px solid var(--line2)">
+
+<aside style="width: 224px; flex: none; display: flex; flex-direction: column; padding: 0 12px 14px; background: var(--side); backdrop-filter: blur(40px) saturate(170%); -webkit-backdrop-filter: blur(40px) saturate(170%); border-right: 1px solid var(--line)">
+<div style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 8px"><i class="tl" style="background: #FF5F57"></i><i class="tl" style="background: #FEBC2E"></i><i class="tl" style="background: #28C840"></i></div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 8px 12px">
+<div style="width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(145deg, #4C9AFF, #0A5BD6); display: grid; place-items: center; box-shadow: 0 4px 12px -4px rgba(10,132,255,.7), inset 0 1px 0 rgba(255,255,255,.35)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div>
+<div><div style="font-weight: 700; font-size: 14px">Call Board</div><div style="font-size: 11px; color: var(--sub)">A better rhythm for sales</div></div>
+</div>
+<nav aria-label="Main navigation" style="display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="14">
+<sc-if value="{{n.isH}}" hint-placeholder-val="{{ false }}"><div class="sec">{{n.label}}</div></sc-if>
+<sc-if value="{{n.isI}}" hint-placeholder-val="{{ true }}"><button class="nav-i {{n.cls}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.d}}"></path></svg><span>{{n.label}}</span><sc-if value="{{n.hasCount}}" hint-placeholder-val="{{ false }}"><span class="cnt mono">{{n.count}}</span></sc-if></button></sc-if>
+</sc-for>
+</nav>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 4px 6px"><div class="av c0" style="width: 32px; height: 32px">A</div><div><div style="font-weight: 600">Ash</div><div style="font-size: 12px; color: var(--sub)">Grovoke</div></div></div>
+</aside>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg)">
+<header style="height: 52px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line)">
+<div style="font-size: 15px; font-weight: 650">Sessions</div>
+<span class="mb on">1 live</span>
+<div style="flex: 1"></div>
+<div class="seg"><button>7 days</button><button class="on">30 days</button><button>All</button></div>
+<button class="btn p"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 9-14 9V3z"></path></svg>Start session</button>
+</header>
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; padding: 18px 20px 20px">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{stats}}" as="t" hint-placeholder-count="4"><div class="panel" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span class="eye">{{t.l}}</span><span class="mono" style="font-size: 30px; font-weight: 650; letter-spacing: -.02em">{{t.v}}</span><span style="font-size: 12px; color: {{t.c}}">{{t.d}}</span></div></sc-for>
+</div>
+<div style="flex: 1; min-height: 0; display: flex; gap: 16px">
+<div class="panel" style="flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden">
+<div style="display: grid; grid-template-columns: minmax(0,1.6fr) minmax(0,.9fr) 70px 90px 70px minmax(0,2fr); gap: 12px; padding: 0 18px; height: 40px; align-items: center"><div class="eye">Session</div><div class="eye">Length</div><div class="eye">Dials</div><div class="eye">Connected</div><div class="eye">Booked</div><div class="eye">Outcome mix</div></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+<div style="display: grid; grid-template-columns: minmax(0,1.6fr) minmax(0,.9fr) 70px 90px 70px minmax(0,2fr); gap: 12px; padding: 0 18px; height: 52px; align-items: center; border-top: 1px solid var(--line); background: {{r.bg}}">
+<div><div style="font-weight: 600">{{r.day}}</div><div style="font-size: 12px; color: var(--sub)">{{r.time}}</div></div>
+<div class="mono">{{r.len}}</div><div class="mono">{{r.dials}}</div><div class="mono">{{r.conn}}</div><div class="mono" style="font-weight: 600; color: {{r.bc}}">{{r.book}}</div>
+<div style="display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--key)"><i style="flex: {{r.b}}; background: var(--green)"></i><i style="flex: {{r.c}}; background: var(--accent)"></i><i style="flex: {{r.d}}; background: var(--sub); opacity: .5"></i></div>
+</div>
+</sc-for>
+</div>
+<aside class="panel" style="width: 360px; flex: none; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; justify-content: space-between"><span class="eye">Live session</span><span class="mb on">● Recording</span></div>
+<div class="mono" style="font-size: 44px; font-weight: 650; letter-spacing: -.02em">00:42:18</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px"><div style="padding: 12px; border-radius: 12px; background: var(--key)"><div class="eye">Dials</div><div class="mono" style="font-size: 22px; font-weight: 650">31</div></div><div style="padding: 12px; border-radius: 12px; background: var(--key)"><div class="eye">Talked</div><div class="mono" style="font-size: 22px; font-weight: 650">6</div></div><div style="padding: 12px; border-radius: 12px; background: var(--key)"><div class="eye">Booked</div><div class="mono" style="font-size: 22px; font-weight: 650; color: var(--green-t)">2</div></div></div>
+<div><div style="display: flex; justify-content: space-between; margin-bottom: 8px"><span style="font-weight: 600">Goal · 80 dials</span><span class="mono" style="color: var(--sub)">39%</span></div><div style="height: 8px; border-radius: 4px; background: var(--key); overflow: hidden"><i style="display: block; width: 39%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-t))"></i></div></div>
+<div style="padding: 12px 14px; border-radius: 12px; background: var(--amber-soft); color: var(--amber-t); font-size: 12px">Austin closes at 5:00 PM CT — 6h 35m left · 3:30 AM IST.</div>
+<div style="display: flex; gap: 10px; margin-top: auto"><button class="btn" style="flex: 1; height: 38px">Pause</button><button class="btn" style="flex: 1; height: 38px; background: var(--red-soft); color: var(--red-t); border-color: transparent">Stop session</button></div>
+</aside>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"dark","options":["dark","light"]},"$preview":{"width":1600,"height":1000}}'>
+class Component extends DCLogic {
+  st() { return this.state || {}; }
+  renderVals() {
+    const s = this.st();
+
+    const I = {
+      dash: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
+      users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+      phone: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z",
+      list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+      act: "M22 12h-4l-3 9L9 3l-3 9H2",
+      cal: "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18",
+      clock: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2",
+      redo: "M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10",
+      file: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8",
+      up: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
+      set: "M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"
+    };
+    const H = (label) => ({ isH: true, isI: false, label });
+    const N = (label, d, extra) => Object.assign({ isH: false, isI: true, label, d, cls: label === 'Sessions' ? 'on' : '', hasCount: false, count: '' }, extra || {});
+    const nav = [
+      H('Workspace'), N('Overview', I.dash), N('Leads', I.users, { hasCount: true, count: '248' }),
+      N('Dialer', I.phone), N('Sessions', I.list), N('Activity', I.act),
+      H('Schedule'), N('Bookings', I.cal), N('Time Zones', I.clock), N('Follow-ups', I.redo, { hasCount: true, count: '4' }),
+      H('Setup'), N('Configuration', I.file), N('Data', I.up), N('Settings', I.set)
+    ];
+
+    const R0 = [
+      ['Today', '9:42 PM IST · live', '00:42:18', 31, 6, 2, 2, 4, 25, 'var(--accent-soft)'],
+      ['Thu, Oct 29', '9:30 PM – 12:10 AM', '02:40:05', 74, 13, 3, 3, 10, 61, ''],
+      ['Wed, Oct 28', '9:35 PM – 11:48 PM', '02:13:22', 62, 11, 2, 2, 9, 51, ''],
+      ['Tue, Oct 27', '9:40 PM – 12:02 AM', '02:22:10', 70, 9, 1, 1, 8, 61, ''],
+      ['Mon, Oct 26', '9:32 PM – 11:15 PM', '01:43:00', 48, 8, 2, 2, 6, 40, ''],
+      ['Fri, Oct 23', '9:30 PM – 12:30 AM', '03:00:41', 81, 14, 3, 3, 11, 67, ''],
+      ['Thu, Oct 22', '9:45 PM – 11:55 PM', '02:10:18', 58, 7, 0, 0, 7, 51, ''],
+      ['Wed, Oct 21', '9:30 PM – 12:00 AM', '02:30:00', 66, 12, 2, 2, 10, 54, '']
+    ];
+    const rows = R0.map((r) => ({ day: r[0], time: r[1], len: r[2], dials: r[3], conn: r[4], book: r[5], bc: r[5] ? 'var(--green-t)' : 'var(--sub)', b: Math.max(r[6], 0.001), c: r[7] - r[6] + 0.001, d: r[8], bg: r[9] }));
+    const stats = [
+      { l: 'Sessions', v: '24', d: '+4 vs last 30 days', c: 'var(--green-t)' },
+      { l: 'Total dials', v: '1,184', d: 'avg 49 per session', c: 'var(--sub)' },
+      { l: 'Connect rate', v: '17.4%', d: '+2.1 pts', c: 'var(--green-t)' },
+      { l: 'Booked', v: '11', d: '1 per 108 dials', c: 'var(--sub)' }
+    ];
+    return { theme: this.props.theme ?? 'dark', nav, rows, stats };
+
+  }
+}
+</script>
+</body>
+</html>
