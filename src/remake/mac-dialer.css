@@ -74,6 +74,33 @@
   color: var(--muted);
   margin: 8px 0;
 }
+.page-dialer .dialer-mac .callback-card .callback-toggle {
+  border: 1px solid #bd7c24;
+  border-radius: 10px;
+  min-height: 44px;
+  background: #fff3d9;
+  color: #7b4300;
+}
+.page-dialer .dialer-mac .callback-card .callback-toggle[aria-pressed="true"] {
+  border-width: 2px;
+  background: #ffe5ad;
+}
+.page-dialer .dialer-mac .callback-toggle .switch.on {
+  background: #8f5000;
+}
+[data-theme="night"] .page-dialer .dialer-mac .callback-card .callback-toggle {
+  background: #3a2e18;
+  color: #ffd184;
+}
+[data-theme="night"] .page-dialer .dialer-mac .callback-card .callback-toggle[aria-pressed="true"] {
+  background: #4c3919;
+}
+.page-dialer .dialer-mac .call-card > .callback-card {
+  grid-column: 1 / -1;
+  grid-row: 8;
+  margin: 0;
+  padding: 0;
+}
 
 /* Keep the guide above the phone; scroll context without hiding call controls. */
 .page-dialer .dialer-mac .lead-panel .dual-time {

@@ -1118,6 +1118,24 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                           : "Call · simulated"}
                 </button>
               )}
+              {state.call && (
+                <div className={`callback-card ${lead.callback ? "enabled" : ""}`}>
+                  <button
+                    type="button"
+                    className="callback-toggle"
+                    aria-pressed={lead.callback}
+                    onClick={() => dispatch({ type: "edit", patch: { callback: !lead.callback } })}
+                  >
+                    <RotateCcw aria-hidden="true" size={18} />
+                    <span>
+                      <strong>Worth a callback</strong>
+                    </span>
+                    <span className={`switch ${lead.callback ? "on" : ""}`} aria-hidden="true">
+                      <span />
+                    </span>
+                  </button>
+                </div>
+              )}
               <div className={`phone-card-footer ${active ? "is-active" : ""}`}>
                 <button
                   type="button"
