@@ -1,4 +1,130 @@
 /* Phase 4: Overview only. Inherits the active palette, including Mac tokens. */
+.page-overview .dashboard-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  align-items: start;
+}
+.page-overview .dashboard-grid > .panel {
+  border-radius: 16px;
+  box-shadow: 0 8px 24px -20px #0006;
+}
+.page-overview .overview-chart-scroll {
+  overflow-x: auto;
+  margin: 0 20px;
+}
+.page-overview .overview-chart-scroll .bar-chart {
+  min-width: 780px;
+  padding: 0;
+}
+.page-overview .overview-chart-scroll .chart-columns {
+  gap: 5px;
+}
+.page-overview .overview-chart-scroll .chart-day {
+  min-width: 20px;
+}
+.page-overview .overview-chart-scroll .chart-day.is-today {
+  outline: 2px solid var(--jade);
+  outline-offset: 2px;
+  border-radius: 6px;
+  background: var(--jade-soft);
+}
+.page-overview .overview-chart-scroll .bar-group {
+  gap: 2px;
+}
+.page-overview .overview-chart-scroll .bar {
+  border-radius: 4px 4px 0 0;
+}
+.page-overview .overview-chart-scroll .chart-day small {
+  font-size: 10px;
+}
+.page-overview .overview-chart-scroll .chart-day small span {
+  color: var(--text);
+  font-size: 8px;
+}
+.page-overview .overview-chart-data {
+  padding: 0 20px 16px;
+}
+.page-overview .overview-chart-data summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text);
+}
+.page-overview .overview-table-scroll {
+  max-height: 250px;
+  overflow: auto;
+}
+.page-overview .overview-chart-data table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+.page-overview .overview-chart-data th,
+.page-overview .overview-chart-data td {
+  padding: 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+.page-overview .overview-chart-data th:first-child {
+  text-align: left;
+}
+.page-overview .funnel-panel .funnel-row {
+  display: grid;
+  grid-template-columns: 86px minmax(30px, 1fr) 32px 36px;
+  gap: 8px;
+  align-items: center;
+}
+.page-overview .funnel-panel .funnel-row > span {
+  grid-column: 1;
+  grid-row: 1;
+}
+.page-overview .funnel-panel .funnel-stage {
+  grid-column: 2;
+  grid-row: 1;
+  width: auto;
+}
+.page-overview .funnel-panel .funnel-row strong {
+  grid-column: 3;
+  grid-row: 1;
+  text-align: right;
+}
+.page-overview .funnel-panel .funnel-row small {
+  grid-column: 4;
+  grid-row: 1;
+  text-align: right;
+}
+.page-overview .funnel-panel .funnel-track {
+  display: block;
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--raised);
+}
+.page-overview .funnel-track i {
+  display: block;
+  height: 100%;
+  background: var(--jade);
+  border-radius: inherit;
+}
+.page-overview .funnel-track.stage-1 i {
+  background: var(--teal);
+}
+.page-overview .funnel-track.stage-2 i {
+  background: var(--blue);
+}
+.page-overview .funnel-track.stage-3 i {
+  background: var(--amber);
+}
+.page-overview .funnel-track.stage-4 i {
+  background: var(--green);
+}
+.page-overview .dashboard-grid .overview-followups {
+  grid-column: 1 / -1;
+}
+@media (max-width: 1000px) {
+  .page-overview .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .page-overview .overview-banner {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr);

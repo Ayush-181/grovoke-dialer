@@ -168,7 +168,7 @@ export function Overview({
       </div>
       <div className="dashboard-grid">
         <OverviewActivityChart logs={logs} month={month} />
-        <Funnel logs={logs} />
+        <Funnel logs={logs} overview />
         <Panel className="appointments-panel overview-followups">
           <section className="followup-section">
             <PanelHead
