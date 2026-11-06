@@ -39,7 +39,13 @@ import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "./metri
 
 import { BookingDialog } from "./Bookings";
 import { shortcutCommand } from "./shortcuts";
-import { isSuppressed, leadPhones, validateDraft, validateCustomValues } from "./domain";
+import {
+  isSuppressed,
+  isValidZone,
+  leadPhones,
+  validateDraft,
+  validateCustomValues,
+} from "./domain";
 import { useRuntime } from "./runtime";
 import { renderScript } from "./template-values";
 import { ContactsPanel, CustomFieldsEditor } from "./Contacts";
@@ -527,6 +533,24 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               <span className={`badge ${lead.outcome === "do_not_call" ? "bad" : "good"}`}>
                 {lead.outcome ? outcomeLabel(lead.outcome) : "Never called"}
               </span>
+            </div>
+            <div className="dual-time" aria-label="Lead local time and IST">
+              <div>
+                <small>Lead local</small>
+                <strong className="mono">
+                  {isValidZone(lead.zone) ? timeAt(now, lead.zone) : "Unknown time zone"}
+                </strong>
+                <span>
+                  {isValidZone(lead.zone)
+                    ? dateAt(now, lead.zone)
+                    : "Choose the lead’s time zone before scheduling."}
+                </span>
+              </div>
+              <div>
+                <small>Your time · IST</small>
+                <strong className="mono">{timeAt(now, "Asia/Kolkata")}</strong>
+                <span>{dateAt(now, "Asia/Kolkata")}</span>
+              </div>
             </div>
             <div className="lead-quick-actions">
               <label className="number-picker">

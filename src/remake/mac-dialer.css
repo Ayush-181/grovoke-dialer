@@ -56,6 +56,20 @@
 }
 
 /* Keep the guide above the phone; scroll context without hiding call controls. */
+.page-dialer .dialer-mac .lead-panel .dual-time {
+  margin-top: 8px;
+  padding: 8px 12px;
+  gap: 8px;
+  border-radius: 12px;
+}
+.page-dialer .dialer-mac .dual-time > div {
+  min-width: 0;
+}
+.page-dialer .dialer-mac .dual-time span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
 .page-dialer .dialer-mac .lead-panel .lead-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
