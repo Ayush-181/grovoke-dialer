@@ -129,6 +129,15 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
     `OPEN\nHi, is ${lead.contact || "the person who handles enquiries"} available? I’m Ash, calling about ${lead.business}.\n\nDISCOVER\nHow do you manage enquiries? Where does follow-up get missed?\n\nNEXT STEP\nAgree the next step: book together, or flag a callback with a reason.`;
   const paused = session?.status === "paused";
   const connected = active && state.call?.phase !== "connecting";
+  const participantBlockedReason = !connected
+    ? "Connect the call before adding a participant."
+    : state.call?.held
+      ? "Resume the call before adding a participant."
+      : working
+        ? "Wait for the current operation to finish."
+        : !runtime.capabilities.conference
+          ? "This calling connection does not support additional participants."
+          : "";
   const callbackCandidates = lead.callbackAt ? bookingInstants(lead.callbackAt, lead.zone) : [];
   const blocked =
     isSuppressed(lead) || state.leads.some((item) => item.id === lead.id && isSuppressed(item));
@@ -1716,11 +1725,21 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               {participantError}
             </p>
           )}
+          {participantBlockedReason && (
+            <p className="hint" id="participant-blocked-reason" role="status">
+              {participantBlockedReason}
+            </p>
+          )}
           <div className="modal-actions">
             <button type="button" className="button" onClick={() => setConference(false)}>
               Cancel
             </button>
-            <button type="submit" className="button primary" disabled={!connected || working}>
+            <button
+              type="submit"
+              className="button primary"
+              disabled={Boolean(participantBlockedReason)}
+              aria-describedby={participantBlockedReason ? "participant-blocked-reason" : undefined}
+            >
               <Plus aria-hidden="true" size={16} />
               {working ? "Adding…" : live ? "Dial & add to call" : "Dial & add to call · simulated"}
             </button>
