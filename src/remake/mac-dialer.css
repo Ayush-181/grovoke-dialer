@@ -54,6 +54,26 @@
   color: #fff;
   border-color: #b4232e;
 }
+.page-dialer .dialer-mac .call-card .phone-call-button.call-start {
+  background: #137333;
+  color: #fff;
+  border-color: #137333;
+}
+.page-dialer .dialer-mac .outcome-panel .outcome-option {
+  min-height: 38px;
+  border-radius: 10px;
+  white-space: normal;
+}
+.page-dialer .dialer-mac .outcome-panel .outcome-option.selected {
+  background: var(--jade-soft);
+  border-color: var(--jade);
+  box-shadow: 0 0 0 2px var(--jade-soft);
+  color: var(--text);
+}
+.page-dialer .dialer-mac .outcome-group h3 {
+  color: var(--muted);
+  margin: 8px 0;
+}
 
 /* Keep the guide above the phone; scroll context without hiding call controls. */
 .page-dialer .dialer-mac .lead-panel .dual-time {

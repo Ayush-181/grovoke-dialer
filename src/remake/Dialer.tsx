@@ -1090,7 +1090,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <button
                   id="dialer-dial"
                   type="button"
-                  className="button primary phone-call-button"
+                  className="button call-start phone-call-button"
                   aria-label={
                     !inlineManual && blocked
                       ? "Do not call"
@@ -1222,12 +1222,12 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             <p>Select, then Save or Save & next.</p>
             <div className="outcome-groups">
               {[
+                ["Connected", ["connected_dm", "connected_gk", "connected_other"]],
                 [
-                  "Reached",
-                  ["connected_dm", "connected_gk", "connected_other", "callback_requested"],
+                  "Not reached",
+                  ["voicemail", "no_answer", "busy", "bad_number", "not_interested", "do_not_call"],
                 ],
-                ["Didn’t reach", ["voicemail", "no_answer", "busy", "bad_number"]],
-                ["Close out", ["not_interested", "do_not_call"]],
+                ["Follow up", ["callback_requested"]],
               ].map(([label, values]) => (
                 <div className="outcome-group" key={label as string}>
                   <h3>{label}</h3>
