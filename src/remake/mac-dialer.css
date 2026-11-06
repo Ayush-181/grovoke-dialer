@@ -54,3 +54,124 @@
   color: #fff;
   border-color: #b4232e;
 }
+
+/* Keep the guide above the phone; scroll context without hiding call controls. */
+.page-dialer .dialer-mac .lead-panel .lead-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(100px, 1fr) auto;
+  min-height: 0;
+}
+.page-dialer .dialer-mac .lead-panel .lead-context {
+  display: flex;
+  overflow-y: auto;
+  min-height: 0;
+  padding-top: 8px;
+}
+.page-dialer .dialer-mac .lead-panel .context-toggle {
+  display: none;
+}
+.page-dialer .dialer-mac .lead-panel .call-guide,
+.page-dialer .dialer-mac .lead-panel .lead-history {
+  flex: 0 0 auto;
+  min-height: 120px;
+}
+.page-dialer .dialer-mac .lead-panel .guide-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: visible;
+}
+.page-dialer .dialer-mac .lead-panel .guide-sections > div > div {
+  display: block;
+  overflow: visible;
+}
+.page-dialer .dialer-mac .lead-panel .call-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 184px;
+  align-content: start;
+  gap: 6px 16px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 12px;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+.page-dialer .dialer-mac .call-card > * {
+  min-width: 0;
+  grid-column: 1;
+}
+.page-dialer .dialer-mac .call-card .phone-source {
+  grid-row: 1;
+}
+.page-dialer .dialer-mac .call-card .phone-number-entry {
+  grid-row: 2;
+}
+.page-dialer .dialer-mac .call-card .phone-call-state {
+  grid-row: 3;
+}
+.page-dialer .dialer-mac .call-card .phone-tools {
+  grid-row: 4;
+}
+.page-dialer .dialer-mac .call-card .phone-call-button {
+  grid-row: 5;
+}
+.page-dialer .dialer-mac .call-card .phone-card-footer {
+  grid-row: 6;
+}
+.page-dialer .dialer-mac .call-card .phone-device-row {
+  grid-row: 7;
+}
+.page-dialer .dialer-mac .call-card .keypad {
+  grid-column: 2;
+  grid-row: 1 / 5;
+  align-self: start;
+}
+.page-dialer .dialer-mac .call-card .phone-dtmf {
+  grid-column: 2;
+  grid-row: 5;
+}
+.page-dialer .dialer-mac .call-card .conference-participants {
+  grid-column: 2;
+  grid-row: 6 / 8;
+  max-height: 80px;
+  overflow-y: auto;
+}
+@container (max-width: 440px) {
+  .page-dialer .dialer-mac .lead-panel .call-card {
+    grid-template-columns: minmax(0, 1fr) 148px;
+    gap: 6px;
+    padding: 8px;
+  }
+  .page-dialer .dialer-mac .call-card .keypad {
+    grid-template-columns: repeat(3, 44px);
+  }
+  .page-dialer .dialer-mac .call-card .keypad button {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+  .page-dialer .dialer-mac .call-card .phone-tools {
+    gap: 4px;
+    justify-content: flex-start;
+  }
+  .page-dialer .dialer-mac .call-card .phone-tools button {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    font-size: 10px;
+  }
+  .page-dialer .dialer-mac .call-card .phone-number-entry input {
+    font-size: 14px;
+    letter-spacing: -0.04em;
+  }
+  .page-dialer .dialer-mac .call-card .call-timer {
+    font-size: 30px;
+  }
+}
+@media (max-width: 720px) {
+  .page-dialer .dialer-mac .lead-panel .lead-workspace {
+    grid-template-rows: minmax(100px, 220px) auto;
+  }
+}

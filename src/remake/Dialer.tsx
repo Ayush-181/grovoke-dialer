@@ -521,9 +521,8 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             <span className="eyebrow">
               {lead.category} · {lead.city}
             </span>
-            <h2>{lead.business}</h2>
+            <h2 className="mono">{active ? state.call!.phone : chosenPhone}</h2>
             <div className="lead-facts">
-              <span className="mono">{active ? state.call!.phone : chosenPhone}</span>
               <span className="badge neutral">{lead.calls} dials</span>
               <span className={`badge ${lead.outcome === "do_not_call" ? "bad" : "good"}`}>
                 {lead.outcome ? outcomeLabel(lead.outcome) : "Never called"}
