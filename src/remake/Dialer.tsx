@@ -39,10 +39,17 @@ import { dateKey, inPeriod, metrics, sessionElapsed, sessionTime } from "./metri
 
 import { BookingDialog } from "./Bookings";
 import { shortcutCommand } from "./shortcuts";
-import { isSuppressed, leadPhones, validateDraft, validateCustomValues } from "./domain";
+import {
+  isSuppressed,
+  isValidZone,
+  leadPhones,
+  validateDraft,
+  validateCustomValues,
+} from "./domain";
 import { useRuntime } from "./runtime";
 import { renderScript } from "./template-values";
 import { ContactsPanel, CustomFieldsEditor } from "./Contacts";
+import "./mac-dialer.css";
 
 type Props = {
   state: State;
@@ -122,6 +129,15 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
     `OPEN\nHi, is ${lead.contact || "the person who handles enquiries"} available? I’m Ash, calling about ${lead.business}.\n\nDISCOVER\nHow do you manage enquiries? Where does follow-up get missed?\n\nNEXT STEP\nAgree the next step: book together, or flag a callback with a reason.`;
   const paused = session?.status === "paused";
   const connected = active && state.call?.phase !== "connecting";
+  const participantBlockedReason = !connected
+    ? "Connect the call before adding a participant."
+    : state.call?.held
+      ? "Resume the call before adding a participant."
+      : working
+        ? "Wait for the current operation to finish."
+        : !runtime.capabilities.conference
+          ? "This calling connection does not support additional participants."
+          : "";
   const callbackCandidates = lead.callbackAt ? bookingInstants(lead.callbackAt, lead.zone) : [];
   const blocked =
     isSuppressed(lead) || state.leads.some((item) => item.id === lead.id && isSuppressed(item));
@@ -307,7 +323,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
   }
   return (
     <form
-      className={`dialer-form ${queueOpen ? "queue-expanded" : "queue-collapsed"}`}
+      className={`dialer-form dialer-mac ${queueOpen ? "queue-expanded" : "queue-collapsed"}`}
       onSubmit={save}
       noValidate
     >
@@ -520,13 +536,30 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             <span className="eyebrow">
               {lead.category} · {lead.city}
             </span>
-            <h2>{lead.business}</h2>
+            <h2 className="mono">{active ? state.call!.phone : chosenPhone}</h2>
             <div className="lead-facts">
-              <span className="mono">{active ? state.call!.phone : chosenPhone}</span>
               <span className="badge neutral">{lead.calls} dials</span>
               <span className={`badge ${lead.outcome === "do_not_call" ? "bad" : "good"}`}>
                 {lead.outcome ? outcomeLabel(lead.outcome) : "Never called"}
               </span>
+            </div>
+            <div className="dual-time" aria-label="Lead local time and IST">
+              <div>
+                <small>Lead local</small>
+                <strong className="mono">
+                  {isValidZone(lead.zone) ? timeAt(now, lead.zone) : "Unknown time zone"}
+                </strong>
+                <span>
+                  {isValidZone(lead.zone)
+                    ? dateAt(now, lead.zone)
+                    : "Choose the lead’s time zone before scheduling."}
+                </span>
+              </div>
+              <div>
+                <small>Your time · IST</small>
+                <strong className="mono">{timeAt(now, "Asia/Kolkata")}</strong>
+                <span>{dateAt(now, "Asia/Kolkata")}</span>
+              </div>
             </div>
             <div className="lead-quick-actions">
               <label className="number-picker">
@@ -923,8 +956,20 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                     <span className="call-status">
                       {active
                         ? state.call?.held
-                          ? "On hold · simulated"
-                          : "Simulated call connected"
+                          ? live
+                            ? "On hold"
+                            : "On hold · simulated"
+                          : state.call?.phase === "connecting"
+                            ? live
+                              ? "Connecting…"
+                              : "Connecting · simulated"
+                            : state.call?.participants.length
+                              ? live
+                                ? "Conference connected"
+                                : "Conference · simulated"
+                              : live
+                                ? "Call connected"
+                                : "Simulated call connected"
                         : state.call
                           ? "Call ended"
                           : inlineManual
@@ -1054,7 +1099,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                 <button
                   id="dialer-dial"
                   type="button"
-                  className="button primary phone-call-button"
+                  className="button call-start phone-call-button"
                   aria-label={
                     !inlineManual && blocked
                       ? "Do not call"
@@ -1081,6 +1126,24 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                           ? "Call"
                           : "Call · simulated"}
                 </button>
+              )}
+              {state.call && (
+                <div className={`callback-card ${lead.callback ? "enabled" : ""}`}>
+                  <button
+                    type="button"
+                    className="callback-toggle"
+                    aria-pressed={lead.callback}
+                    onClick={() => dispatch({ type: "edit", patch: { callback: !lead.callback } })}
+                  >
+                    <RotateCcw aria-hidden="true" size={18} />
+                    <span>
+                      <strong>Worth a callback</strong>
+                    </span>
+                    <span className={`switch ${lead.callback ? "on" : ""}`} aria-hidden="true">
+                      <span />
+                    </span>
+                  </button>
+                </div>
               )}
               <div className={`phone-card-footer ${active ? "is-active" : ""}`}>
                 <button
@@ -1187,11 +1250,17 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             <div className="outcome-groups">
               {[
                 [
-                  "Reached",
-                  ["connected_dm", "connected_gk", "connected_other", "callback_requested"],
+                  "Connected",
+                  [
+                    "connected_dm",
+                    "connected_gk",
+                    "connected_other",
+                    "not_interested",
+                    "do_not_call",
+                  ],
                 ],
-                ["Didn’t reach", ["voicemail", "no_answer", "busy", "bad_number"]],
-                ["Close out", ["not_interested", "do_not_call"]],
+                ["Not reached", ["voicemail", "no_answer", "busy", "bad_number"]],
+                ["Follow up", ["callback_requested"]],
               ].map(([label, values]) => (
                 <div className="outcome-group" key={label as string}>
                   <h3>{label}</h3>
@@ -1662,11 +1731,21 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
               {participantError}
             </p>
           )}
+          {participantBlockedReason && (
+            <p className="hint" id="participant-blocked-reason" role="status">
+              {participantBlockedReason}
+            </p>
+          )}
           <div className="modal-actions">
             <button type="button" className="button" onClick={() => setConference(false)}>
               Cancel
             </button>
-            <button type="submit" className="button primary" disabled={!connected || working}>
+            <button
+              type="submit"
+              className="button primary"
+              disabled={Boolean(participantBlockedReason)}
+              aria-describedby={participantBlockedReason ? "participant-blocked-reason" : undefined}
+            >
               <Plus aria-hidden="true" size={16} />
               {working ? "Adding…" : live ? "Dial & add to call" : "Dial & add to call · simulated"}
             </button>
