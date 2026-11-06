@@ -1,0 +1,96 @@
+/* Phase 4: Overview only. Inherits the active palette, including Mac tokens. */
+.page-overview .overview-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr);
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 28px 32px;
+  border-radius: 24px;
+  background: linear-gradient(120deg, #0a3fb0, #3b2ac2);
+  color: #fff;
+  box-shadow: 0 16px 32px -24px #2832c8;
+}
+.page-overview .overview-banner h2 {
+  margin: 8px 0;
+  font-size: clamp(22px, 2.2vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+.page-overview .overview-banner p {
+  margin: 0 0 12px;
+}
+.page-overview .overview-banner .overview-eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.page-overview .overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 8px;
+}
+.page-overview .overview-banner .button {
+  min-height: 42px;
+  border-radius: 21px;
+}
+.page-overview .overview-banner .overview-start {
+  background: #fff;
+  color: #0a3fb0;
+  border-color: #fff;
+}
+.page-overview .overview-banner .overview-review {
+  background: transparent;
+  color: #fff;
+  border-color: #ffffff80;
+}
+.page-overview .overview-banner :focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+}
+.page-overview .overview-next {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  border-radius: 18px;
+  border: 1px solid #ffffff50;
+  background: #ffffff12;
+  overflow-wrap: anywhere;
+}
+.page-overview .overview-next strong {
+  font-size: 20px;
+}
+.page-overview .stats-grid.overview-stats {
+  gap: 16px;
+}
+.page-overview .overview-stats .panel.stat {
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px -20px #0006;
+}
+.page-overview .overview-stats .stat [data-metric] {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 32px;
+}
+.page-overview .overview-stats .stat .stat-comparison {
+  min-height: 40px;
+}
+@media (max-width: 1000px) {
+  .page-overview .overview-banner {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+}
+@media (max-width: 520px) {
+  .page-overview .overview-banner {
+    padding: 20px;
+    gap: 20px;
+  }
+  .page-overview .stats-grid.overview-stats {
+    grid-template-columns: 1fr;
+  }
+}

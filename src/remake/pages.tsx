@@ -1,3 +1,4 @@
+import { OverviewBanner } from "./OverviewContext";
 import { dateAt, timeAt } from "./format";
 import { useEffect, useState, type Dispatch } from "react";
 import {
@@ -62,7 +63,12 @@ export function Overview({
   openLead,
 }: Props & { navigate: (page: Page, view?: "all" | "callbacks") => void }) {
   const runtime = useRuntime();
-  const currentMonth = dateKey(new Date()).slice(0, 7);
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+  const currentMonth = dateKey(now).slice(0, 7);
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentMonth.slice(0, 4));
   const logs = inPeriod(state.logs, month);
@@ -98,6 +104,7 @@ export function Overview({
     minutes = Math.floor(m.talk / 60) % 60;
   return (
     <>
+      <OverviewBanner state={state} now={now} navigate={navigate} />
       <div className="overview-caption">
         <label className="overview-month">
           <span className="sr-only">Overview month</span>
