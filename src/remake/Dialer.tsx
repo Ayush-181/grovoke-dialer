@@ -43,6 +43,7 @@ import { isSuppressed, leadPhones, validateDraft, validateCustomValues } from ".
 import { useRuntime } from "./runtime";
 import { renderScript } from "./template-values";
 import { ContactsPanel, CustomFieldsEditor } from "./Contacts";
+import "./mac-dialer.css";
 
 type Props = {
   state: State;
@@ -307,7 +308,7 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
   }
   return (
     <form
-      className={`dialer-form ${queueOpen ? "queue-expanded" : "queue-collapsed"}`}
+      className={`dialer-form dialer-mac ${queueOpen ? "queue-expanded" : "queue-collapsed"}`}
       onSubmit={save}
       noValidate
     >
@@ -923,8 +924,20 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
                     <span className="call-status">
                       {active
                         ? state.call?.held
-                          ? "On hold · simulated"
-                          : "Simulated call connected"
+                          ? live
+                            ? "On hold"
+                            : "On hold · simulated"
+                          : state.call?.phase === "connecting"
+                            ? live
+                              ? "Connecting…"
+                              : "Connecting · simulated"
+                            : state.call?.participants.length
+                              ? live
+                                ? "Conference connected"
+                                : "Conference · simulated"
+                              : live
+                                ? "Call connected"
+                                : "Simulated call connected"
                         : state.call
                           ? "Call ended"
                           : inlineManual

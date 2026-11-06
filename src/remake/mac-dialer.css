@@ -1,0 +1,56 @@
+/* Phase 3: Dialer-only styles. Extra scope preserves the shared stylesheet layers. */
+.page-dialer .dialer-mac .call-card .phone-call-state {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-block: 8px;
+}
+.page-dialer .dialer-mac .call-card .call-timer {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.page-dialer .dialer-mac .call-card .phone-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  padding-block: 8px;
+}
+.page-dialer .dialer-mac .call-card .phone-tools button {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 60px;
+  border-radius: 50%;
+  background: var(--raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 11px;
+}
+.page-dialer .dialer-mac .call-card .phone-tools button[aria-pressed="true"] {
+  background: var(--jade-soft);
+  border-color: var(--jade);
+}
+.page-dialer .dialer-mac .call-card .keypad {
+  grid-template-columns: repeat(3, 56px);
+  justify-content: center;
+  gap: 8px;
+}
+.page-dialer .dialer-mac .call-card .keypad button {
+  width: 56px;
+  height: 56px;
+  min-height: 56px;
+  border-radius: 50%;
+  background: var(--raised);
+}
+.page-dialer .dialer-mac .call-card .phone-call-button {
+  min-height: 48px;
+  border-radius: 24px;
+  flex-shrink: 0;
+}
+.page-dialer .dialer-mac .call-card .phone-call-button.danger {
+  background: #b4232e;
+  color: #fff;
+  border-color: #b4232e;
+}
