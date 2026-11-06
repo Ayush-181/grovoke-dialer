@@ -1,4 +1,4 @@
-import { OverviewBanner } from "./OverviewContext";
+import { OverviewBanner, OverviewSchedule, OverviewAvailability } from "./OverviewContext";
 import { dateAt, timeAt } from "./format";
 import { useEffect, useState, type Dispatch } from "react";
 import {
@@ -97,7 +97,7 @@ export function Overview({
   const delta = (value: number, before: number) =>
     before ? `${Math.round(((value - before) / before) * 100)}%` : "—";
   const upcoming = state.bookings
-    .filter((booking) => new Date(booking.at).getTime() >= Date.now())
+    .filter((booking) => new Date(booking.at).getTime() >= now.getTime())
     .sort((a, b) => a.at.localeCompare(b.at));
   const callbacks = state.leads.filter((lead) => lead.callback);
   const hours = Math.floor(m.talk / 3600),
@@ -204,6 +204,9 @@ export function Overview({
                     <span>
                       {dateAt(booking.at, booking.zone)} · {timeAt(booking.at, booking.zone)}
                     </span>
+                    <span>
+                      {dateAt(booking.at)} · {timeAt(booking.at, "Asia/Kolkata")}
+                    </span>
                   </span>
                   <ChevronRight aria-hidden="true" size={15} />
                 </button>
@@ -257,26 +260,9 @@ export function Overview({
           </section>
         </Panel>
       </div>
+      <OverviewSchedule state={state} now={now} navigate={navigate} />
+      <OverviewAvailability state={state} now={now} navigate={navigate} />
       <div className="overview-bottom">
-        <Panel>
-          <PanelHead
-            title="A queue ready for your next session"
-            subtitle={`${state.leads.filter((l) => !l.outcome).length} untouched businesses to get to know`}
-          />
-          <div className="session-preview">
-            <span className="stat-icon jade">
-              <ListOrdered aria-hidden="true" size={22} />
-            </span>
-            <div>
-              <strong>Local businesses · First touch</strong>
-              <p>Take one lead at a time. Save before moving on.</p>
-            </div>
-            <button className="button primary" onClick={() => navigate("dialer")}>
-              Start calling
-              <ArrowRight aria-hidden="true" size={15} />
-            </button>
-          </div>
-        </Panel>
         <Panel className="quiet-card">
           <ShieldCheck aria-hidden="true" size={24} />
           <h2>
