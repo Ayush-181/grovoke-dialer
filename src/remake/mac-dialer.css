@@ -2,7 +2,7 @@
 .page-dialer .dialer-mac .call-card .phone-call-state {
   flex-wrap: wrap;
   gap: 8px;
-  padding-block: 8px;
+  padding-block: 4px;
 }
 .page-dialer .dialer-mac .call-card .call-timer {
   font-family: "JetBrains Mono", monospace;
@@ -16,7 +16,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
-  padding-block: 8px;
+  padding-block: 0;
 }
 .page-dialer .dialer-mac .call-card .phone-tools button {
   width: 60px;
@@ -186,16 +186,16 @@
 }
 .page-dialer .dialer-mac .call-card .keypad {
   grid-column: 2;
-  grid-row: 1 / 5;
+  grid-row: 2 / 6;
   align-self: start;
 }
 .page-dialer .dialer-mac .call-card .phone-dtmf {
   grid-column: 2;
-  grid-row: 5;
+  grid-row: 6;
 }
 .page-dialer .dialer-mac .call-card .conference-participants {
   grid-column: 2;
-  grid-row: 6 / 8;
+  grid-row: 7;
   max-height: 80px;
   overflow-y: auto;
 }

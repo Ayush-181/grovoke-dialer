@@ -1249,11 +1249,17 @@ export function Dialer({ state, dispatch, openLead, guarded, now }: Props) {
             <p>Select, then Save or Save & next.</p>
             <div className="outcome-groups">
               {[
-                ["Connected", ["connected_dm", "connected_gk", "connected_other"]],
                 [
-                  "Not reached",
-                  ["voicemail", "no_answer", "busy", "bad_number", "not_interested", "do_not_call"],
+                  "Connected",
+                  [
+                    "connected_dm",
+                    "connected_gk",
+                    "connected_other",
+                    "not_interested",
+                    "do_not_call",
+                  ],
                 ],
+                ["Not reached", ["voicemail", "no_answer", "busy", "bad_number"]],
                 ["Follow up", ["callback_requested"]],
               ].map(([label, values]) => (
                 <div className="outcome-group" key={label as string}>
